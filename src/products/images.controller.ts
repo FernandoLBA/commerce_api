@@ -1,0 +1,122 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ImagesService } from './images.service';
+import { CreateProductImageDto } from './dto/create-product-image.dto';
+import { UpdateProductImageDto } from './dto/update-product-image.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
+
+@Controller('products/:productId/images')
+export class ImagesController {
+  constructor(private readonly imagesService: ImagesService) {}
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  create(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Body() createImageDto: CreateProductImageDto,
+  ) {
+    return this.imagesService.create(productId, createImageDto);
+  }
+
+  @Post('upload')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @UseInterceptors(FileInterceptor('file'))
+  uploadFile(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp|gif)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+    @Body('altText') altText?: string,
+    @Body('isPrimary') isPrimary?: string,
+  ) {
+    return this.imagesService.uploadFile(productId, file, {
+      altText,
+      isPrimary: isPrimary === 'true',
+    });
+  }
+
+  @Post('upload-url')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  uploadFromUrl(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Body('url') url: string,
+    @Body('altText') altText?: string,
+    @Body('isPrimary') isPrimary?: boolean,
+  ) {
+    return this.imagesService.uploadFromUrl(productId, url, {
+      altText,
+      isPrimary,
+    });
+  }
+
+  @Get()
+  findAll(@Param('productId', ParseUUIDPipe) productId: string) {
+    return this.imagesService.findAllByProduct(productId);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.imagesService.findOne(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateImageDto: UpdateProductImageDto,
+  ) {
+    return this.imagesService.update(id, updateImageDto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.imagesService.remove(id);
+  }
+
+  @Patch(':id/primary')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  setPrimary(@Param('id', ParseUUIDPipe) id: string) {
+    return this.imagesService.setPrimary(id);
+  }
+
+  @Patch('reorder')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  reorder(
+    @Param('productId', ParseUUIDPipe) productId: string,
+    @Body('imageIds') imageIds: string[],
+  ) {
+    return this.imagesService.reorder(productId, imageIds);
+  }
+}

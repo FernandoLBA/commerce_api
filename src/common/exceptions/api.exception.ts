@@ -21,7 +21,7 @@ export class ApiException extends HttpException {
   }
 }
 
-// Specific exception classes for common use cases
+// Authentication exceptions
 export class UserAlreadyExistsException extends ApiException {
   constructor(message?: string) {
     super(
@@ -62,17 +62,72 @@ export class UnauthorizedException extends ApiException {
   }
 }
 
+// Validation exceptions
 export class ValidationException extends ApiException {
-  constructor(details: string[]) {
+  constructor(details: string | string[]) {
+    const detailsArray = Array.isArray(details) ? details : [details];
     super(
       ErrorCodes.VALIDATION_ERROR,
       HttpStatus.BAD_REQUEST,
-      ErrorMessages[ErrorCodes.VALIDATION_ERROR],
-      details,
+      Array.isArray(details) ? ErrorMessages[ErrorCodes.VALIDATION_ERROR] : details,
+      detailsArray,
     );
   }
 }
 
+// Product exceptions
+export class ProductNotFoundException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.PRODUCT_NOT_FOUND,
+      HttpStatus.NOT_FOUND,
+      message || ErrorMessages[ErrorCodes.PRODUCT_NOT_FOUND],
+    );
+  }
+}
+
+export class ProductAlreadyExistsException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.PRODUCT_ALREADY_EXISTS,
+      HttpStatus.CONFLICT,
+      message || ErrorMessages[ErrorCodes.PRODUCT_ALREADY_EXISTS],
+    );
+  }
+}
+
+// Category exceptions
+export class CategoryNotFoundException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.CATEGORY_NOT_FOUND,
+      HttpStatus.NOT_FOUND,
+      message || ErrorMessages[ErrorCodes.CATEGORY_NOT_FOUND],
+    );
+  }
+}
+
+export class CategoryAlreadyExistsException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.CATEGORY_ALREADY_EXISTS,
+      HttpStatus.CONFLICT,
+      message || ErrorMessages[ErrorCodes.CATEGORY_ALREADY_EXISTS],
+    );
+  }
+}
+
+export class CategoryHasProductsException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.CATEGORY_HAS_PRODUCTS,
+      HttpStatus.CONFLICT,
+      message || ErrorMessages[ErrorCodes.CATEGORY_HAS_PRODUCTS],
+    );
+  }
+}
+
+// General exceptions
 export class NotFoundException extends ApiException {
   constructor(message?: string) {
     super(
@@ -100,6 +155,89 @@ export class ForbiddenException extends ApiException {
       ErrorCodes.FORBIDDEN,
       HttpStatus.FORBIDDEN,
       message || ErrorMessages[ErrorCodes.FORBIDDEN],
+    );
+  }
+}
+
+// Address exceptions
+export class AddressNotFoundException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.ADDRESS_NOT_FOUND,
+      HttpStatus.NOT_FOUND,
+      message || ErrorMessages[ErrorCodes.ADDRESS_NOT_FOUND],
+    );
+  }
+}
+
+// Product variant exceptions
+export class ProductVariantNotFoundException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.PRODUCT_VARIANT_NOT_FOUND,
+      HttpStatus.NOT_FOUND,
+      message || ErrorMessages[ErrorCodes.PRODUCT_VARIANT_NOT_FOUND],
+    );
+  }
+}
+
+export class ProductSkuExistsException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.PRODUCT_SKU_EXISTS,
+      HttpStatus.CONFLICT,
+      message || ErrorMessages[ErrorCodes.PRODUCT_SKU_EXISTS],
+    );
+  }
+}
+
+export class ProductSlugExistsException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.PRODUCT_SLUG_EXISTS,
+      HttpStatus.CONFLICT,
+      message || ErrorMessages[ErrorCodes.PRODUCT_SLUG_EXISTS],
+    );
+  }
+}
+
+export class ProductImageNotFoundException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.PRODUCT_IMAGE_NOT_FOUND,
+      HttpStatus.NOT_FOUND,
+      message || ErrorMessages[ErrorCodes.PRODUCT_IMAGE_NOT_FOUND],
+    );
+  }
+}
+
+// Attribute exceptions
+export class AttributeNotFoundException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.ATTRIBUTE_NOT_FOUND,
+      HttpStatus.NOT_FOUND,
+      message || ErrorMessages[ErrorCodes.ATTRIBUTE_NOT_FOUND],
+    );
+  }
+}
+
+export class AttributeAlreadyExistsException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.ATTRIBUTE_ALREADY_EXISTS,
+      HttpStatus.CONFLICT,
+      message || ErrorMessages[ErrorCodes.ATTRIBUTE_ALREADY_EXISTS],
+    );
+  }
+}
+
+export class FileUploadException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.FILE_UPLOAD_ERROR,
+      HttpStatus.BAD_REQUEST,
+      message || ErrorMessages[ErrorCodes.FILE_UPLOAD_ERROR],
     );
   }
 }

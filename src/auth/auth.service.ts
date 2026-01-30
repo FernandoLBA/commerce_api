@@ -65,17 +65,23 @@ export class AuthService {
       throw new UserNotFoundException();
     }
 
-    // Verificar la contraseña
+    // Check if user is active
+    if (!user.isActive) {
+      throw new InvalidCredentialsException('User account is disabled');
+    }
+
+    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       throw new InvalidCredentialsException();
     }
 
-    // Generar token JWT
+    // Generate JWT token with role
     const token = this.jwtService.sign({
       id: user.id,
       email: user.email,
+      role: user.role,
     });
 
     return {
@@ -85,6 +91,7 @@ export class AuthService {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
     };
   }
@@ -92,7 +99,7 @@ export class AuthService {
   async validateUser(id: string) {
     return this.usersRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'firstName', 'lastName'],
+      select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive'],
     });
   }
 }

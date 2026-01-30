@@ -9,7 +9,95 @@
 * 🟢 You can import this file directly.
 */
 
+export const Role = {
+  USER: 'USER',
+  ADMIN: 'ADMIN'
+} as const
+
+export type Role = (typeof Role)[keyof typeof Role]
 
 
-// This file is empty because there are no enums in the schema.
-export {}
+export const OrderStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  PROCESSING: 'PROCESSING',
+  SHIPPED: 'SHIPPED',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED',
+  REFUNDED: 'REFUNDED'
+} as const
+
+export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus]
+
+
+export const PaymentStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED',
+  REFUNDED: 'REFUNDED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
+
+
+export const PaymentMethod = {
+  STRIPE: 'STRIPE',
+  MERCADOPAGO: 'MERCADOPAGO',
+  CASH_ON_DELIVERY: 'CASH_ON_DELIVERY'
+} as const
+
+export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
+
+
+export const ShippingCarrier = {
+  OLVA: 'OLVA',
+  SHALOM: 'SHALOM',
+  CRUZ_DEL_SUR: 'CRUZ_DEL_SUR',
+  SERVIENTREGA: 'SERVIENTREGA',
+  PICKUP: 'PICKUP'
+} as const
+
+export type ShippingCarrier = (typeof ShippingCarrier)[keyof typeof ShippingCarrier]
+
+
+export const ShippingStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  SHIPPED: 'SHIPPED',
+  IN_TRANSIT: 'IN_TRANSIT',
+  OUT_FOR_DELIVERY: 'OUT_FOR_DELIVERY',
+  DELIVERED: 'DELIVERED',
+  FAILED: 'FAILED',
+  RETURNED: 'RETURNED',
+  CANCELLED: 'CANCELLED'
+} as const
+
+export type ShippingStatus = (typeof ShippingStatus)[keyof typeof ShippingStatus]
+
+
+export const MovementType = {
+  PURCHASE: 'PURCHASE',
+  RETURN: 'RETURN',
+  ADJUSTMENT_IN: 'ADJUSTMENT_IN',
+  TRANSFER_IN: 'TRANSFER_IN',
+  SALE: 'SALE',
+  RESERVATION: 'RESERVATION',
+  ADJUSTMENT_OUT: 'ADJUSTMENT_OUT',
+  DAMAGED: 'DAMAGED',
+  EXPIRED: 'EXPIRED',
+  TRANSFER_OUT: 'TRANSFER_OUT',
+  RELEASE: 'RELEASE'
+} as const
+
+export type MovementType = (typeof MovementType)[keyof typeof MovementType]
+
+
+export const DiscountType = {
+  PERCENTAGE: 'PERCENTAGE',
+  FIXED_AMOUNT: 'FIXED_AMOUNT',
+  FREE_SHIPPING: 'FREE_SHIPPING'
+} as const
+
+export type DiscountType = (typeof DiscountType)[keyof typeof DiscountType]
