@@ -37,7 +37,7 @@ export class OrderItem {
   @Column({ nullable: true, type: 'uuid' })
   variantId?: string | null;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'varchar' })
   variantSku?: string | null;
 
   @Column({ type: 'jsonb', nullable: true })

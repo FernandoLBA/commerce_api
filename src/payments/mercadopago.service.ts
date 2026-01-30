@@ -169,6 +169,7 @@ export class MercadoPagoService {
                 await this.notificationsService.sendPaymentConfirmation(
                   orderWithUser,
                   orderWithUser.user.email,
+                  Number(order.total),
                 );
               }
             } catch (emailError) {

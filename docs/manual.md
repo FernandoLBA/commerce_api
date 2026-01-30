@@ -36,7 +36,7 @@ Este manual proporciona instrucciones prácticas para trabajar en el proyecto si
 
 - Node.js v18+
 - pnpm
-- PostgreSQL
+- PostgreSQL 14+
 - Docker (opcional)
 
 ### Instalación
@@ -53,48 +53,69 @@ pnpm install
 cp .env.example .env
 # Editar .env con tus credenciales
 
-# Ejecutar migraciones
-pnpm prisma:migrate
-
 # Generar cliente Prisma
-pnpm prisma:generate
+pnpm prisma generate
+
+# Ejecutar migraciones
+pnpm prisma migrate deploy
+
+# Poblar base de datos con datos de prueba
+pnpm prisma db seed
 
 # Iniciar en modo desarrollo
 pnpm start:dev
 ```
 
+### Datos de Prueba (Seed)
+
+El seed crea:
+- **4 usuarios** (1 admin + 3 usuarios)
+- **8 categorías** jerárquicas
+- **5 productos** con variantes
+- **4 cupones** de descuento
+- **Órdenes, pagos y envíos** de ejemplo
+
+**Usuarios de prueba:**
+| Email | Contraseña | Rol |
+|-------|------------|-----|
+| admin@tienda.pe | password123 | Admin |
+| juan.perez@gmail.com | password123 | User |
+| maria.garcia@gmail.com | password123 | User |
+| carlos.rodriguez@gmail.com | password123 | User |
+
+**Cupones de prueba:** `BIENVENIDO10`, `VERANO2025`, `ENVIOGRATIS`, `TECH20`
+
 ### Variables de Entorno
 
 ```env
-# Base de datos
+# Base de datos (requerido)
+DATABASE_URL="postgresql://postgres:password@localhost:5432/commerce_db?schema=public"
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=your_password
-DB_NAME=commerce_api
+DB_NAME=commerce_db
 
-# JWT
+# JWT (requerido)
 JWT_SECRET=your_super_secret_key
-JWT_EXPIRATION=1h
+JWT_EXPIRES_IN=1d
 
 # Aplicación
 PORT=3000
-NODE_ENV=development
-APP_URL=http://localhost:3000
 
-# Pagos - Stripe
+# Pagos - Stripe (opcional)
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Pagos - MercadoPago
+# Pagos - MercadoPago (opcional)
 MERCADOPAGO_ACCESS_TOKEN=TEST-...
 
-# Cloudinary (Imágenes)
+# Cloudinary - Imágenes (opcional)
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# Email (SMTP)
+# Email SMTP (opcional)
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_SECURE=false

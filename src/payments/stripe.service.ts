@@ -146,6 +146,7 @@ export class StripeService {
           await this.notificationsService.sendPaymentConfirmation(
             orderWithItems,
             orderWithItems.user.email,
+            Number(order.total),
           );
         }
       } catch (emailError) {

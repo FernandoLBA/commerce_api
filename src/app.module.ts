@@ -69,7 +69,7 @@ import { WishlistItem } from './wishlist/entities/wishlist-item.entity';
         CouponUsage,
         WishlistItem,
       ],
-      synchronize: true,
+      synchronize: false, // Disabled because schema is managed by Prisma migrations
     }),
     AuthModule,
     ProductsModule,

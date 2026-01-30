@@ -1,7 +1,13 @@
-import { PrismaClient, Role, DiscountType, OrderStatus, PaymentStatus, PaymentMethod, ShippingCarrier, ShippingStatus, MovementType } from '../src/generated/prisma';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { PrismaClient, Role, DiscountType, OrderStatus, PaymentStatus, PaymentMethod, ShippingCarrier, ShippingStatus, MovementType } = require('../src/generated/prisma/client');
 import * as bcrypt from 'bcrypt';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import 'dotenv/config';
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('🌱 Starting seed...\n');
