@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   ManyToOne,
   OneToMany,
@@ -8,7 +8,9 @@ import {
   UpdateDateColumn,
   JoinColumn,
   Index,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../auth/entities/user.entity';
 import { OrderItem } from './order-item.entity';
 import { Payment } from './payment.entity';
@@ -16,8 +18,15 @@ import { OrderStatus } from '../enums/order-status.enum';
 
 @Entity('orders')
 export class Order {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Index()
   @Column({ name: 'order_number', unique: true })

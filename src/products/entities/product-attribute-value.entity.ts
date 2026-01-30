@@ -1,20 +1,29 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
   ManyToMany,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 } from 'uuid';
 import { ProductAttribute } from './product-attribute.entity';
 import { ProductVariant } from './product-variant.entity';
 
 @Entity('product_attribute_values')
 export class ProductAttributeValue {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = v4() as string;
+    }
+  }
 
   @Column({ length: 100 })
   value: string;

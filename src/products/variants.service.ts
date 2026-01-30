@@ -23,7 +23,8 @@ export class VariantsService {
   ) {}
 
   async create(createVariantDto: CreateVariantDto): Promise<ProductVariant> {
-    const { productId, sku, attributeValueIds, ...variantData } = createVariantDto;
+    const { productId, sku, attributeValueIds, ...variantData } =
+      createVariantDto;
 
     // Verify product exists
     const product = await this.productsRepository.findOne({
@@ -31,7 +32,9 @@ export class VariantsService {
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found`,
+      );
     }
 
     // Check SKU uniqueness
@@ -44,7 +47,8 @@ export class VariantsService {
     }
 
     // Get attribute values
-    const attributeValues = await this.attributesService.findAttributeValuesByIds(attributeValueIds);
+    const attributeValues =
+      await this.attributesService.findAttributeValuesByIds(attributeValueIds);
 
     const variant = this.variantsRepository.create({
       ...variantData,
@@ -77,7 +81,9 @@ export class VariantsService {
     });
 
     if (!variant) {
-      throw new ProductVariantNotFoundException(`Variant with ID "${id}" not found`);
+      throw new ProductVariantNotFoundException(
+        `Variant with ID "${id}" not found`,
+      );
     }
 
     return variant;
@@ -90,13 +96,18 @@ export class VariantsService {
     });
 
     if (!variant) {
-      throw new ProductVariantNotFoundException(`Variant with SKU "${sku}" not found`);
+      throw new ProductVariantNotFoundException(
+        `Variant with SKU "${sku}" not found`,
+      );
     }
 
     return variant;
   }
 
-  async update(id: string, updateVariantDto: UpdateVariantDto): Promise<ProductVariant> {
+  async update(
+    id: string,
+    updateVariantDto: UpdateVariantDto,
+  ): Promise<ProductVariant> {
     const variant = await this.findOne(id);
 
     // Check SKU uniqueness if updating SKU
@@ -106,15 +117,18 @@ export class VariantsService {
       });
 
       if (existingSku) {
-        throw new ProductSkuExistsException(`SKU "${updateVariantDto.sku}" already exists`);
+        throw new ProductSkuExistsException(
+          `SKU "${updateVariantDto.sku}" already exists`,
+        );
       }
     }
 
     // Update attribute values if provided
     if (updateVariantDto.attributeValueIds) {
-      variant.attributeValues = await this.attributesService.findAttributeValuesByIds(
-        updateVariantDto.attributeValueIds,
-      );
+      variant.attributeValues =
+        await this.attributesService.findAttributeValuesByIds(
+          updateVariantDto.attributeValueIds,
+        );
     }
 
     const { attributeValueIds, ...updateData } = updateVariantDto;

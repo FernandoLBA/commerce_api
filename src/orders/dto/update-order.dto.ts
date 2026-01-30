@@ -1,23 +1,24 @@
 import { IsOptional, IsString, IsEnum, MaxLength } from 'class-validator';
 import { OrderStatus } from '../enums/order-status.enum';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class UpdateOrderDto {
   @IsOptional()
-  @IsEnum(OrderStatus, { message: 'Invalid order status' })
+  @IsEnum(OrderStatus, { message: VALIDATION_MESSAGES.INVALID_ENUM('Status', 'pending, confirmed, processing, shipped, delivered, cancelled, refunded') })
   status?: OrderStatus;
 
   @IsOptional()
-  @IsString({ message: 'Tracking number must be a string' })
-  @MaxLength(100, { message: 'Tracking number must be at most 100 characters' })
+  @IsString()
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Tracking number', 100) })
   trackingNumber?: string;
 
   @IsOptional()
-  @IsString({ message: 'Tracking URL must be a string' })
-  @MaxLength(500, { message: 'Tracking URL must be at most 500 characters' })
+  @IsString()
+  @MaxLength(500, { message: VALIDATION_MESSAGES.MAX_LENGTH('Tracking URL', 500) })
   trackingUrl?: string;
 
   @IsOptional()
-  @IsString({ message: 'Admin notes must be a string' })
-  @MaxLength(1000, { message: 'Admin notes must be at most 1000 characters' })
+  @IsString()
+  @MaxLength(1000, { message: VALIDATION_MESSAGES.MAX_LENGTH('Admin notes', 1000) })
   adminNotes?: string;
 }

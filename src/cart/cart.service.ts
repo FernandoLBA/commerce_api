@@ -46,12 +46,13 @@ export class CartService {
     return cart;
   }
 
-  async getCart(userId: string): Promise<Cart & { total: number; itemCount: number }> {
+  async getCart(userId: string): Promise<Omit<Cart, 'generateId'> & { total: number; itemCount: number }> {
     const cart = await this.getOrCreateCart(userId);
     const total = this.calculateTotal(cart.items);
     const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
-    return { ...cart, total, itemCount };
+    const { generateId, ...cartData } = cart;
+    return { ...cartData, total, itemCount };
   }
 
   async addToCart(userId: string, addToCartDto: AddToCartDto): Promise<Cart> {

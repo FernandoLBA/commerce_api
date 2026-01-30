@@ -1,12 +1,14 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
   Index,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { Product } from '../../products/entities/product.entity';
 import { ProductVariant } from '../../products/entities/product-variant.entity';
 import { MovementType } from '../enums/movement-type.enum';
@@ -15,8 +17,15 @@ import { MovementType } from '../enums/movement-type.enum';
 @Index(['productId', 'createdAt'])
 @Index(['variantId', 'createdAt'])
 export class InventoryMovement {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ name: 'product_id', nullable: true })
   productId?: string;

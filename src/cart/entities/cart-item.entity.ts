@@ -1,20 +1,29 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { Cart } from './cart.entity';
 import { Product } from '../../products/entities/product.entity';
 import { ProductVariant } from '../../products/entities/product-variant.entity';
 
 @Entity('cart_items')
 export class CartItem {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ name: 'cart_id' })
   cartId: string;

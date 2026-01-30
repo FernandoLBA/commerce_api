@@ -4,7 +4,11 @@ import { Repository } from 'typeorm';
 import { ImagesService } from './images.service';
 import { ProductImage } from './entities/product-image.entity';
 import { Product } from './entities/product.entity';
-import { ProductNotFoundException, ProductImageNotFoundException, CloudinaryService } from '../common';
+import {
+  ProductNotFoundException,
+  ProductImageNotFoundException,
+  CloudinaryService,
+} from '../common';
 
 describe('ImagesService', () => {
   let service: ImagesService;
@@ -186,9 +190,14 @@ describe('ImagesService', () => {
       const updateDto = { isPrimary: true };
       const nonPrimaryImage = { ...mockImage, isPrimary: false };
 
-      imagesRepository.findOne.mockResolvedValue(nonPrimaryImage as ProductImage);
+      imagesRepository.findOne.mockResolvedValue(
+        nonPrimaryImage as ProductImage,
+      );
       imagesRepository.update.mockResolvedValue({ affected: 1 } as any);
-      imagesRepository.save.mockResolvedValue({ ...nonPrimaryImage, isPrimary: true } as ProductImage);
+      imagesRepository.save.mockResolvedValue({
+        ...nonPrimaryImage,
+        isPrimary: true,
+      } as ProductImage);
 
       await service.update(mockImage.id!, updateDto);
 
@@ -213,9 +222,14 @@ describe('ImagesService', () => {
     it('should set an image as primary', async () => {
       const nonPrimaryImage = { ...mockImage, isPrimary: false };
 
-      imagesRepository.findOne.mockResolvedValue(nonPrimaryImage as ProductImage);
+      imagesRepository.findOne.mockResolvedValue(
+        nonPrimaryImage as ProductImage,
+      );
       imagesRepository.update.mockResolvedValue({ affected: 1 } as any);
-      imagesRepository.save.mockResolvedValue({ ...nonPrimaryImage, isPrimary: true } as ProductImage);
+      imagesRepository.save.mockResolvedValue({
+        ...nonPrimaryImage,
+        isPrimary: true,
+      } as ProductImage);
 
       const result = await service.setPrimary(mockImage.id!);
 
@@ -232,7 +246,9 @@ describe('ImagesService', () => {
       ] as ProductImage[];
 
       imagesRepository.find.mockResolvedValue(images);
-      imagesRepository.save.mockImplementation((img) => Promise.resolve(img as ProductImage));
+      imagesRepository.save.mockImplementation((img) =>
+        Promise.resolve(img as ProductImage),
+      );
 
       const result = await service.reorder(mockProduct.id!, ['img-2', 'img-1']);
 

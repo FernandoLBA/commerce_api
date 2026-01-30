@@ -7,6 +7,7 @@ export * from './interfaces/api-response.interface';
 // Constants
 export * from './constants/error-codes.constants';
 export * from './constants/jwt.constants';
+export * from './constants/validation-messages';
 
 // Enums
 export * from './enums/role.enum';

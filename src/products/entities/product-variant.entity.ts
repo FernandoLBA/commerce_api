@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -8,14 +8,23 @@ import {
   JoinColumn,
   ManyToMany,
   JoinTable,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { Product } from './product.entity';
 import { ProductAttributeValue } from './product-attribute-value.entity';
 
 @Entity('product_variants')
 export class ProductVariant {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ length: 100, unique: true })
   sku: string;
@@ -23,7 +32,13 @@ export class ProductVariant {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ name: 'compare_at_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({
+    name: 'compare_at_price',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
   compareAtPrice: number;
 
   @Column({ type: 'int', default: 0 })
@@ -45,7 +60,10 @@ export class ProductVariant {
   @JoinTable({
     name: 'variant_attribute_values',
     joinColumn: { name: 'variant_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'attribute_value_id', referencedColumnName: 'id' },
+    inverseJoinColumn: {
+      name: 'attribute_value_id',
+      referencedColumnName: 'id',
+    },
   })
   attributeValues: ProductAttributeValue[];
 

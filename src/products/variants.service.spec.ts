@@ -96,7 +96,10 @@ describe('VariantsService', () => {
       attributesService.findAttributeValuesByIds.mockResolvedValue([]);
       variantsRepository.create.mockReturnValue(mockVariant as ProductVariant);
       variantsRepository.save.mockResolvedValue(mockVariant as ProductVariant);
-      productsRepository.save.mockResolvedValue({ ...mockProduct, hasVariants: true } as Product);
+      productsRepository.save.mockResolvedValue({
+        ...mockProduct,
+        hasVariants: true,
+      } as Product);
 
       const result = await service.create(createDto);
 
@@ -115,7 +118,9 @@ describe('VariantsService', () => {
 
       productsRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.create(createDto)).rejects.toThrow(ProductNotFoundException);
+      await expect(service.create(createDto)).rejects.toThrow(
+        ProductNotFoundException,
+      );
     });
 
     it('should throw ProductSkuExistsException if SKU exists', async () => {
@@ -128,9 +133,13 @@ describe('VariantsService', () => {
       };
 
       productsRepository.findOne.mockResolvedValue(mockProduct as Product);
-      variantsRepository.findOne.mockResolvedValue(mockVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
 
-      await expect(service.create(createDto)).rejects.toThrow(ProductSkuExistsException);
+      await expect(service.create(createDto)).rejects.toThrow(
+        ProductSkuExistsException,
+      );
     });
   });
 
@@ -152,7 +161,9 @@ describe('VariantsService', () => {
 
   describe('findOne', () => {
     it('should return a variant by id', async () => {
-      variantsRepository.findOne.mockResolvedValue(mockVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
 
       const result = await service.findOne(mockVariant.id!);
 
@@ -170,7 +181,9 @@ describe('VariantsService', () => {
 
   describe('findBySku', () => {
     it('should return a variant by SKU', async () => {
-      variantsRepository.findOne.mockResolvedValue(mockVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
 
       const result = await service.findBySku(mockVariant.sku!);
 
@@ -191,8 +204,12 @@ describe('VariantsService', () => {
       const updateDto = { price: 79.99 };
       const updatedVariant = { ...mockVariant, ...updateDto };
 
-      variantsRepository.findOne.mockResolvedValue(mockVariant as ProductVariant);
-      variantsRepository.save.mockResolvedValue(updatedVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
+      variantsRepository.save.mockResolvedValue(
+        updatedVariant as ProductVariant,
+      );
 
       const result = await service.update(mockVariant.id!, updateDto);
 
@@ -201,7 +218,11 @@ describe('VariantsService', () => {
 
     it('should throw ProductSkuExistsException if new SKU exists', async () => {
       const updateDto = { sku: 'EXISTING-SKU' };
-      const existingVariant = { ...mockVariant, id: 'other-id', sku: 'EXISTING-SKU' };
+      const existingVariant = {
+        ...mockVariant,
+        id: 'other-id',
+        sku: 'EXISTING-SKU',
+      };
 
       variantsRepository.findOne
         .mockResolvedValueOnce(mockVariant as ProductVariant) // findOne
@@ -215,8 +236,12 @@ describe('VariantsService', () => {
 
   describe('remove', () => {
     it('should delete a variant', async () => {
-      variantsRepository.findOne.mockResolvedValue(mockVariant as ProductVariant);
-      variantsRepository.remove.mockResolvedValue(mockVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
+      variantsRepository.remove.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
 
       await service.remove(mockVariant.id!);
 
@@ -226,7 +251,9 @@ describe('VariantsService', () => {
 
   describe('updateStock', () => {
     it('should increase stock', async () => {
-      variantsRepository.findOne.mockResolvedValue(mockVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
       variantsRepository.save.mockResolvedValue({
         ...mockVariant,
         stock: 110,
@@ -238,8 +265,12 @@ describe('VariantsService', () => {
     });
 
     it('should not allow negative stock', async () => {
-      variantsRepository.findOne.mockResolvedValue(mockVariant as ProductVariant);
-      variantsRepository.save.mockImplementation((v) => Promise.resolve(v as ProductVariant));
+      variantsRepository.findOne.mockResolvedValue(
+        mockVariant as ProductVariant,
+      );
+      variantsRepository.save.mockImplementation((v) =>
+        Promise.resolve(v as ProductVariant),
+      );
 
       const result = await service.updateStock(mockVariant.id!, -200);
 
@@ -250,7 +281,9 @@ describe('VariantsService', () => {
   describe('checkAvailability', () => {
     it('should return true if variant is available', async () => {
       const activeVariant = { ...mockVariant, isActive: true, stock: 100 };
-      variantsRepository.findOne.mockResolvedValue(activeVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        activeVariant as ProductVariant,
+      );
 
       const result = await service.checkAvailability(mockVariant.id!, 10);
 
@@ -259,7 +292,9 @@ describe('VariantsService', () => {
 
     it('should return false if stock is insufficient', async () => {
       const activeVariant = { ...mockVariant, isActive: true, stock: 100 };
-      variantsRepository.findOne.mockResolvedValue(activeVariant as ProductVariant);
+      variantsRepository.findOne.mockResolvedValue(
+        activeVariant as ProductVariant,
+      );
 
       const result = await service.checkAvailability(mockVariant.id!, 150);
 

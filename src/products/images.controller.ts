@@ -47,7 +47,9 @@ export class ImagesController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp|gif)$/ }),
+          new FileTypeValidator({
+            fileType: /^image\/(jpeg|jpg|png|webp|gif)$/,
+          }),
         ],
       }),
     )

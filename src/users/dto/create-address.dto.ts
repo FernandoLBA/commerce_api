@@ -1,55 +1,63 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateAddressDto {
   @IsString()
-  @MaxLength(100, { message: 'Label must not exceed 100 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Label', 100) })
   label: string;
 
   @IsString()
-  @MaxLength(200, { message: 'Street must not exceed 200 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(200, { message: VALIDATION_MESSAGES.MAX_LENGTH('Street', 200) })
   street: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(50, { message: 'Number must not exceed 50 characters' })
+  @MaxLength(50, { message: VALIDATION_MESSAGES.MAX_LENGTH('Number', 50) })
   number?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(100, { message: 'Apartment must not exceed 100 characters' })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Apartment', 100) })
   apartment?: string;
 
   @IsString()
-  @MaxLength(100, { message: 'District must not exceed 100 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('District', 100) })
   district: string;
 
   @IsString()
-  @MaxLength(100, { message: 'City must not exceed 100 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('City', 100) })
   city: string;
 
   @IsString()
-  @MaxLength(100, { message: 'Department must not exceed 100 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Department', 100) })
   department: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(10, { message: 'Postal code must not exceed 10 characters' })
+  @MaxLength(10, { message: VALIDATION_MESSAGES.MAX_LENGTH('Postal code', 10) })
   postalCode?: string;
 
   @IsString()
-  @MaxLength(100, { message: 'Recipient name must not exceed 100 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Recipient name', 100) })
   recipientName: string;
 
   @IsString()
-  @MaxLength(20, { message: 'Phone must not exceed 20 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(20, { message: VALIDATION_MESSAGES.MAX_LENGTH('Phone', 20) })
   recipientPhone: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(500, { message: 'Reference must not exceed 500 characters' })
+  @MaxLength(500, { message: VALIDATION_MESSAGES.MAX_LENGTH('Reference', 500) })
   reference?: string;
 
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: VALIDATION_MESSAGES.MUST_BE_BOOLEAN('isDefault') })
   isDefault?: boolean;
 }

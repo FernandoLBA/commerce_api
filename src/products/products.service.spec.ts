@@ -4,10 +4,7 @@ import { Repository } from 'typeorm';
 import { ProductsService } from './products.service';
 import { Product } from './entities/product.entity';
 import { Category } from '../categories/entities/category.entity';
-import {
-  ProductNotFoundException,
-  CategoryNotFoundException,
-} from '../common';
+import { ProductNotFoundException, CategoryNotFoundException } from '../common';
 
 describe('ProductsService', () => {
   let service: ProductsService;

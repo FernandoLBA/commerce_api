@@ -5,7 +5,11 @@ import { ProductImage } from './entities/product-image.entity';
 import { Product } from './entities/product.entity';
 import { CreateProductImageDto } from './dto/create-product-image.dto';
 import { UpdateProductImageDto } from './dto/update-product-image.dto';
-import { ProductNotFoundException, ProductImageNotFoundException, CloudinaryService } from '../common';
+import {
+  ProductNotFoundException,
+  ProductImageNotFoundException,
+  CloudinaryService,
+} from '../common';
 
 @Injectable()
 export class ImagesService {
@@ -17,13 +21,18 @@ export class ImagesService {
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(productId: string, createImageDto: CreateProductImageDto): Promise<ProductImage> {
+  async create(
+    productId: string,
+    createImageDto: CreateProductImageDto,
+  ): Promise<ProductImage> {
     const product = await this.productsRepository.findOne({
       where: { id: productId },
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found`,
+      );
     }
 
     // Get the highest displayOrder for this product
@@ -33,7 +42,8 @@ export class ImagesService {
       .select('MAX(image.displayOrder)', 'maxOrder')
       .getRawOne();
 
-    const displayOrder = createImageDto.displayOrder ?? (maxOrder?.maxOrder ?? -1) + 1;
+    const displayOrder =
+      createImageDto.displayOrder ?? (maxOrder?.maxOrder ?? -1) + 1;
 
     const image = this.imagesRepository.create({
       url: createImageDto.url,
@@ -58,16 +68,23 @@ export class ImagesService {
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found`,
+      );
     }
 
     // Upload to Cloudinary
-    const uploadResult = await this.cloudinaryService.uploadFromBuffer(file.buffer, {
-      folder: `commerce-api/products/${productId}`,
-    });
+    const uploadResult = await this.cloudinaryService.uploadFromBuffer(
+      file.buffer,
+      {
+        folder: `commerce-api/products/${productId}`,
+      },
+    );
 
     // Get responsive URLs
-    const urls = this.cloudinaryService.getResponsiveUrls(uploadResult.publicId);
+    const urls = this.cloudinaryService.getResponsiveUrls(
+      uploadResult.publicId,
+    );
 
     // Get next displayOrder
     const maxOrder = await this.imagesRepository
@@ -104,7 +121,9 @@ export class ImagesService {
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found`,
+      );
     }
 
     // Upload to Cloudinary
@@ -113,7 +132,9 @@ export class ImagesService {
     });
 
     // Get responsive URLs
-    const urls = this.cloudinaryService.getResponsiveUrls(uploadResult.publicId);
+    const urls = this.cloudinaryService.getResponsiveUrls(
+      uploadResult.publicId,
+    );
 
     // Get next displayOrder
     const maxOrder = await this.imagesRepository
@@ -151,13 +172,18 @@ export class ImagesService {
     });
 
     if (!image) {
-      throw new ProductImageNotFoundException(`Image with ID "${id}" not found`);
+      throw new ProductImageNotFoundException(
+        `Image with ID "${id}" not found`,
+      );
     }
 
     return image;
   }
 
-  async update(id: string, updateImageDto: UpdateProductImageDto): Promise<ProductImage> {
+  async update(
+    id: string,
+    updateImageDto: UpdateProductImageDto,
+  ): Promise<ProductImage> {
     const image = await this.findOne(id);
 
     if (updateImageDto.url !== undefined) {
@@ -204,7 +230,10 @@ export class ImagesService {
     await this.imagesRepository.remove(images);
   }
 
-  async reorder(productId: string, imageIds: string[]): Promise<ProductImage[]> {
+  async reorder(
+    productId: string,
+    imageIds: string[],
+  ): Promise<ProductImage[]> {
     const images = await this.findAllByProduct(productId);
 
     const updatePromises = imageIds.map((imageId, index) => {

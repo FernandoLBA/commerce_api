@@ -1,13 +1,15 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
   Index,
   Unique,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../auth/entities/user.entity';
 import { Product } from '../../products/entities/product.entity';
 import { ProductVariant } from '../../products/entities/product-variant.entity';
@@ -16,8 +18,15 @@ import { ProductVariant } from '../../products/entities/product-variant.entity';
 @Unique(['userId', 'productId', 'variantId'])
 @Index(['userId', 'createdAt'])
 export class WishlistItem {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ name: 'user_id' })
   userId: string;

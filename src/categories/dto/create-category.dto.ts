@@ -3,19 +3,22 @@ import {
   IsOptional,
   IsBoolean,
   MaxLength,
+  IsNotEmpty,
 } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateCategoryDto {
   @IsString()
-  @MaxLength(100, { message: 'Name must not exceed 100 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 100) })
   name: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(500, { message: 'Description must not exceed 500 characters' })
+  @MaxLength(500, { message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 500) })
   description?: string;
 
   @IsOptional()
-  @IsBoolean()
+  @IsBoolean({ message: VALIDATION_MESSAGES.MUST_BE_BOOLEAN('isActive') })
   isActive?: boolean;
 }

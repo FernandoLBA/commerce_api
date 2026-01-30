@@ -1,12 +1,14 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
   Index,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { Coupon } from './coupon.entity';
 import { User } from '../../auth/entities/user.entity';
 import { Order } from '../../orders/entities/order.entity';
@@ -14,8 +16,15 @@ import { Order } from '../../orders/entities/order.entity';
 @Entity('coupon_usages')
 @Index(['couponId', 'userId'])
 export class CouponUsage {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ name: 'coupon_id' })
   couponId: string;

@@ -7,29 +7,33 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateProductImageDto {
-  @IsNotEmpty({ message: 'URL is required' })
-  @IsUrl({}, { message: 'URL must be a valid URL' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsUrl({}, { message: VALIDATION_MESSAGES.INVALID_URL('URL') })
   url: string;
 
   @IsOptional()
-  @IsString({ message: 'Alt text must be a string' })
-  @MaxLength(255, { message: 'Alt text must be at most 255 characters' })
+  @IsString()
+  @MaxLength(255, { message: VALIDATION_MESSAGES.MAX_LENGTH('Alt text', 255) })
   alt?: string;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Width must be a number' })
-  @Min(0, { message: 'Width must be at least 0' })
+  @IsNumber({}, { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Width') })
+  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Width') })
   width?: number;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Height must be a number' })
-  @Min(0, { message: 'Height must be at least 0' })
+  @IsNumber({}, { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Height') })
+  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Height') })
   height?: number;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Display order must be a number' })
-  @Min(0, { message: 'Display order must be at least 0' })
+  @IsNumber(
+    {},
+    { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Display order') },
+  )
+  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Display order') })
   displayOrder?: number;
 }

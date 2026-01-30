@@ -23,7 +23,9 @@ export class AttributesService {
 
   // =============== ATTRIBUTES ===============
 
-  async createAttribute(createAttributeDto: CreateAttributeDto): Promise<ProductAttribute> {
+  async createAttribute(
+    createAttributeDto: CreateAttributeDto,
+  ): Promise<ProductAttribute> {
     const existing = await this.attributesRepository.findOne({
       where: { name: createAttributeDto.name },
     });
@@ -52,7 +54,9 @@ export class AttributesService {
     });
 
     if (!attribute) {
-      throw new AttributeNotFoundException(`Attribute with ID "${id}" not found`);
+      throw new AttributeNotFoundException(
+        `Attribute with ID "${id}" not found`,
+      );
     }
 
     return attribute;
@@ -90,7 +94,9 @@ export class AttributesService {
   async createAttributeValue(
     createAttributeValueDto: CreateAttributeValueDto,
   ): Promise<ProductAttributeValue> {
-    const attribute = await this.findAttributeById(createAttributeValueDto.attributeId);
+    const attribute = await this.findAttributeById(
+      createAttributeValueDto.attributeId,
+    );
 
     const attributeValue = this.attributeValuesRepository.create({
       ...createAttributeValueDto,
@@ -107,13 +113,17 @@ export class AttributesService {
     });
 
     if (!value) {
-      throw new AttributeNotFoundException(`Attribute value with ID "${id}" not found`);
+      throw new AttributeNotFoundException(
+        `Attribute value with ID "${id}" not found`,
+      );
     }
 
     return value;
   }
 
-  async findAttributeValuesByIds(ids: string[]): Promise<ProductAttributeValue[]> {
+  async findAttributeValuesByIds(
+    ids: string[],
+  ): Promise<ProductAttributeValue[]> {
     return this.attributeValuesRepository.findByIds(ids);
   }
 

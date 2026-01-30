@@ -1,9 +1,10 @@
 import { IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
 import { ShippingStatus } from '../enums/shipping-status.enum';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class UpdateShipmentDto {
   @IsOptional()
-  @IsEnum(ShippingStatus, { message: 'Invalid shipping status' })
+  @IsEnum(ShippingStatus, { message: VALIDATION_MESSAGES.INVALID_ENUM('Status', 'pending, processing, shipped, in_transit, out_for_delivery, delivered, failed, returned') })
   status?: ShippingStatus;
 
   @IsOptional()
@@ -15,7 +16,7 @@ export class UpdateShipmentDto {
   trackingUrl?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'Invalid date format' })
+  @IsDateString({}, { message: VALIDATION_MESSAGES.INVALID_DATE('Estimated delivery date') })
   estimatedDeliveryDate?: string;
 
   @IsOptional()

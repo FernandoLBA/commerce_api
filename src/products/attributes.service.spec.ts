@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { AttributesService } from './attributes.service';
 import { ProductAttribute } from './entities/product-attribute.entity';
 import { ProductAttributeValue } from './entities/product-attribute-value.entity';
-import { AttributeNotFoundException, AttributeAlreadyExistsException } from '../common';
+import {
+  AttributeNotFoundException,
+  AttributeAlreadyExistsException,
+} from '../common';
 
 describe('AttributesService', () => {
   let service: AttributesService;
@@ -144,15 +147,19 @@ describe('AttributesService', () => {
 
     it('should throw AttributeAlreadyExistsException if new name exists', async () => {
       const updateDto = { name: 'Color' };
-      const existingAttribute = { ...mockAttribute, id: 'other-id', name: 'Color' };
+      const existingAttribute = {
+        ...mockAttribute,
+        id: 'other-id',
+        name: 'Color',
+      };
 
       attributesRepository.findOne
         .mockResolvedValueOnce(mockAttribute) // findAttributeById
         .mockResolvedValueOnce(existingAttribute); // check name uniqueness
 
-      await expect(service.updateAttribute(mockAttribute.id, updateDto)).rejects.toThrow(
-        AttributeAlreadyExistsException,
-      );
+      await expect(
+        service.updateAttribute(mockAttribute.id, updateDto),
+      ).rejects.toThrow(AttributeAlreadyExistsException);
     });
   });
 
@@ -188,7 +195,9 @@ describe('AttributesService', () => {
     it('should return a value by id', async () => {
       valuesRepository.findOne.mockResolvedValue(mockAttributeValue);
 
-      const result = await service.findAttributeValueById(mockAttributeValue.id);
+      const result = await service.findAttributeValueById(
+        mockAttributeValue.id,
+      );
 
       expect(result).toEqual(mockAttributeValue);
     });
@@ -196,9 +205,9 @@ describe('AttributesService', () => {
     it('should throw AttributeNotFoundException if not found', async () => {
       valuesRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findAttributeValueById('nonexistent')).rejects.toThrow(
-        AttributeNotFoundException,
-      );
+      await expect(
+        service.findAttributeValueById('nonexistent'),
+      ).rejects.toThrow(AttributeNotFoundException);
     });
   });
 
@@ -207,7 +216,9 @@ describe('AttributesService', () => {
       const values = [mockAttributeValue];
       valuesRepository.findByIds.mockResolvedValue(values);
 
-      const result = await service.findAttributeValuesByIds([mockAttributeValue.id]);
+      const result = await service.findAttributeValuesByIds([
+        mockAttributeValue.id,
+      ]);
 
       expect(result).toEqual(values);
     });

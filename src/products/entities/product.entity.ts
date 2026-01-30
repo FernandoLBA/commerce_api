@@ -1,21 +1,30 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
   JoinColumn,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 } from 'uuid';
 import { Category } from '../../categories/entities/category.entity';
 import { ProductVariant } from './product-variant.entity';
 import { ProductImage } from './product-image.entity';
 
 @Entity('products')
 export class Product {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = v4() as string;
+    }
+  }
 
   @Column({ length: 200 })
   name: string;
@@ -32,10 +41,16 @@ export class Product {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ name: 'compare_at_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({
+    name: 'compare_at_price',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
   compareAtPrice: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: 'int', default: 1 })
   stock: number;
 
   @Column({ name: 'is_active', default: true })
@@ -59,9 +74,11 @@ export class Product {
   @OneToMany(() => ProductImage, (image) => image.product)
   images: ProductImage[];
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({
+    name: 'updated_at',
+  })
   updatedAt: Date;
 }

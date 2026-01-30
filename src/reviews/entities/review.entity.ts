@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -8,7 +8,9 @@ import {
   JoinColumn,
   Index,
   Unique,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { User } from '../../auth/entities/user.entity';
 import { Product } from '../../products/entities/product.entity';
 
@@ -16,8 +18,15 @@ import { Product } from '../../products/entities/product.entity';
 @Unique(['userId', 'productId'])
 @Index(['productId', 'createdAt'])
 export class Review {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ name: 'user_id' })
   userId: string;

@@ -1,21 +1,30 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   ManyToOne,
   CreateDateColumn,
   UpdateDateColumn,
   JoinColumn,
   Index,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { Order } from './order.entity';
 import { PaymentStatus } from '../enums/payment-status.enum';
 import { PaymentMethod } from '../enums/payment-method.enum';
 
 @Entity('payments')
 export class Payment {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ name: 'order_id' })
   orderId: string;

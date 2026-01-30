@@ -1,20 +1,29 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  BeforeInsert,
 } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import { Order } from '../../orders/entities/order.entity';
 import { ShippingCarrier } from '../enums/shipping-carrier.enum';
 import { ShippingStatus } from '../enums/shipping-status.enum';
 
 @Entity('shipments')
 export class Shipment {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv4();
+    }
+  }
 
   @Column({ name: 'order_id' })
   orderId: string;
