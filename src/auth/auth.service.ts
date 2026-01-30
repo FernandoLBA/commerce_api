@@ -6,6 +6,11 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
+import {
+  UserAlreadyExistsException,
+  UserNotFoundException,
+  InvalidCredentialsException,
+} from '../common';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +29,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new Error('El usuario ya existe');
+      throw new UserAlreadyExistsException();
     }
 
     // Encriptar la contraseña
@@ -57,14 +62,14 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('Usuario no encontrado');
+      throw new UserNotFoundException();
     }
 
     // Verificar la contraseña
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new Error('Contraseña incorrecta');
+      throw new InvalidCredentialsException();
     }
 
     // Generar token JWT

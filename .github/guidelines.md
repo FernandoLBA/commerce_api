@@ -97,46 +97,6 @@ async createUser(@Body() data: CreateUserDto) {
 
 ## 2. No Usar `any` en TypeScript
 
-- **Extraer lógica común:** Si encuentras código duplicado en más de un lugar, crea una función o servicio reutilizable.
-- **Crear utilidades compartidas:** Coloca funciones comunes en archivos de utilidades (`src/common/utils/`).
-- **Usar decoradores y middlewares:** Aprovecha los decoradores de NestJS para evitar repetición de lógica.
-
-**❌ Incorrecto:**
-```typescript
-@Post('users')
-async createUser(@Body() data: CreateUserDto) {
-  if (!data.email) throw new Error('Email requerido');
-  if (!data.password) throw new Error('Password requerido');
-  return await this.userService.create(data);
-}
-
-@Post('products')
-async createProduct(@Body() data: CreateProductDto) {
-  if (!data.email) throw new Error('Email requerido');
-  if (!data.password) throw new Error('Password requerido');
-  return await this.productService.create(data);
-}
-```
-
-**✅ Correcto:**
-```typescript
-// common/validators/email-password.validator.ts
-export function validateEmailPassword(data: any) {
-  if (!data.email) throw new Error('Email requerido');
-  if (!data.password) throw new Error('Password requerido');
-}
-
-@Post('users')
-async createUser(@Body() data: CreateUserDto) {
-  validateEmailPassword(data);
-  return await this.userService.create(data);
-}
-```
-
----
-
-## 2. No Usar `any` en TypeScript
-
 - **Siempre utilizar tipos específicos:** Usa interfaces, tipos o tipos genéricos en lugar de `any`.
 - **Crear DTOs para datos externos:** Define la estructura esperada en DTOs o interfaces.
 - **Usar `unknown` si es necesario:** Si realmente no sabes el tipo, usa `unknown` y realiza type guards.
@@ -246,25 +206,36 @@ setTimeout(() => {
 ```
 src/
 ├── auth/
-│   ├── controllers/
-│   ├── services/
-│   ├── entities/
 │   ├── dto/
+│   ├── entities/
 │   ├── guards/
+│   ├── interfaces/
 │   ├── strategies/
-│   └── auth.module.ts
+│   ├── auth.controller.ts
+│   ├── auth.module.ts
+│   └── auth.service.ts
 ├── common/
 │   ├── constants/
-│   ├── decorators/
+│   │   ├── error-codes.constants.ts
+│   │   └── jwt.constants.ts
 │   ├── exceptions/
+│   │   └── api.exception.ts
 │   ├── filters/
+│   │   └── http-exception.filter.ts
 │   ├── interceptors/
-│   ├── pipes/
-│   └── utils/
-├── config/
-├── database/
-│   └── migrations/
-└── app.module.ts
+│   │   └── response.interceptor.ts
+│   ├── interfaces/
+│   │   └── api-response.interface.ts
+│   └── index.ts
+├── generated/
+│   └── prisma/
+├── app.controller.ts
+├── app.module.ts
+├── app.service.ts
+└── main.ts
+prisma/
+├── schema.prisma
+└── migrations/
 ```
 
 ### 4.2 Nombres Descriptivos
@@ -289,18 +260,79 @@ function validateEmail() {}
 
 ### 4.3 Error Handling
 
-- **Crear excepciones personalizadas:** Usa `HttpException` o crea custom exceptions.
+- **Usar excepciones personalizadas:** Usar las clases de `src/common/exceptions/api.exception.ts`.
+- **Usar códigos de error:** Definir códigos en `src/common/constants/error-codes.constants.ts`.
 - **Loguear errores:** Siempre registra los errores para debugging.
 - **Mensajes descriptivos:** El mensaje de error debe indicar qué salió mal.
+
+**Códigos de Error Disponibles:**
+
+| Código | Constante | Descripción |
+|--------|-----------|-------------|
+| AUTH_001 | `AUTH_USER_ALREADY_EXISTS` | User already exists |
+| AUTH_002 | `AUTH_USER_NOT_FOUND` | User not found |
+| AUTH_003 | `AUTH_INVALID_CREDENTIALS` | Invalid credentials |
+| AUTH_004 | `AUTH_INVALID_TOKEN` | Invalid token |
+| AUTH_005 | `AUTH_TOKEN_EXPIRED` | Token has expired |
+| AUTH_006 | `AUTH_UNAUTHORIZED` | Unauthorized access |
+| VAL_001 | `VALIDATION_ERROR` | Validation failed |
+| GEN_001 | `INTERNAL_SERVER_ERROR` | Internal server error |
+| GEN_002 | `NOT_FOUND` | Resource not found |
+| GEN_003 | `BAD_REQUEST` | Bad request |
+| GEN_004 | `FORBIDDEN` | Access forbidden |
 
 **❌ Incorrecto:**
 ```typescript
 throw new Error('Error');
+throw new Error('El usuario ya existe');
 ```
 
 **✅ Correcto:**
 ```typescript
-throw new BadRequestException('El email ya está registrado en el sistema');
+import { 
+  UserAlreadyExistsException,
+  UserNotFoundException,
+  InvalidCredentialsException,
+  NotFoundException,
+  BadRequestException,
+} from '../common';
+
+// Usar excepciones específicas
+throw new UserAlreadyExistsException();
+throw new UserNotFoundException();
+throw new InvalidCredentialsException();
+
+// O crear excepción genérica con código personalizado
+throw new ApiException(
+  ErrorCodes.BAD_REQUEST,
+  HttpStatus.BAD_REQUEST,
+  'Custom error message',
+  { detail: 'Additional info' }
+);
+```
+
+**Formato de Respuesta de Error:**
+```json
+{
+  "statusCode": 401,
+  "error": {
+    "code": "AUTH_003",
+    "message": "Invalid credentials",
+    "details": {}  // opcional
+  },
+  "timestamp": "2026-01-29T...",
+  "path": "/api/auth/login"
+}
+```
+
+**Formato de Respuesta Exitosa:**
+```json
+{
+  "statusCode": 200,
+  "data": { ... },
+  "timestamp": "2026-01-29T...",
+  "path": "/api/auth/login"
+}
 ```
 
 ### 4.4 Documentación
@@ -381,18 +413,48 @@ export class UserService {
 
 - **Usar class-validator:** Para validar DTOs.
 - **Validación en entrada:** Valida datos externos antes de procesarlos.
+- **Mensajes personalizados:** Incluir mensajes descriptivos en inglés.
 
 **✅ Correcto:**
 ```typescript
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { 
+  IsEmail, 
+  IsString, 
+  MinLength, 
+  MaxLength, 
+  IsOptional 
+} from 'class-validator';
 
 export class CreateUserDto {
-  @IsEmail()
+  @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
   @IsString()
-  @MinLength(8)
+  @MinLength(8, { message: 'Password must be at least 8 characters long' })
+  @MaxLength(50, { message: 'Password must not exceed 50 characters' })
   password: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100, { message: 'First name must not exceed 100 characters' })
+  firstName?: string;
+}
+```
+
+**Respuesta de Error de Validación:**
+```json
+{
+  "statusCode": 400,
+  "error": {
+    "code": "VAL_001",
+    "message": "Validation failed",
+    "details": [
+      "Please provide a valid email address",
+      "Password must be at least 8 characters long"
+    ]
+  },
+  "timestamp": "2026-01-29T...",
+  "path": "/api/auth/register"
 }
 ```
 
@@ -416,7 +478,9 @@ export class CreateUserDto {
 - [ ] Todos los tests pasan
 - [ ] Cobertura de tests > 80%
 - [ ] Nombres descriptivos en variables/funciones
-- [ ] Error handling apropiado
+- [ ] Error handling con excepciones de `src/common/exceptions/`
+- [ ] Códigos de error definidos en `error-codes.constants.ts`
+- [ ] Validaciones con class-validator y mensajes en inglés
 - [ ] Documentación actualizada
 - [ ] Variables de entorno en .env
 - [ ] Código formateado (eslint + prettier)
