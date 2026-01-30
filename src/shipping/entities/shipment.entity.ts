@@ -16,11 +16,11 @@ export class Shipment {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'order_id' })
   orderId: string;
 
   @ManyToOne(() => Order)
-  @JoinColumn({ name: 'orderId' })
+  @JoinColumn({ name: 'order_id' })
   order: Order;
 
   @Column({ type: 'enum', enum: ShippingCarrier })
@@ -29,11 +29,35 @@ export class Shipment {
   @Column({ type: 'enum', enum: ShippingStatus, default: ShippingStatus.PENDING })
   status: ShippingStatus;
 
-  @Column({ nullable: true })
+  @Column({ name: 'tracking_number', nullable: true })
   trackingNumber: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'tracking_url', nullable: true })
   trackingUrl: string;
+
+  @Column({ name: 'recipient_name', nullable: true })
+  recipientName: string;
+
+  @Column({ name: 'recipient_phone', nullable: true })
+  recipientPhone: string;
+
+  @Column({ name: 'address_line_1', nullable: true })
+  addressLine1: string;
+
+  @Column({ name: 'address_line_2', nullable: true })
+  addressLine2: string;
+
+  @Column({ nullable: true })
+  city: string;
+
+  @Column({ nullable: true })
+  state: string;
+
+  @Column({ name: 'postal_code', nullable: true })
+  postalCode: string;
+
+  @Column({ nullable: true })
+  country: string;
 
   @Column('decimal', { precision: 10, scale: 2 })
   cost: number;
@@ -41,37 +65,21 @@ export class Shipment {
   @Column({ default: 'PEN' })
   currency: string;
 
-  @Column('decimal', { precision: 6, scale: 2, nullable: true })
+  @Column('decimal', { name: 'weight_kg', precision: 6, scale: 2, nullable: true })
   weightKg: number;
 
-  @Column('jsonb', { nullable: true })
-  dimensions: {
-    lengthCm: number;
-    widthCm: number;
-    heightCm: number;
-  };
-
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'estimated_delivery_date', type: 'date', nullable: true })
   estimatedDeliveryDate: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
-  pickedUpAt: Date;
+  @Column({ name: 'shipped_at', type: 'timestamp', nullable: true })
+  shippedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'delivered_at', type: 'timestamp', nullable: true })
   deliveredAt: Date;
 
-  @Column({ nullable: true })
-  deliveryNotes: string;
-
-  @Column({ nullable: true })
-  recipientName: string;
-
-  @Column({ nullable: true })
-  signatureUrl: string;
-
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

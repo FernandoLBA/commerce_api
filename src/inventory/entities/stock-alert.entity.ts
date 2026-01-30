@@ -15,38 +15,38 @@ export class StockAlert {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'product_id', nullable: true })
   productId?: string;
 
   @OneToOne(() => Product, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'productId' })
+  @JoinColumn({ name: 'product_id' })
   product?: Product;
 
-  @Column({ nullable: true })
+  @Column({ name: 'variant_id', nullable: true })
   variantId?: string;
 
   @OneToOne(() => ProductVariant, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'variantId' })
+  @JoinColumn({ name: 'variant_id' })
   variant?: ProductVariant;
 
-  @Column({ type: 'int', default: 10 })
-  lowStockThreshold: number; // Umbral para alerta de bajo stock
+  @Column({ name: 'low_stock_threshold', type: 'int', default: 10 })
+  lowStockThreshold: number;
 
-  @Column({ type: 'int', default: 0 })
-  criticalStockThreshold: number; // Umbral crítico (ej: 0)
+  @Column({ name: 'critical_stock_threshold', type: 'int', default: 0 })
+  criticalStockThreshold: number;
 
-  @Column({ default: true })
+  @Column({ name: 'alert_enabled', default: true })
   alertEnabled: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'last_alert_sent_at', nullable: true })
   lastAlertSentAt?: Date;
 
-  @Column({ type: 'int', default: 0 })
-  alertCount: number; // Cuántas alertas se han enviado
+  @Column({ name: 'alert_count', type: 'int', default: 0 })
+  alertCount: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

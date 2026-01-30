@@ -17,30 +17,30 @@ export class CouponUsage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'coupon_id' })
   couponId: string;
 
   @ManyToOne(() => Coupon, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'couponId' })
+  @JoinColumn({ name: 'coupon_id' })
   coupon: Coupon;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ nullable: true })
+  @Column({ name: 'order_id', nullable: true })
   orderId?: string;
 
   @ManyToOne(() => Order, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'orderId' })
+  @JoinColumn({ name: 'order_id' })
   order?: Order;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ name: 'discount_applied', type: 'decimal', precision: 10, scale: 2 })
   discountApplied: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'used_at' })
   usedAt: Date;
 }

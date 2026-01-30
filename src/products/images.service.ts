@@ -26,23 +26,19 @@ export class ImagesService {
       throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
     }
 
-    // If this is the first image or marked as primary, handle primary flag
-    if (createImageDto.isPrimary) {
-      await this.resetPrimaryImages(productId);
-    }
-
-    // Get the highest position for this product
-    const maxPosition = await this.imagesRepository
+    // Get the highest displayOrder for this product
+    const maxOrder = await this.imagesRepository
       .createQueryBuilder('image')
       .where('image.productId = :productId', { productId })
-      .select('MAX(image.position)', 'maxPosition')
+      .select('MAX(image.displayOrder)', 'maxOrder')
       .getRawOne();
 
-    const position = createImageDto.position ?? (maxPosition?.maxPosition ?? -1) + 1;
+    const displayOrder = createImageDto.displayOrder ?? (maxOrder?.maxOrder ?? -1) + 1;
 
     const image = this.imagesRepository.create({
-      ...createImageDto,
-      position,
+      url: createImageDto.url,
+      alt: createImageDto.alt,
+      displayOrder,
       product,
     });
 
@@ -55,7 +51,7 @@ export class ImagesService {
   async uploadFile(
     productId: string,
     file: Express.Multer.File,
-    options?: { altText?: string; isPrimary?: boolean },
+    options?: { alt?: string },
   ): Promise<ProductImage> {
     const product = await this.productsRepository.findOne({
       where: { id: productId },
@@ -73,32 +69,22 @@ export class ImagesService {
     // Get responsive URLs
     const urls = this.cloudinaryService.getResponsiveUrls(uploadResult.publicId);
 
-    // Handle primary flag
-    if (options?.isPrimary) {
-      await this.resetPrimaryImages(productId);
-    }
-
-    // Get next position
-    const maxPosition = await this.imagesRepository
+    // Get next displayOrder
+    const maxOrder = await this.imagesRepository
       .createQueryBuilder('image')
       .where('image.productId = :productId', { productId })
-      .select('MAX(image.position)', 'maxPosition')
+      .select('MAX(image.displayOrder)', 'maxOrder')
       .getRawOne();
 
-    const position = (maxPosition?.maxPosition ?? -1) + 1;
-
-    // Check if this is the first image (make it primary automatically)
-    const imageCount = await this.imagesRepository.count({
-      where: { product: { id: productId } },
-    });
+    const displayOrder = (maxOrder?.maxOrder ?? -1) + 1;
 
     const image = this.imagesRepository.create({
       url: urls.large,
-      thumbnailUrl: urls.thumbnail,
       publicId: uploadResult.publicId,
-      altText: options?.altText || product.name,
-      position,
-      isPrimary: options?.isPrimary || imageCount === 0,
+      alt: options?.alt || product.name,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      displayOrder,
       product,
     });
 
@@ -111,7 +97,7 @@ export class ImagesService {
   async uploadFromUrl(
     productId: string,
     url: string,
-    options?: { altText?: string; isPrimary?: boolean },
+    options?: { alt?: string },
   ): Promise<ProductImage> {
     const product = await this.productsRepository.findOne({
       where: { id: productId },
@@ -129,32 +115,22 @@ export class ImagesService {
     // Get responsive URLs
     const urls = this.cloudinaryService.getResponsiveUrls(uploadResult.publicId);
 
-    // Handle primary flag
-    if (options?.isPrimary) {
-      await this.resetPrimaryImages(productId);
-    }
-
-    // Get next position
-    const maxPosition = await this.imagesRepository
+    // Get next displayOrder
+    const maxOrder = await this.imagesRepository
       .createQueryBuilder('image')
       .where('image.productId = :productId', { productId })
-      .select('MAX(image.position)', 'maxPosition')
+      .select('MAX(image.displayOrder)', 'maxOrder')
       .getRawOne();
 
-    const position = (maxPosition?.maxPosition ?? -1) + 1;
-
-    // Check if this is the first image
-    const imageCount = await this.imagesRepository.count({
-      where: { product: { id: productId } },
-    });
+    const displayOrder = (maxOrder?.maxOrder ?? -1) + 1;
 
     const image = this.imagesRepository.create({
       url: urls.large,
-      thumbnailUrl: urls.thumbnail,
       publicId: uploadResult.publicId,
-      altText: options?.altText || product.name,
-      position,
-      isPrimary: options?.isPrimary || imageCount === 0,
+      alt: options?.alt || product.name,
+      width: uploadResult.width,
+      height: uploadResult.height,
+      displayOrder,
       product,
     });
 
@@ -164,7 +140,7 @@ export class ImagesService {
   async findAllByProduct(productId: string): Promise<ProductImage[]> {
     return this.imagesRepository.find({
       where: { product: { id: productId } },
-      order: { position: 'ASC' },
+      order: { displayOrder: 'ASC' },
     });
   }
 
@@ -184,12 +160,16 @@ export class ImagesService {
   async update(id: string, updateImageDto: UpdateProductImageDto): Promise<ProductImage> {
     const image = await this.findOne(id);
 
-    // If setting as primary, reset other primary images
-    if (updateImageDto.isPrimary && !image.isPrimary) {
-      await this.resetPrimaryImages(image.product.id);
+    if (updateImageDto.url !== undefined) {
+      image.url = updateImageDto.url;
+    }
+    if (updateImageDto.alt !== undefined) {
+      image.alt = updateImageDto.alt;
+    }
+    if (updateImageDto.displayOrder !== undefined) {
+      image.displayOrder = updateImageDto.displayOrder;
     }
 
-    Object.assign(image, updateImageDto);
     return this.imagesRepository.save(image);
   }
 
@@ -224,21 +204,13 @@ export class ImagesService {
     await this.imagesRepository.remove(images);
   }
 
-  async setPrimary(id: string): Promise<ProductImage> {
-    const image = await this.findOne(id);
-    await this.resetPrimaryImages(image.product.id);
-
-    image.isPrimary = true;
-    return this.imagesRepository.save(image);
-  }
-
   async reorder(productId: string, imageIds: string[]): Promise<ProductImage[]> {
     const images = await this.findAllByProduct(productId);
 
     const updatePromises = imageIds.map((imageId, index) => {
       const image = images.find((img) => img.id === imageId);
       if (image) {
-        image.position = index;
+        image.displayOrder = index;
         return this.imagesRepository.save(image);
       }
       return Promise.resolve(null);
@@ -246,12 +218,5 @@ export class ImagesService {
 
     await Promise.all(updatePromises);
     return this.findAllByProduct(productId);
-  }
-
-  private async resetPrimaryImages(productId: string): Promise<void> {
-    await this.imagesRepository.update(
-      { product: { id: productId }, isPrimary: true },
-      { isPrimary: false },
-    );
   }
 }

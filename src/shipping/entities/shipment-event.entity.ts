@@ -14,11 +14,11 @@ export class ShipmentEvent {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'shipment_id' })
   shipmentId: string;
 
   @ManyToOne(() => Shipment, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'shipmentId' })
+  @JoinColumn({ name: 'shipment_id' })
   shipment: Shipment;
 
   @Column({ type: 'enum', enum: ShippingStatus })
@@ -30,9 +30,9 @@ export class ShipmentEvent {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'occurred_at', type: 'timestamp' })
   occurredAt: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

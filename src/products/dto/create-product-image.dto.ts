@@ -3,7 +3,6 @@ import {
   IsString,
   IsNumber,
   IsOptional,
-  IsBoolean,
   IsUrl,
   MaxLength,
   Min,
@@ -15,25 +14,22 @@ export class CreateProductImageDto {
   url: string;
 
   @IsOptional()
-  @IsUrl({}, { message: 'Thumbnail URL must be a valid URL' })
-  thumbnailUrl?: string;
-
-  @IsOptional()
-  @IsString({ message: 'Public ID must be a string' })
-  @MaxLength(255, { message: 'Public ID must be at most 255 characters' })
-  publicId?: string;
-
-  @IsOptional()
   @IsString({ message: 'Alt text must be a string' })
   @MaxLength(255, { message: 'Alt text must be at most 255 characters' })
-  altText?: string;
+  alt?: string;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Position must be a number' })
-  @Min(0, { message: 'Position must be at least 0' })
-  position?: number;
+  @IsNumber({}, { message: 'Width must be a number' })
+  @Min(0, { message: 'Width must be at least 0' })
+  width?: number;
 
   @IsOptional()
-  @IsBoolean({ message: 'isPrimary must be a boolean' })
-  isPrimary?: boolean;
+  @IsNumber({}, { message: 'Height must be a number' })
+  @Min(0, { message: 'Height must be at least 0' })
+  height?: number;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'Display order must be a number' })
+  @Min(0, { message: 'Display order must be at least 0' })
+  displayOrder?: number;
 }

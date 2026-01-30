@@ -18,47 +18,47 @@ export class InventoryMovement {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'product_id', nullable: true })
   productId?: string;
 
   @ManyToOne(() => Product, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'productId' })
+  @JoinColumn({ name: 'product_id' })
   product?: Product;
 
-  @Column({ nullable: true })
+  @Column({ name: 'variant_id', nullable: true })
   variantId?: string;
 
   @ManyToOne(() => ProductVariant, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'variantId' })
+  @JoinColumn({ name: 'variant_id' })
   variant?: ProductVariant;
 
   @Column({ type: 'enum', enum: MovementType })
   type: MovementType;
 
   @Column({ type: 'int' })
-  quantity: number; // Positivo para entradas, negativo para salidas
+  quantity: number;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'previous_stock', type: 'int' })
   previousStock: number;
 
-  @Column({ type: 'int' })
+  @Column({ name: 'new_stock', type: 'int' })
   newStock: number;
 
-  @Column({ nullable: true })
-  orderId?: string; // Referencia a la orden si aplica
+  @Column({ name: 'order_id', nullable: true })
+  orderId?: string;
 
-  @Column({ nullable: true })
-  referenceNumber?: string; // Número de factura, guía, etc.
+  @Column({ name: 'reference_number', nullable: true })
+  referenceNumber?: string;
 
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
-  @Column({ nullable: true })
-  performedBy?: string; // User ID que realizó el movimiento
+  @Column({ name: 'performed_by', nullable: true })
+  performedBy?: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  unitCost?: number; // Costo unitario (para compras)
+  @Column({ name: 'unit_cost', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  unitCost?: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

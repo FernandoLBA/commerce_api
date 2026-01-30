@@ -14,17 +14,14 @@ export class ProductAttribute {
   id: string;
 
   @Column({ length: 100, unique: true })
-  name: string; // e.g., "Talla", "Color"
-
-  @Column({ length: 50 })
-  type: string; // e.g., "select", "color"
+  name: string;
 
   @OneToMany(() => ProductAttributeValue, (value) => value.attribute)
   values: ProductAttributeValue[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

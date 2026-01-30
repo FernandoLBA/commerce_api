@@ -5,6 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Product } from '../../products/entities/product.entity';
 
@@ -13,21 +15,42 @@ export class Category {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 100, unique: true })
+  @Column({ length: 100 })
   name: string;
+
+  @Column({ length: 100, unique: true })
+  slug: string;
 
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ default: true })
+  @Column({ nullable: true })
+  image: string;
+
+  @Column({ name: 'parent_id', nullable: true })
+  parentId: string;
+
+  @ManyToOne(() => Category, (category) => category.children, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'parent_id' })
+  parent: Category;
+
+  @OneToMany(() => Category, (category) => category.parent)
+  children: Category[];
+
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  @Column({ name: 'display_order', type: 'int', default: 0 })
+  displayOrder: number;
 
   @OneToMany(() => Product, (product) => product.category)
   products: Product[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

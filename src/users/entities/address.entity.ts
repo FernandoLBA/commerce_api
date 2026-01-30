@@ -14,8 +14,11 @@ export class Address {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 100 })
-  label: string; // e.g., "Casa", "Oficina"
+  @Column({ name: 'recipient_name', length: 100 })
+  recipientName: string;
+
+  @Column({ length: 20 })
+  phone: string;
 
   @Column({ length: 200 })
   street: string;
@@ -24,44 +27,38 @@ export class Address {
   number: string;
 
   @Column({ length: 100, nullable: true })
-  apartment: string; // Dpto, piso, etc.
+  apartment: string;
 
   @Column({ length: 100 })
-  district: string; // Distrito
+  district: string;
 
   @Column({ length: 100 })
-  city: string; // Ciudad/Provincia
+  city: string;
 
   @Column({ length: 100 })
-  department: string; // Departamento (Lima, Arequipa, etc.)
+  department: string;
 
-  @Column({ length: 10, nullable: true })
+  @Column({ name: 'postal_code', length: 10, nullable: true })
   postalCode: string;
 
-  @Column({ length: 100 })
-  recipientName: string;
-
-  @Column({ length: 20 })
-  recipientPhone: string;
-
   @Column({ type: 'text', nullable: true })
-  reference: string; // Referencia para ubicar
+  reference: string;
 
-  @Column({ default: false })
+  @Column({ name: 'is_default', default: false })
   isDefault: boolean;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId: string;
 
   @ManyToOne(() => User, (user) => user.addresses, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

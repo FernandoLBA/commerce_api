@@ -37,20 +37,12 @@ export class CartItem {
   @JoinColumn({ name: 'variant_id' })
   variant: ProductVariant | null;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', default: 1 })
   quantity: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  unitPrice: number;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
-  // Computed property
-  get subtotal(): number {
-    return this.quantity * Number(this.unitPrice);
-  }
 }

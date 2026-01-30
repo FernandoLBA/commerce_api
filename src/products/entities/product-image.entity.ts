@@ -17,33 +17,33 @@ export class ProductImage {
   @Column({ length: 500 })
   url: string;
 
-  @Column({ length: 500, nullable: true })
-  thumbnailUrl: string;
+  @Column({ name: 'public_id', length: 200, nullable: true })
+  publicId: string;
 
   @Column({ length: 200, nullable: true })
-  publicId: string; // Cloudinary public_id for deletion
+  alt: string;
 
-  @Column({ length: 200, nullable: true })
-  altText: string;
+  @Column({ type: 'int', nullable: true })
+  width: number;
 
-  @Column({ type: 'int', default: 0 })
-  position: number; // For ordering images
+  @Column({ type: 'int', nullable: true })
+  height: number;
 
-  @Column({ default: false })
-  isPrimary: boolean;
+  @Column({ name: 'display_order', type: 'int', default: 0 })
+  displayOrder: number;
 
-  @Column()
+  @Column({ name: 'product_id' })
   productId: string;
 
   @ManyToOne(() => Product, (product) => product.images, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'productId' })
+  @JoinColumn({ name: 'product_id' })
   product: Product;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

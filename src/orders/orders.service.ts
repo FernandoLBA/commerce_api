@@ -77,7 +77,7 @@ export class OrdersService {
         status: OrderStatus.PENDING,
         shippingAddress: {
           recipientName: address.recipientName,
-          recipientPhone: address.recipientPhone,
+          recipientPhone: address.phone,
           street: address.street,
           number: address.number,
           apartment: address.apartment,
@@ -99,21 +99,21 @@ export class OrdersService {
 
       // Create order items from cart
       for (const cartItem of cart.items) {
+        // Get price from variant if exists, otherwise from product
+        const unitPrice = cartItem.variant ? Number(cartItem.variant.price) : Number(cartItem.product.price);
+        
         const orderItem = this.orderItemRepository.create({
           orderId: savedOrder.id,
           productId: cartItem.productId,
           productName: cartItem.product.name,
-          productSlug: cartItem.product.slug,
-          productImage: cartItem.product.images?.[0]?.url,
           variantId: cartItem.variantId,
-          variantSku: cartItem.variant?.sku,
           variantAttributes: cartItem.variant?.attributeValues?.map((av) => ({
             name: av.attribute?.name || '',
             value: av.value,
           })),
-          unitPrice: cartItem.unitPrice,
+          unitPrice,
           quantity: cartItem.quantity,
-          subtotal: cartItem.quantity * Number(cartItem.unitPrice),
+          subtotal: cartItem.quantity * unitPrice,
         });
 
         await queryRunner.manager.save(orderItem);

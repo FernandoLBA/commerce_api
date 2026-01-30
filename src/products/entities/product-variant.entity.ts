@@ -23,35 +23,35 @@ export class ProductVariant {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  compareAtPrice: number; // Precio tachado (antes)
+  @Column({ name: 'compare_at_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  compareAtPrice: number;
 
   @Column({ type: 'int', default: 0 })
   stock: number;
 
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column()
+  @Column({ name: 'product_id' })
   productId: string;
 
   @ManyToOne(() => Product, (product) => product.variants, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'productId' })
+  @JoinColumn({ name: 'product_id' })
   product: Product;
 
   @ManyToMany(() => ProductAttributeValue, (value) => value.variants)
   @JoinTable({
     name: 'variant_attribute_values',
-    joinColumn: { name: 'variantId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'attributeValueId', referencedColumnName: 'id' },
+    joinColumn: { name: 'variant_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'attribute_value_id', referencedColumnName: 'id' },
   })
   attributeValues: ProductAttributeValue[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

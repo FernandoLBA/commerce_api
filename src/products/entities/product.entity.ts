@@ -26,31 +26,31 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'short_description', type: 'text', nullable: true })
   shortDescription: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  compareAtPrice: number; // Precio tachado (antes)
+  @Column({ name: 'compare_at_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  compareAtPrice: number;
 
   @Column({ type: 'int', default: 0 })
   stock: number;
 
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ default: false })
+  @Column({ name: 'has_variants', default: false })
   hasVariants: boolean;
 
-  @Column({ nullable: true })
+  @Column({ name: 'category_id', nullable: true })
   categoryId: string;
 
   @ManyToOne(() => Category, (category) => category.products, {
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'categoryId' })
+  @JoinColumn({ name: 'category_id' })
   category: Category;
 
   @OneToMany(() => ProductVariant, (variant) => variant.product)
@@ -59,9 +59,9 @@ export class Product {
   @OneToMany(() => ProductImage, (image) => image.product)
   images: ProductImage[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

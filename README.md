@@ -17,7 +17,28 @@ API RESTful completa para e-commerce construida con NestJS, TypeORM y Prisma.
 - **Wishlist** - Lista de deseos para usuarios
 - **Notificaciones** - Emails transaccionales
 
-## 📋 Requisitos
+## � Seguridad
+
+Esta API implementa múltiples capas de seguridad:
+
+| Característica | Descripción |
+|----------------|-------------|
+| **Helmet** | Protección de headers HTTP contra ataques XSS, clickjacking, etc. |
+| **Rate Limiting** | Prevención de ataques de fuerza bruta y DDoS |
+| **CORS** | Control de orígenes permitidos |
+| **Validation Pipe** | Sanitización y validación de todas las entradas |
+| **JWT** | Tokens seguros con expiración configurable |
+| **Password Hashing** | Bcrypt con salt rounds configurables |
+
+### Rate Limiting por Endpoint
+
+| Endpoint | Límite | Período |
+|----------|--------|---------|
+| Global | 100 requests | 1 minuto |
+| `/auth/login` | 5 requests | 1 minuto |
+| `/auth/register` | 5 requests | 1 minuto |
+
+## �📋 Requisitos
 
 - Node.js v18+
 - pnpm
@@ -53,31 +74,26 @@ pnpm start:dev
 
 ## ⚙️ Variables de Entorno
 
+Ver archivo `.env.example` para la lista completa. Variables principales:
+
 ```env
 # Base de datos
 DATABASE_URL="postgresql://postgres:password@localhost:5432/commerce_db?schema=public"
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=password
-DB_NAME=commerce_db
 
-# JWT
-JWT_SECRET=your_jwt_secret_key
+# JWT (CAMBIAR en producción)
+JWT_SECRET=your_jwt_secret_key_min_32_chars
 JWT_EXPIRES_IN=1d
 
-# Aplicación
+# Entorno
+NODE_ENV=development
 PORT=3000
 
-# Pagos (opcional)
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-MERCADOPAGO_ACCESS_TOKEN=TEST-...
+# Seguridad - CORS
+CORS_ORIGINS=http://localhost:3000,http://localhost:4200
 
-# Cloudinary (opcional)
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
+# Seguridad - Rate Limiting
+THROTTLE_LIMIT=100
+THROTTLE_AUTH_LIMIT=5
 ```
 
 ## 🏃 Ejecutar
@@ -116,6 +132,10 @@ pnpm test:cov
 | Wishlist | `GET /api/wishlist` | Ver wishlist |
 | Inventory | `GET /api/inventory/low-stock` | Productos con bajo stock |
 | Shipping | `GET /api/shipping/calculate` | Calcular envío |
+| **Security** | `GET /api/security/report` | Reporte de seguridad (admin) |
+| **Security** | `POST /api/security/test/sql-injection` | Test de SQL Injection |
+| **Security** | `POST /api/security/test/xss` | Test de XSS |
+| **Security** | `GET /api/security/test/rate-limit` | Test de Rate Limiting |
 
 ## 👤 Usuarios de Prueba
 
@@ -151,6 +171,7 @@ src/
 ├── payments/       # Stripe y MercadoPago
 ├── products/       # Productos, variantes, imágenes
 ├── reviews/        # Reseñas y calificaciones
+├── security/       # 🔒 Pruebas de seguridad
 ├── shipping/       # Envíos y tracking
 ├── users/          # Gestión de usuarios
 ├── wishlist/       # Lista de deseos
@@ -166,6 +187,8 @@ Consulta el [Manual de Desarrollo](docs/manual.md) para información detallada s
 - Creación de módulos
 - Manejo de errores
 - Autenticación y autorización
+- **Seguridad (Helmet, CORS, Rate Limiting)**
+- **Módulo de Pruebas de Seguridad**
 - Testing
 
 ## 🛡️ Licencia

@@ -15,56 +15,56 @@ export class Coupon {
 
   @Index({ unique: true })
   @Column({ length: 50 })
-  code: string; // Código del cupón (ej: VERANO2026)
+  code: string;
 
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({ type: 'enum', enum: DiscountType })
+  @Column({ name: 'discount_type', type: 'enum', enum: DiscountType })
   discountType: DiscountType;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  discountValue: number; // Porcentaje (0-100) o monto fijo en PEN
+  @Column({ name: 'discount_value', type: 'decimal', precision: 10, scale: 2 })
+  discountValue: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  minPurchaseAmount?: number; // Monto mínimo de compra
+  @Column({ name: 'min_purchase_amount', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  minPurchaseAmount?: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  maxDiscountAmount?: number; // Descuento máximo (para porcentajes)
+  @Column({ name: 'max_discount_amount', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  maxDiscountAmount?: number;
 
-  @Column({ type: 'int', nullable: true })
-  usageLimit?: number; // Límite total de usos
+  @Column({ name: 'usage_limit', type: 'int', nullable: true })
+  usageLimit?: number;
 
-  @Column({ type: 'int', default: 0 })
-  usageCount: number; // Veces que se ha usado
+  @Column({ name: 'usage_count', type: 'int', default: 0 })
+  usageCount: number;
 
-  @Column({ type: 'int', nullable: true })
-  usageLimitPerUser?: number; // Límite por usuario
+  @Column({ name: 'usage_limit_per_user', type: 'int', nullable: true })
+  usageLimitPerUser?: number;
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'start_date', type: 'timestamp' })
   startDate: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ name: 'end_date', type: 'timestamp' })
   endDate: Date;
 
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ type: 'simple-array', nullable: true })
-  applicableCategories?: string[]; // IDs de categorías donde aplica
+  @Column({ name: 'applicable_categories', type: 'simple-array', nullable: true })
+  applicableCategories?: string[];
 
-  @Column({ type: 'simple-array', nullable: true })
-  applicableProducts?: string[]; // IDs de productos donde aplica
+  @Column({ name: 'applicable_products', type: 'simple-array', nullable: true })
+  applicableProducts?: string[];
 
-  @Column({ type: 'simple-array', nullable: true })
-  excludedProducts?: string[]; // IDs de productos excluidos
+  @Column({ name: 'excluded_products', type: 'simple-array', nullable: true })
+  excludedProducts?: string[];
 
-  @Column({ default: false })
-  isFirstPurchaseOnly: boolean; // Solo para primera compra
+  @Column({ name: 'is_first_purchase_only', default: false })
+  isFirstPurchaseOnly: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -16,6 +18,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CouponsModule } from './coupons/coupons.module';
 import { WishlistModule } from './wishlist/wishlist.module';
+import { SecurityModule } from './security/security.module';
 import { Product } from './products/entities/product.entity';
 import { Category } from './categories/entities/category.entity';
 import { Address } from './users/entities/address.entity';
@@ -36,9 +39,23 @@ import { Review } from './reviews/entities/review.entity';
 import { Coupon } from './coupons/entities/coupon.entity';
 import { CouponUsage } from './coupons/entities/coupon-usage.entity';
 import { WishlistItem } from './wishlist/entities/wishlist-item.entity';
+import { securityConfig } from './common';
 
 @Module({
   imports: [
+    // Rate Limiting - Global configuration
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: securityConfig.throttle.global.ttl,
+        limit: securityConfig.throttle.global.limit,
+      },
+      {
+        name: 'auth',
+        ttl: securityConfig.throttle.auth.ttl,
+        limit: securityConfig.throttle.auth.limit,
+      },
+    ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST || 'localhost',
@@ -84,8 +101,16 @@ import { WishlistItem } from './wishlist/entities/wishlist-item.entity';
     ReviewsModule,
     CouponsModule,
     WishlistModule,
+    SecurityModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Global ThrottlerGuard - applies rate limiting to all routes
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

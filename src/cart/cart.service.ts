@@ -114,7 +114,6 @@ export class CartService {
       }
 
       existingItem.quantity = newQuantity;
-      existingItem.unitPrice = price;
       await this.cartItemRepository.save(existingItem);
     } else {
       // Add new item
@@ -123,7 +122,6 @@ export class CartService {
         productId,
         variantId,
         quantity,
-        unitPrice: price,
       });
       await this.cartItemRepository.save(cartItem);
     }
@@ -226,7 +224,9 @@ export class CartService {
 
   private calculateTotal(items: CartItem[]): number {
     return items.reduce((total, item) => {
-      return total + item.quantity * Number(item.unitPrice);
+      // Get price from variant if exists, otherwise from product
+      const price = item.variant ? Number(item.variant.price) : Number(item.product?.price || 0);
+      return total + item.quantity * price;
     }, 0);
   }
 }

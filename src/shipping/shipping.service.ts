@@ -192,7 +192,7 @@ export class ShippingService {
 
       // Set timestamps
       if (updateData.status === ShippingStatus.PICKED_UP) {
-        shipment.pickedUpAt = new Date();
+        shipment.shippedAt = new Date();
       } else if (updateData.status === ShippingStatus.DELIVERED) {
         shipment.deliveredAt = new Date();
       }

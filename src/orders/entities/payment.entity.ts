@@ -43,35 +43,35 @@ export class Payment {
   @Column({ default: 'PEN' })
   currency: string;
 
-  // External payment provider info
   @Index()
-  @Column({ nullable: true })
-  externalId?: string; // Stripe payment_intent_id or MercadoPago preference_id
+  @Column({ name: 'external_id', nullable: true })
+  externalId?: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'external_status', nullable: true })
   externalStatus?: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  externalData?: Record<string, any>; // Raw response from provider
+  @Column({ name: 'external_data', type: 'jsonb', nullable: true })
+  externalData?: Record<string, any>;
 
-  // Error info if failed
-  @Column({ nullable: true })
+  @Column({ name: 'error_code', nullable: true })
   errorCode?: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'error_message', type: 'text', nullable: true })
   errorMessage?: string;
 
-  // Refund info
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ name: 'refunded_amount', type: 'decimal', precision: 10, scale: 2, nullable: true })
   refundedAmount?: number;
 
-  @Column({ nullable: true })
+  @Column({ name: 'refund_id', nullable: true })
   refundId?: string;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'refund_reason', type: 'text', nullable: true })
+  refundReason?: string;
+
+  @Column({ name: 'refunded_at', type: 'timestamp', nullable: true })
   refundedAt?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'completed_at', type: 'timestamp', nullable: true })
   completedAt?: Date;
 
   @CreateDateColumn({ name: 'created_at' })

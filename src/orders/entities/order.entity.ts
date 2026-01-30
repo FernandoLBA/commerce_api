@@ -20,7 +20,7 @@ export class Order {
   id: string;
 
   @Index()
-  @Column({ unique: true })
+  @Column({ name: 'order_number', unique: true })
   orderNumber: string;
 
   @Column({ name: 'user_id' })
@@ -37,8 +37,7 @@ export class Order {
   })
   status: OrderStatus;
 
-  // Shipping address (embedded, snapshot at order time)
-  @Column({ type: 'jsonb' })
+  @Column({ name: 'shipping_address', type: 'jsonb' })
   shippingAddress: {
     recipientName: string;
     recipientPhone: string;
@@ -52,11 +51,10 @@ export class Order {
     reference?: string;
   };
 
-  // Order totals
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   subtotal: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ name: 'shipping_cost', type: 'decimal', precision: 10, scale: 2, default: 0 })
   shippingCost: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
@@ -65,36 +63,31 @@ export class Order {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
 
-  // Discount code if applied
-  @Column({ nullable: true })
+  @Column({ name: 'discount_code', nullable: true })
   discountCode?: string;
 
-  // Customer notes
   @Column({ type: 'text', nullable: true })
   notes?: string;
 
-  // Admin notes (internal)
-  @Column({ type: 'text', nullable: true })
+  @Column({ name: 'admin_notes', type: 'text', nullable: true })
   adminNotes?: string;
 
-  // Tracking info
-  @Column({ nullable: true })
+  @Column({ name: 'tracking_number', nullable: true })
   trackingNumber?: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'tracking_url', nullable: true })
   trackingUrl?: string;
 
-  // Timestamps
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'confirmed_at', type: 'timestamp', nullable: true })
   confirmedAt?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'shipped_at', type: 'timestamp', nullable: true })
   shippedAt?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'delivered_at', type: 'timestamp', nullable: true })
   deliveredAt?: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ name: 'cancelled_at', type: 'timestamp', nullable: true })
   cancelledAt?: Date;
 
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })

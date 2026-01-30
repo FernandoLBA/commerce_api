@@ -14,19 +14,20 @@ Este manual proporciona instrucciones prácticas para trabajar en el proyecto si
 8. [Base de Datos con Prisma](#8-base-de-datos-con-prisma)
 9. [Autenticación](#9-autenticación)
 10. [Roles y Autorización](#10-roles-y-autorización)
-11. [Módulo de Usuarios](#11-módulo-de-usuarios)
-12. [Módulo de Productos Extendido](#12-módulo-de-productos-extendido)
-13. [Variantes de Productos](#13-variantes-de-productos)
-14. [Imágenes de Productos](#14-imágenes-de-productos)
-15. [Carrito de Compras](#15-carrito-de-compras)
-16. [Órdenes](#16-órdenes)
-17. [Pagos](#17-pagos)
-18. [Cloudinary (Imágenes)](#18-cloudinary-imágenes)
-19. [Envíos](#19-envíos)
-20. [Notificaciones](#20-notificaciones)
-21. [Inventario](#21-inventario)
-22. [Testing](#22-testing)
-23. [Comandos Útiles](#23-comandos-útiles)
+11. [Seguridad](#11-seguridad)
+12. [Módulo de Usuarios](#12-módulo-de-usuarios)
+13. [Módulo de Productos Extendido](#13-módulo-de-productos-extendido)
+14. [Variantes de Productos](#14-variantes-de-productos)
+15. [Imágenes de Productos](#15-imágenes-de-productos)
+16. [Carrito de Compras](#16-carrito-de-compras)
+17. [Órdenes](#17-órdenes)
+18. [Pagos](#18-pagos)
+19. [Cloudinary (Imágenes)](#19-cloudinary-imágenes)
+20. [Envíos](#20-envíos)
+21. [Notificaciones](#21-notificaciones)
+22. [**Módulo de Pruebas de Seguridad**](#22-módulo-de-pruebas-de-seguridad) ⭐ **NUEVO**
+23. [Testing](#23-testing)
+24. [Comandos Útiles](#24-comandos-útiles)
 
 ---
 
@@ -760,7 +761,216 @@ export class ProductsController {
 
 ---
 
-## 11. Módulo de Usuarios
+## 11. Seguridad
+
+Esta API implementa múltiples capas de seguridad siguiendo las mejores prácticas de OWASP.
+
+### 11.1 Helmet - Protección de Headers HTTP
+
+Helmet configura automáticamente headers de seguridad:
+
+```typescript
+// main.ts
+import helmet from 'helmet';
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      scriptSrc: ["'self'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+```
+
+**Headers configurados:**
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
+- `X-XSS-Protection: 0` (deshabilitado por mejores alternativas)
+- `Strict-Transport-Security` (HSTS)
+- `Content-Security-Policy`
+
+### 11.2 Rate Limiting
+
+Previene ataques de fuerza bruta y DDoS usando `@nestjs/throttler`:
+
+```typescript
+// app.module.ts
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+
+@Module({
+  imports: [
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 60000,  // 60 segundos
+        limit: 100,  // 100 requests
+      },
+      {
+        name: 'auth',
+        ttl: 60000,  // 60 segundos
+        limit: 5,    // 5 intentos para auth
+      },
+    ]),
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
+})
+```
+
+#### Configuración por Endpoint
+
+```typescript
+import { Throttle, SkipThrottle } from '@nestjs/throttler';
+
+@Controller('auth')
+export class AuthController {
+  
+  @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })  // 5 intentos/minuto
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
+  
+  @Get('health')
+  @SkipThrottle()  // Sin límite para health check
+  health() {
+    return { status: 'ok' };
+  }
+}
+```
+
+#### Variables de Entorno para Rate Limiting
+
+```env
+# Configuración global
+THROTTLE_TTL=60000        # Ventana de tiempo (ms)
+THROTTLE_LIMIT=100        # Requests por ventana
+
+# Configuración para auth
+THROTTLE_AUTH_TTL=60000
+THROTTLE_AUTH_LIMIT=5
+
+# API key para servicios internos (salta throttling)
+INTERNAL_API_KEY=your_secure_internal_key
+```
+
+### 11.3 CORS (Cross-Origin Resource Sharing)
+
+```typescript
+// main.ts
+app.enableCors({
+  origin: process.env.CORS_ORIGINS?.split(',') || [
+    'http://localhost:3000',
+    'http://localhost:4200',
+    'http://localhost:5173',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+  ],
+  credentials: true,
+  maxAge: 86400, // 24 horas
+});
+```
+
+#### Variables de Entorno
+
+```env
+# Orígenes permitidos (separados por coma)
+CORS_ORIGINS=http://localhost:3000,https://myapp.com,https://admin.myapp.com
+```
+
+### 11.4 Validation Pipe
+
+Sanitiza y valida todas las entradas:
+
+```typescript
+// main.ts
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,              // Elimina propiedades no decoradas
+    forbidNonWhitelisted: true,   // Rechaza requests con props extras
+    transform: true,              // Transforma tipos automáticamente
+    disableErrorMessages: process.env.NODE_ENV === 'production',
+  }),
+);
+```
+
+### 11.5 Configuración Centralizada
+
+Todas las configuraciones de seguridad están en:
+
+```typescript
+// src/common/config/security.config.ts
+export const securityConfig = {
+  helmet: { /* ... */ },
+  cors: { /* ... */ },
+  throttle: {
+    global: { ttl: 60000, limit: 100 },
+    auth: { ttl: 60000, limit: 5 },
+    create: { ttl: 60000, limit: 30 },
+  },
+  jwt: {
+    secret: process.env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  },
+  password: {
+    minLength: 8,
+    saltRounds: 10,
+  },
+};
+```
+
+### 11.6 Checklist de Seguridad para Producción
+
+- [ ] Cambiar `JWT_SECRET` por una clave segura de al menos 32 caracteres
+- [ ] Configurar `NODE_ENV=production`
+- [ ] Configurar CORS con dominios específicos (no usar `*`)
+- [ ] Habilitar HTTPS (SSL/TLS)
+- [ ] Configurar rate limiting adecuado para tu carga
+- [ ] Revisar y ajustar CSP según tus necesidades
+- [ ] Configurar logging de seguridad
+- [ ] Deshabilitar mensajes de error detallados
+- [ ] Usar variables de entorno para secretos (nunca hardcodeados)
+- [ ] Configurar backup de base de datos
+- [ ] Implementar monitoreo de seguridad
+
+### 11.7 Decoradores de Seguridad Personalizados
+
+```typescript
+// src/common/decorators/throttle.decorator.ts
+import { Throttle } from '@nestjs/throttler';
+
+// Para endpoints de autenticación
+export const AuthThrottle = () => 
+  Throttle({ default: { limit: 5, ttl: 60000 } });
+
+// Para endpoints de creación
+export const CreateThrottle = () => 
+  Throttle({ default: { limit: 30, ttl: 60000 } });
+
+// Uso:
+@Post('login')
+@AuthThrottle()
+async login() { /* ... */ }
+```
+
+---
+
+## 12. Módulo de Usuarios
 
 ### Endpoints del Perfil
 
@@ -2139,7 +2349,257 @@ export class StockAlert {
 
 ---
 
-## 22. Testing
+## 22. Módulo de Pruebas de Seguridad
+
+El módulo `SecurityModule` proporciona endpoints para ejecutar pruebas de seguridad controladas y verificar que las medidas de protección funcionan correctamente.
+
+### 22.1 Estructura del Módulo
+
+```
+src/security/
+├── dto/
+│   └── security-test.dto.ts     # DTOs para las pruebas
+├── index.ts                      # Exports
+├── security.controller.ts        # Controlador con endpoints
+├── security.module.ts            # Módulo
+└── security.service.ts           # Lógica de pruebas
+```
+
+### 22.2 Endpoints Disponibles
+
+| Método | Endpoint | Auth | Descripción |
+|--------|----------|------|-------------|
+| GET | `/security/report` | Admin | Reporte completo del estado de seguridad |
+| GET | `/security/payloads` | Admin | Payloads de prueba para diferentes ataques |
+| POST | `/security/test/sql-injection` | Admin | Prueba de detección de SQL Injection |
+| POST | `/security/test/xss` | Admin | Prueba de detección de XSS |
+| POST | `/security/test/path-traversal` | Admin | Prueba de detección de Path Traversal |
+| POST | `/security/test/command-injection` | Admin | Prueba de Command Injection |
+| POST | `/security/test/password-strength` | Admin | Analiza fortaleza de contraseña |
+| POST | `/security/test/all` | Admin | Ejecuta todas las pruebas en un input |
+| GET | `/security/test/rate-limit` | Público | Prueba rate limiting (3 req/min) |
+| GET | `/security/test/no-rate-limit` | Público | Endpoint sin rate limiting |
+| GET | `/security/headers` | Público | Muestra headers de seguridad |
+| GET | `/security/cors-test` | Público | Prueba configuración CORS |
+
+### 22.3 Ejemplos de Uso
+
+#### Obtener Reporte de Seguridad
+
+```bash
+GET /api/security/report
+Authorization: Bearer <admin_token>
+
+# Response
+{
+  "success": true,
+  "data": {
+    "timestamp": "2026-01-30T...",
+    "environment": "development",
+    "security": {
+      "helmet": { "enabled": true, "features": [...] },
+      "cors": { "enabled": true, "origins": [...] },
+      "rateLimiting": { "enabled": true, "globalLimit": 100 },
+      "validation": { "enabled": true, "whitelist": true },
+      "authentication": { "type": "JWT", "expiresIn": "1d" }
+    },
+    "recommendations": [
+      "⚠️ Configurar NODE_ENV=production en producción",
+      "🔴 CRÍTICO: Cambiar JWT_SECRET por clave segura"
+    ]
+  }
+}
+```
+
+#### Probar SQL Injection
+
+```bash
+POST /api/security/test/sql-injection
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "input": "' OR '1'='1"
+}
+
+# Response
+{
+  "success": true,
+  "data": {
+    "testName": "SQL Injection Test",
+    "passed": false,
+    "message": "⚠️ Posible inyección SQL detectada - El input sería sanitizado",
+    "details": {
+      "input": "' OR '1'='1",
+      "maliciousPatternFound": true
+    }
+  }
+}
+```
+
+#### Probar XSS
+
+```bash
+POST /api/security/test/xss
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "input": "<script>alert('XSS')</script>"
+}
+```
+
+#### Ejecutar Todas las Pruebas
+
+```bash
+POST /api/security/test/all
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "input": "'; DROP TABLE users; --"
+}
+
+# Response
+{
+  "success": true,
+  "data": {
+    "input": "'; DROP TABLE users; --",
+    "results": [
+      { "testName": "SQL Injection Test", "passed": false, ... },
+      { "testName": "XSS Test", "passed": true, ... },
+      { "testName": "Path Traversal Test", "passed": true, ... },
+      { "testName": "Command Injection Test", "passed": false, ... }
+    ],
+    "summary": {
+      "total": 4,
+      "passed": 2,
+      "failed": 2
+    }
+  }
+}
+```
+
+#### Probar Rate Limiting
+
+```bash
+# Este endpoint tiene límite de 3 requests por minuto
+GET /api/security/test/rate-limit
+
+# Primeros 3 requests: 200 OK
+# 4to request: 429 Too Many Requests
+{
+  "statusCode": 429,
+  "message": "Too many requests. Please wait before making another request."
+}
+```
+
+#### Analizar Fortaleza de Contraseña
+
+```bash
+POST /api/security/test/password-strength
+Authorization: Bearer <admin_token>
+Content-Type: application/json
+
+{
+  "password": "MiPassword123!"
+}
+
+# Response
+{
+  "success": true,
+  "data": {
+    "testName": "Password Strength Test",
+    "passed": true,
+    "message": "Fortaleza de contraseña: Muy fuerte (100%)",
+    "details": {
+      "score": "6/6",
+      "percentage": 100,
+      "strength": "Muy fuerte",
+      "checks": {
+        "minLength": true,
+        "hasUppercase": true,
+        "hasLowercase": true,
+        "hasNumbers": true,
+        "hasSpecialChars": true,
+        "noCommonPatterns": true
+      }
+    }
+  }
+}
+```
+
+### 22.4 Obtener Payloads de Prueba
+
+```bash
+GET /api/security/payloads
+Authorization: Bearer <admin_token>
+
+# Response
+{
+  "success": true,
+  "data": {
+    "sqlInjection": [
+      "' OR '1'='1",
+      "'; DROP TABLE users; --",
+      ...
+    ],
+    "xss": [
+      "<script>alert('XSS')</script>",
+      "<img src='x' onerror='alert(1)'>",
+      ...
+    ],
+    "pathTraversal": [
+      "../../../etc/passwd",
+      ...
+    ],
+    "commandInjection": [
+      "; ls -la",
+      "| cat /etc/passwd",
+      ...
+    ],
+    "weakPasswords": [
+      "password",
+      "123456",
+      ...
+    ]
+  }
+}
+```
+
+### 22.5 Pruebas de Seguridad Implementadas
+
+| Prueba | Descripción | Patrones Detectados |
+|--------|-------------|---------------------|
+| SQL Injection | Inyección de código SQL | SELECT, DROP, UNION, comentarios SQL |
+| XSS | Cross-Site Scripting | script, javascript:, eventos on*, eval |
+| Path Traversal | Acceso a archivos del sistema | ../, encoded paths |
+| Command Injection | Inyección de comandos | pipes, backticks, comandos shell |
+| Password Strength | Fortaleza de contraseña | Longitud, caracteres, patrones comunes |
+
+### 22.6 Consideraciones de Producción
+
+⚠️ **IMPORTANTE**: En producción, considera:
+
+1. **Deshabilitar endpoints públicos** de prueba
+2. **Limitar acceso** solo a IPs internas o VPN
+3. **Agregar logging** de todas las pruebas ejecutadas
+4. **Rate limiting adicional** en endpoints de prueba
+
+```typescript
+// Ejemplo: Deshabilitar en producción
+@Get('test/rate-limit')
+testRateLimit() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new ForbiddenException('Endpoint disabled in production');
+  }
+  // ...
+}
+```
+
+---
+
+## 23. Testing
 
 ### Estructura de Tests
 

@@ -17,26 +17,23 @@ export class ProductAttributeValue {
   id: string;
 
   @Column({ length: 100 })
-  value: string; // e.g., "S", "M", "L", "Rojo", "Azul"
+  value: string;
 
-  @Column({ length: 50, nullable: true })
-  displayValue: string; // For colors: hex code "#FF0000"
-
-  @Column()
+  @Column({ name: 'attribute_id' })
   attributeId: string;
 
   @ManyToOne(() => ProductAttribute, (attribute) => attribute.values, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'attributeId' })
+  @JoinColumn({ name: 'attribute_id' })
   attribute: ProductAttribute;
 
   @ManyToMany(() => ProductVariant, (variant) => variant.attributeValues)
   variants: ProductVariant[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

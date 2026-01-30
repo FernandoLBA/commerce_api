@@ -19,39 +19,39 @@ export class WishlistItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({ name: 'product_id' })
   productId: string;
 
   @ManyToOne(() => Product, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'productId' })
+  @JoinColumn({ name: 'product_id' })
   product: Product;
 
-  @Column({ nullable: true })
+  @Column({ name: 'variant_id', nullable: true })
   variantId?: string;
 
   @ManyToOne(() => ProductVariant, { onDelete: 'CASCADE', nullable: true })
-  @JoinColumn({ name: 'variantId' })
+  @JoinColumn({ name: 'variant_id' })
   variant?: ProductVariant;
 
   @Column({ type: 'text', nullable: true })
-  notes?: string; // Notas personales del usuario
+  notes?: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  priceWhenAdded?: number; // Precio cuando se agregó (para alertas)
+  @Column({ name: 'price_when_added', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  priceWhenAdded?: number;
 
-  @Column({ default: false })
-  notifyOnPriceDrop: boolean; // Notificar si baja el precio
+  @Column({ name: 'notify_on_price_drop', default: false })
+  notifyOnPriceDrop: boolean;
 
-  @Column({ default: false })
-  notifyOnBackInStock: boolean; // Notificar cuando vuelva a estar disponible
+  @Column({ name: 'notify_on_back_in_stock', default: false })
+  notifyOnBackInStock: boolean;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

@@ -13,28 +13,28 @@ import { User } from '../../auth/entities/user.entity';
 import { Product } from '../../products/entities/product.entity';
 
 @Entity('reviews')
-@Unique(['userId', 'productId']) // Un usuario solo puede hacer una reseña por producto
+@Unique(['userId', 'productId'])
 @Index(['productId', 'createdAt'])
 export class Review {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ name: 'user_id' })
   userId: string;
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column()
+  @Column({ name: 'product_id' })
   productId: string;
 
   @ManyToOne(() => Product, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'productId' })
+  @JoinColumn({ name: 'product_id' })
   product: Product;
 
   @Column({ type: 'int' })
-  rating: number; // 1-5 estrellas
+  rating: number;
 
   @Column({ type: 'text', nullable: true })
   title?: string;
@@ -42,27 +42,27 @@ export class Review {
   @Column({ type: 'text', nullable: true })
   comment?: string;
 
-  @Column({ default: false })
-  isVerifiedPurchase: boolean; // Si el usuario compró el producto
+  @Column({ name: 'is_verified_purchase', default: false })
+  isVerifiedPurchase: boolean;
 
-  @Column({ default: true })
-  isApproved: boolean; // Moderación
+  @Column({ name: 'is_approved', default: true })
+  isApproved: boolean;
 
-  @Column({ default: 0 })
-  helpfulCount: number; // Votos de "útil"
+  @Column({ name: 'helpful_count', default: 0 })
+  helpfulCount: number;
 
   @Column({ type: 'simple-array', nullable: true })
-  images?: string[]; // URLs de imágenes adjuntas
+  images?: string[];
 
-  @Column({ nullable: true })
-  adminResponse?: string; // Respuesta del vendedor
+  @Column({ name: 'admin_response', nullable: true })
+  adminResponse?: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'admin_response_at', nullable: true })
   adminResponseAt?: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
