@@ -1,7 +1,7 @@
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
@@ -11,7 +11,7 @@ import { Address } from '../../users/entities/address.entity';
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn('uuid')
   id: string;
 
   @Column({ unique: true })
@@ -20,10 +20,10 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'first_name', nullable: true })
   firstName: string;
 
-  @Column({ nullable: true })
+  @Column({ name: 'last_name', nullable: true })
   lastName: string;
 
   @Column({ nullable: true })
@@ -36,15 +36,15 @@ export class User {
   })
   role: Role;
 
-  @Column({ default: true })
+  @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
   @OneToMany(() => Address, (address) => address.user)
   addresses: Address[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }

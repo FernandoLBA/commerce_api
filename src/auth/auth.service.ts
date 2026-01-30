@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
@@ -37,10 +38,13 @@ export class AuthService {
 
     // Crear nuevo usuario
     const user = this.usersRepository.create({
+      id: randomUUID(),
       email,
       password: hashedPassword,
       firstName,
       lastName,
+      updatedAt: new Date(),
+      createdAt: new Date(),
     });
 
     await this.usersRepository.save(user);
