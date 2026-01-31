@@ -1,52 +1,48 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ProductImage } from './entities/product-image.entity';
-import { Product } from './entities/product.entity';
+import { PrismaService } from '../prisma';
 import { CreateProductImageDto } from './dto/create-product-image.dto';
 import { UpdateProductImageDto } from './dto/update-product-image.dto';
-import { ProductNotFoundException, ProductImageNotFoundException, CloudinaryService } from '../common';
+import {
+  ProductNotFoundException,
+  ProductImageNotFoundException,
+  CloudinaryService,
+} from '../common';
 
 @Injectable()
 export class ImagesService {
   constructor(
-    @InjectRepository(ProductImage)
-    private imagesRepository: Repository<ProductImage>,
-    @InjectRepository(Product)
-    private productsRepository: Repository<Product>,
+    private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(productId: string, createImageDto: CreateProductImageDto): Promise<ProductImage> {
-    const product = await this.productsRepository.findOne({
+  async create(productId: string, createImageDto: CreateProductImageDto) {
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found`,
+      );
     }
 
-    // If this is the first image or marked as primary, handle primary flag
-    if (createImageDto.isPrimary) {
-      await this.resetPrimaryImages(productId);
-    }
-
-    // Get the highest position for this product
-    const maxPosition = await this.imagesRepository
-      .createQueryBuilder('image')
-      .where('image.productId = :productId', { productId })
-      .select('MAX(image.position)', 'maxPosition')
-      .getRawOne();
-
-    const position = createImageDto.position ?? (maxPosition?.maxPosition ?? -1) + 1;
-
-    const image = this.imagesRepository.create({
-      ...createImageDto,
-      position,
-      product,
+    // Get the highest displayOrder for this product
+    const maxOrderResult = await this.prisma.productImage.aggregate({
+      where: { productId },
+      _max: { displayOrder: true },
     });
 
-    return this.imagesRepository.save(image);
+    const displayOrder =
+      createImageDto.displayOrder ?? (maxOrderResult._max.displayOrder ?? -1) + 1;
+
+    return this.prisma.productImage.create({
+      data: {
+        url: createImageDto.url,
+        alt: createImageDto.alt,
+        displayOrder,
+        productId,
+      },
+    });
   }
 
   /**
@@ -55,54 +51,50 @@ export class ImagesService {
   async uploadFile(
     productId: string,
     file: Express.Multer.File,
-    options?: { altText?: string; isPrimary?: boolean },
-  ): Promise<ProductImage> {
-    const product = await this.productsRepository.findOne({
+    options?: { alt?: string },
+  ) {
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found`,
+      );
     }
 
     // Upload to Cloudinary
-    const uploadResult = await this.cloudinaryService.uploadFromBuffer(file.buffer, {
-      folder: `commerce-api/products/${productId}`,
-    });
+    const uploadResult = await this.cloudinaryService.uploadFromBuffer(
+      file.buffer,
+      {
+        folder: `commerce-api/products/${productId}`,
+      },
+    );
 
     // Get responsive URLs
-    const urls = this.cloudinaryService.getResponsiveUrls(uploadResult.publicId);
+    const urls = this.cloudinaryService.getResponsiveUrls(
+      uploadResult.publicId,
+    );
 
-    // Handle primary flag
-    if (options?.isPrimary) {
-      await this.resetPrimaryImages(productId);
-    }
-
-    // Get next position
-    const maxPosition = await this.imagesRepository
-      .createQueryBuilder('image')
-      .where('image.productId = :productId', { productId })
-      .select('MAX(image.position)', 'maxPosition')
-      .getRawOne();
-
-    const position = (maxPosition?.maxPosition ?? -1) + 1;
-
-    // Check if this is the first image (make it primary automatically)
-    const imageCount = await this.imagesRepository.count({
-      where: { product: { id: productId } },
+    // Get next displayOrder
+    const maxOrderResult = await this.prisma.productImage.aggregate({
+      where: { productId },
+      _max: { displayOrder: true },
     });
 
-    const image = this.imagesRepository.create({
-      url: urls.large,
-      thumbnailUrl: urls.thumbnail,
-      publicId: uploadResult.publicId,
-      altText: options?.altText || product.name,
-      position,
-      isPrimary: options?.isPrimary || imageCount === 0,
-      product,
-    });
+    const displayOrder = (maxOrderResult._max.displayOrder ?? -1) + 1;
 
-    return this.imagesRepository.save(image);
+    return this.prisma.productImage.create({
+      data: {
+        url: urls.large,
+        publicId: uploadResult.publicId,
+        alt: options?.alt || product.name,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        displayOrder,
+        productId,
+      },
+    });
   }
 
   /**
@@ -111,14 +103,16 @@ export class ImagesService {
   async uploadFromUrl(
     productId: string,
     url: string,
-    options?: { altText?: string; isPrimary?: boolean },
-  ): Promise<ProductImage> {
-    const product = await this.productsRepository.findOne({
+    options?: { alt?: string },
+  ) {
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found`,
+      );
     }
 
     // Upload to Cloudinary
@@ -127,70 +121,60 @@ export class ImagesService {
     });
 
     // Get responsive URLs
-    const urls = this.cloudinaryService.getResponsiveUrls(uploadResult.publicId);
+    const urls = this.cloudinaryService.getResponsiveUrls(
+      uploadResult.publicId,
+    );
 
-    // Handle primary flag
-    if (options?.isPrimary) {
-      await this.resetPrimaryImages(productId);
-    }
-
-    // Get next position
-    const maxPosition = await this.imagesRepository
-      .createQueryBuilder('image')
-      .where('image.productId = :productId', { productId })
-      .select('MAX(image.position)', 'maxPosition')
-      .getRawOne();
-
-    const position = (maxPosition?.maxPosition ?? -1) + 1;
-
-    // Check if this is the first image
-    const imageCount = await this.imagesRepository.count({
-      where: { product: { id: productId } },
+    // Get next displayOrder
+    const maxOrderResult = await this.prisma.productImage.aggregate({
+      where: { productId },
+      _max: { displayOrder: true },
     });
 
-    const image = this.imagesRepository.create({
-      url: urls.large,
-      thumbnailUrl: urls.thumbnail,
-      publicId: uploadResult.publicId,
-      altText: options?.altText || product.name,
-      position,
-      isPrimary: options?.isPrimary || imageCount === 0,
-      product,
-    });
+    const displayOrder = (maxOrderResult._max.displayOrder ?? -1) + 1;
 
-    return this.imagesRepository.save(image);
-  }
-
-  async findAllByProduct(productId: string): Promise<ProductImage[]> {
-    return this.imagesRepository.find({
-      where: { product: { id: productId } },
-      order: { position: 'ASC' },
+    return this.prisma.productImage.create({
+      data: {
+        url: urls.large,
+        publicId: uploadResult.publicId,
+        alt: options?.alt || product.name,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        displayOrder,
+        productId,
+      },
     });
   }
 
-  async findOne(id: string): Promise<ProductImage> {
-    const image = await this.imagesRepository.findOne({
+  async findAllByProduct(productId: string) {
+    return this.prisma.productImage.findMany({
+      where: { productId },
+      orderBy: { displayOrder: 'asc' },
+    });
+  }
+
+  async findOne(id: string) {
+    const image = await this.prisma.productImage.findUnique({
       where: { id },
-      relations: ['product'],
+      include: { product: true },
     });
 
     if (!image) {
-      throw new ProductImageNotFoundException(`Image with ID "${id}" not found`);
+      throw new ProductImageNotFoundException(
+        `Image with ID "${id}" not found`,
+      );
     }
 
     return image;
   }
 
-  async update(id: string, updateImageDto: UpdateProductImageDto): Promise<ProductImage> {
-    const image = await this.findOne(id);
+  async update(id: string, updateImageDto: UpdateProductImageDto) {
+    await this.findOne(id); // Verify exists
 
-    // If setting as primary, reset other primary images
-    if (updateImageDto.isPrimary && !image.isPrimary) {
-      await this.resetPrimaryImages(image.product.id);
-    }
-
-    Object.assign(image, updateImageDto);
-    return this.imagesRepository.save(image);
+    return this.prisma.productImage.update({
+      where: { id },
+      data: updateImageDto,
+    });
   }
 
   async remove(id: string): Promise<void> {
@@ -201,7 +185,7 @@ export class ImagesService {
       await this.cloudinaryService.delete(image.publicId);
     }
 
-    await this.imagesRepository.remove(image);
+    await this.prisma.productImage.delete({ where: { id } });
   }
 
   /**
@@ -213,7 +197,7 @@ export class ImagesService {
     // Get all public IDs
     const publicIds = images
       .filter((img) => img.publicId)
-      .map((img) => img.publicId);
+      .map((img) => img.publicId as string);
 
     // Delete from Cloudinary
     if (publicIds.length > 0) {
@@ -221,37 +205,18 @@ export class ImagesService {
     }
 
     // Delete from database
-    await this.imagesRepository.remove(images);
+    await this.prisma.productImage.deleteMany({ where: { productId } });
   }
 
-  async setPrimary(id: string): Promise<ProductImage> {
-    const image = await this.findOne(id);
-    await this.resetPrimaryImages(image.product.id);
-
-    image.isPrimary = true;
-    return this.imagesRepository.save(image);
-  }
-
-  async reorder(productId: string, imageIds: string[]): Promise<ProductImage[]> {
-    const images = await this.findAllByProduct(productId);
-
-    const updatePromises = imageIds.map((imageId, index) => {
-      const image = images.find((img) => img.id === imageId);
-      if (image) {
-        image.position = index;
-        return this.imagesRepository.save(image);
-      }
-      return Promise.resolve(null);
-    });
+  async reorder(productId: string, imageIds: string[]) {
+    const updatePromises = imageIds.map((imageId, index) =>
+      this.prisma.productImage.update({
+        where: { id: imageId },
+        data: { displayOrder: index },
+      }),
+    );
 
     await Promise.all(updatePromises);
     return this.findAllByProduct(productId);
-  }
-
-  private async resetPrimaryImages(productId: string): Promise<void> {
-    await this.imagesRepository.update(
-      { product: { id: productId }, isPrimary: true },
-      { isPrimary: false },
-    );
   }
 }

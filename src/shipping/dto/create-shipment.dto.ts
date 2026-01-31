@@ -8,15 +8,16 @@ import {
   Min,
   IsDateString,
 } from 'class-validator';
-import { ShippingCarrier } from '../enums/shipping-carrier.enum';
+import { ShippingCarrier } from '../../generated/prisma/client';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateShipmentDto {
-  @IsNotEmpty({ message: 'Order ID is required' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
   @IsString()
   orderId: string;
 
-  @IsNotEmpty({ message: 'Carrier is required' })
-  @IsEnum(ShippingCarrier, { message: 'Invalid shipping carrier' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsEnum(ShippingCarrier, { message: VALIDATION_MESSAGES.INVALID_ENUM('Carrier', 'OLVA, SHALOM, CRUZ_DEL_SUR, SERVIENTREGA, PICKUP') })
   carrier: ShippingCarrier;
 
   @IsOptional()
@@ -24,8 +25,8 @@ export class CreateShipmentDto {
   trackingNumber?: string;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Weight must be a number' })
-  @Min(0, { message: 'Weight must be positive' })
+  @IsNumber({}, { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Weight') })
+  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Weight') })
   weightKg?: number;
 
   @IsOptional()
@@ -37,6 +38,6 @@ export class CreateShipmentDto {
   };
 
   @IsOptional()
-  @IsDateString({}, { message: 'Invalid date format' })
+  @IsDateString({}, { message: VALIDATION_MESSAGES.INVALID_DATE('Estimated delivery date') })
   estimatedDeliveryDate?: string;
 }

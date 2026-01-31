@@ -8,29 +8,32 @@ import {
   Min,
   IsArray,
   IsUrl,
+  IsNotEmpty,
 } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateReviewDto {
-  @IsUUID()
+  @IsUUID('4', { message: VALIDATION_MESSAGES.INVALID_UUID('Product ID') })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
   productId: string;
 
-  @IsInt()
-  @Min(1, { message: 'Rating must be at least 1' })
-  @Max(5, { message: 'Rating cannot exceed 5' })
+  @IsInt({ message: VALIDATION_MESSAGES.MUST_BE_INTEGER('Rating') })
+  @Min(1, { message: VALIDATION_MESSAGES.RATING_MIN })
+  @Max(5, { message: VALIDATION_MESSAGES.RATING_MAX })
   rating: number;
 
   @IsString()
   @IsOptional()
-  @MaxLength(200)
+  @MaxLength(200, { message: VALIDATION_MESSAGES.MAX_LENGTH('Title', 200) })
   title?: string;
 
   @IsString()
   @IsOptional()
-  @MaxLength(2000)
+  @MaxLength(2000, { message: VALIDATION_MESSAGES.MAX_LENGTH('Comment', 2000) })
   comment?: string;
 
-  @IsArray()
-  @IsUrl({}, { each: true })
+  @IsArray({ message: VALIDATION_MESSAGES.MUST_BE_ARRAY('Images') })
+  @IsUrl({}, { each: true, message: VALIDATION_MESSAGES.INVALID_URL('Each image') })
   @IsOptional()
   images?: string[];
 }

@@ -16,7 +16,7 @@ import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { User } from '../auth/entities/user.entity';
+import { User } from '../generated/prisma/client';
 
 @Controller('cart')
 @UseGuards(JwtAuthGuard)

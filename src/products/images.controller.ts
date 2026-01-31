@@ -47,18 +47,16 @@ export class ImagesController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp|gif)$/ }),
+          new FileTypeValidator({
+            fileType: /^image\/(jpeg|jpg|png|webp|gif)$/,
+          }),
         ],
       }),
     )
     file: Express.Multer.File,
-    @Body('altText') altText?: string,
-    @Body('isPrimary') isPrimary?: string,
+    @Body('alt') alt?: string,
   ) {
-    return this.imagesService.uploadFile(productId, file, {
-      altText,
-      isPrimary: isPrimary === 'true',
-    });
+    return this.imagesService.uploadFile(productId, file, { alt });
   }
 
   @Post('upload-url')
@@ -67,13 +65,9 @@ export class ImagesController {
   uploadFromUrl(
     @Param('productId', ParseUUIDPipe) productId: string,
     @Body('url') url: string,
-    @Body('altText') altText?: string,
-    @Body('isPrimary') isPrimary?: boolean,
+    @Body('alt') alt?: string,
   ) {
-    return this.imagesService.uploadFromUrl(productId, url, {
-      altText,
-      isPrimary,
-    });
+    return this.imagesService.uploadFromUrl(productId, url, { alt });
   }
 
   @Get()
@@ -101,13 +95,6 @@ export class ImagesController {
   @Roles(Role.ADMIN)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.imagesService.remove(id);
-  }
-
-  @Patch(':id/primary')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  setPrimary(@Param('id', ParseUUIDPipe) id: string) {
-    return this.imagesService.setPrimary(id);
   }
 
   @Patch('reorder')

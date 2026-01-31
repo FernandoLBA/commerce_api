@@ -1,5 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { v2 as cloudinary, UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
+import {
+  v2 as cloudinary,
+  UploadApiResponse,
+  UploadApiErrorResponse,
+} from 'cloudinary';
 import { ValidationException } from '../exceptions/api.exception';
 
 export interface CloudinaryUploadResult {
@@ -46,18 +50,24 @@ export class CloudinaryService implements OnModuleInit {
           public_id: options?.publicId,
           resource_type: 'image',
           allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-          transformation: [
-            { quality: 'auto:good' },
-            { fetch_format: 'auto' },
-          ],
+          transformation: [{ quality: 'auto:good' }, { fetch_format: 'auto' }],
         },
-        (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
+        (
+          error: UploadApiErrorResponse | undefined,
+          result: UploadApiResponse | undefined,
+        ) => {
           if (error) {
-            reject(new ValidationException(`Failed to upload image: ${error.message}`));
+            reject(
+              new ValidationException(
+                `Failed to upload image: ${error.message}`,
+              ),
+            );
             return;
           }
           if (!result) {
-            reject(new ValidationException('Upload failed: No result returned'));
+            reject(
+              new ValidationException('Upload failed: No result returned'),
+            );
             return;
           }
           resolve({
@@ -89,10 +99,7 @@ export class CloudinaryService implements OnModuleInit {
         public_id: options?.publicId,
         resource_type: 'image',
         allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif'],
-        transformation: [
-          { quality: 'auto:good' },
-          { fetch_format: 'auto' },
-        ],
+        transformation: [{ quality: 'auto:good' }, { fetch_format: 'auto' }],
       });
 
       return {
@@ -105,7 +112,9 @@ export class CloudinaryService implements OnModuleInit {
         bytes: result.bytes,
       };
     } catch (error: any) {
-      throw new ValidationException(`Failed to upload image from URL: ${error.message}`);
+      throw new ValidationException(
+        `Failed to upload image from URL: ${error.message}`,
+      );
     }
   }
 
@@ -124,7 +133,9 @@ export class CloudinaryService implements OnModuleInit {
   /**
    * Delete multiple images
    */
-  async deleteMany(publicIds: string[]): Promise<{ deleted: string[]; failed: string[] }> {
+  async deleteMany(
+    publicIds: string[],
+  ): Promise<{ deleted: string[]; failed: string[] }> {
     const deleted: string[] = [];
     const failed: string[] = [];
 
@@ -147,7 +158,10 @@ export class CloudinaryService implements OnModuleInit {
   /**
    * Generate a transformed URL for an image
    */
-  getTransformedUrl(publicId: string, options: CloudinaryTransformOptions = {}): string {
+  getTransformedUrl(
+    publicId: string,
+    options: CloudinaryTransformOptions = {},
+  ): string {
     const transformation: any = {};
 
     if (options.width) transformation.width = options.width;
@@ -196,7 +210,10 @@ export class CloudinaryService implements OnModuleInit {
       small: this.getProductImageUrl(publicId, 400),
       medium: this.getProductImageUrl(publicId, 800),
       large: this.getProductImageUrl(publicId, 1200),
-      original: this.getTransformedUrl(publicId, { quality: 'auto', format: 'auto' }),
+      original: this.getTransformedUrl(publicId, {
+        quality: 'auto',
+        format: 'auto',
+      }),
     };
   }
 }

@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ProductAttribute } from './entities/product-attribute.entity';
-import { ProductAttributeValue } from './entities/product-attribute-value.entity';
+import { PrismaService } from '../prisma';
 import { CreateAttributeDto } from './dto/create-attribute.dto';
 import { UpdateAttributeDto } from './dto/update-attribute.dto';
 import { CreateAttributeValueDto } from './dto/create-attribute-value.dto';
@@ -14,17 +11,14 @@ import {
 
 @Injectable()
 export class AttributesService {
-  constructor(
-    @InjectRepository(ProductAttribute)
-    private attributesRepository: Repository<ProductAttribute>,
-    @InjectRepository(ProductAttributeValue)
-    private attributeValuesRepository: Repository<ProductAttributeValue>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   // =============== ATTRIBUTES ===============
 
-  async createAttribute(createAttributeDto: CreateAttributeDto): Promise<ProductAttribute> {
-    const existing = await this.attributesRepository.findOne({
+  async createAttribute(
+    createAttributeDto: CreateAttributeDto,
+  ) {
+    const existing = await this.prisma.productAttribute.findFirst({
       where: { name: createAttributeDto.name },
     });
 
@@ -34,25 +28,28 @@ export class AttributesService {
       );
     }
 
-    const attribute = this.attributesRepository.create(createAttributeDto);
-    return this.attributesRepository.save(attribute);
-  }
-
-  async findAllAttributes(): Promise<ProductAttribute[]> {
-    return this.attributesRepository.find({
-      relations: ['values'],
-      order: { name: 'ASC' },
+    return this.prisma.productAttribute.create({
+      data: createAttributeDto,
     });
   }
 
-  async findAttributeById(id: string): Promise<ProductAttribute> {
-    const attribute = await this.attributesRepository.findOne({
+  async findAllAttributes() {
+    return this.prisma.productAttribute.findMany({
+      include: { values: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async findAttributeById(id: string) {
+    const attribute = await this.prisma.productAttribute.findUnique({
       where: { id },
-      relations: ['values'],
+      include: { values: true },
     });
 
     if (!attribute) {
-      throw new AttributeNotFoundException(`Attribute with ID "${id}" not found`);
+      throw new AttributeNotFoundException(
+        `Attribute with ID "${id}" not found`,
+      );
     }
 
     return attribute;
@@ -61,11 +58,11 @@ export class AttributesService {
   async updateAttribute(
     id: string,
     updateAttributeDto: UpdateAttributeDto,
-  ): Promise<ProductAttribute> {
+  ) {
     const attribute = await this.findAttributeById(id);
 
     if (updateAttributeDto.name && updateAttributeDto.name !== attribute.name) {
-      const existing = await this.attributesRepository.findOne({
+      const existing = await this.prisma.productAttribute.findFirst({
         where: { name: updateAttributeDto.name },
       });
 
@@ -76,58 +73,69 @@ export class AttributesService {
       }
     }
 
-    Object.assign(attribute, updateAttributeDto);
-    return this.attributesRepository.save(attribute);
+    return this.prisma.productAttribute.update({
+      where: { id },
+      data: updateAttributeDto,
+    });
   }
 
   async deleteAttribute(id: string): Promise<void> {
-    const attribute = await this.findAttributeById(id);
-    await this.attributesRepository.remove(attribute);
+    await this.findAttributeById(id);
+    await this.prisma.productAttribute.delete({ where: { id } });
   }
 
   // =============== ATTRIBUTE VALUES ===============
 
   async createAttributeValue(
     createAttributeValueDto: CreateAttributeValueDto,
-  ): Promise<ProductAttributeValue> {
-    const attribute = await this.findAttributeById(createAttributeValueDto.attributeId);
+  ) {
+    await this.findAttributeById(createAttributeValueDto.attributeId);
 
-    const attributeValue = this.attributeValuesRepository.create({
-      ...createAttributeValueDto,
-      attribute,
+    return this.prisma.productAttributeValue.create({
+      data: {
+        value: createAttributeValueDto.value,
+        attributeId: createAttributeValueDto.attributeId,
+      },
     });
-
-    return this.attributeValuesRepository.save(attributeValue);
   }
 
-  async findAttributeValueById(id: string): Promise<ProductAttributeValue> {
-    const value = await this.attributeValuesRepository.findOne({
+  async findAttributeValueById(id: string) {
+    const value = await this.prisma.productAttributeValue.findUnique({
       where: { id },
-      relations: ['attribute'],
+      include: { attribute: true },
     });
 
     if (!value) {
-      throw new AttributeNotFoundException(`Attribute value with ID "${id}" not found`);
+      throw new AttributeNotFoundException(
+        `Attribute value with ID "${id}" not found`,
+      );
     }
 
     return value;
   }
 
-  async findAttributeValuesByIds(ids: string[]): Promise<ProductAttributeValue[]> {
-    return this.attributeValuesRepository.findByIds(ids);
+  async findAttributeValuesByIds(
+    ids: string[],
+  ) {
+    return this.prisma.productAttributeValue.findMany({
+      where: { id: { in: ids } },
+    });
   }
 
   async updateAttributeValue(
     id: string,
     updateAttributeValueDto: UpdateAttributeValueDto,
-  ): Promise<ProductAttributeValue> {
-    const value = await this.findAttributeValueById(id);
-    Object.assign(value, updateAttributeValueDto);
-    return this.attributeValuesRepository.save(value);
+  ) {
+    await this.findAttributeValueById(id);
+
+    return this.prisma.productAttributeValue.update({
+      where: { id },
+      data: updateAttributeValueDto,
+    });
   }
 
   async deleteAttributeValue(id: string): Promise<void> {
-    const value = await this.findAttributeValueById(id);
-    await this.attributeValuesRepository.remove(value);
+    await this.findAttributeValueById(id);
+    await this.prisma.productAttributeValue.delete({ where: { id } });
   }
 }

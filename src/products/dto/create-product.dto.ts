@@ -8,43 +8,52 @@ import {
   Min,
   IsPositive,
   Matches,
+  IsNotEmpty,
 } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateProductDto {
   @IsString()
-  @MaxLength(200, { message: 'Name must not exceed 200 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(200, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 200) })
   name: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(100, { message: 'Slug must not exceed 100 characters' })
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Slug', 100) })
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'Slug must be lowercase with hyphens only',
+    message: VALIDATION_MESSAGES.SLUG_FORMAT,
   })
   slug?: string;
 
-  @IsOptional()
   @IsString()
-  @MaxLength(2000, { message: 'Description must not exceed 2000 characters' })
-  description?: string;
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @MaxLength(2000, {
+    message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 2000),
+  })
+  description: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(500, { message: 'Short description must not exceed 500 characters' })
+  @MaxLength(500, {
+    message: VALIDATION_MESSAGES.MAX_LENGTH('Short description', 500),
+  })
   shortDescription?: string;
 
   @IsNumber()
-  @IsPositive({ message: 'Price must be a positive number' })
+  @IsPositive({ message: VALIDATION_MESSAGES.POSITIVE_NUMBER('Price') })
   price: number;
 
   @IsOptional()
   @IsNumber()
-  @IsPositive({ message: 'Compare at price must be a positive number' })
+  @IsPositive({
+    message: VALIDATION_MESSAGES.POSITIVE_NUMBER('Compare at price'),
+  })
   compareAtPrice?: number;
 
   @IsOptional()
   @IsNumber()
-  @Min(0, { message: 'Stock cannot be negative' })
+  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Stock') })
   stock?: number;
 
   @IsOptional()
@@ -56,6 +65,8 @@ export class CreateProductDto {
   hasVariants?: boolean;
 
   @IsOptional()
-  @IsUUID('4', { message: 'Invalid category ID format' })
+  @IsUUID('4', {
+    message: VALIDATION_MESSAGES.FIELD_FORMAT_INVALID('Category ID'),
+  })
   categoryId?: string;
 }

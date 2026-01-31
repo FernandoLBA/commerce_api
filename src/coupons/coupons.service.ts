@@ -1,12 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { Coupon } from './entities/coupon.entity';
-import { CouponUsage } from './entities/coupon-usage.entity';
-import { Order } from '../orders/entities/order.entity';
+import { PrismaService } from '../prisma';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateCouponDto } from './dto/update-coupon.dto';
-import { DiscountType } from './enums/discount-type.enum';
+import { DiscountType, Coupon, Prisma } from '../generated/prisma/client';
 import { NotFoundException, ValidationException } from '../common';
 
 export interface CouponValidation {
@@ -25,18 +21,11 @@ export interface CartItem {
 
 @Injectable()
 export class CouponsService {
-  constructor(
-    @InjectRepository(Coupon)
-    private couponRepository: Repository<Coupon>,
-    @InjectRepository(CouponUsage)
-    private usageRepository: Repository<CouponUsage>,
-    @InjectRepository(Order)
-    private orderRepository: Repository<Order>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(createCouponDto: CreateCouponDto): Promise<Coupon> {
+  async create(createCouponDto: CreateCouponDto) {
     // Check if code already exists
-    const existing = await this.couponRepository.findOne({
+    const existing = await this.prisma.coupon.findFirst({
       where: { code: createCouponDto.code.toUpperCase() },
     });
 
@@ -52,28 +41,28 @@ export class CouponsService {
       throw new ValidationException('Percentage discount cannot exceed 100%');
     }
 
-    const coupon = this.couponRepository.create({
-      ...createCouponDto,
-      code: createCouponDto.code.toUpperCase(),
+    return this.prisma.coupon.create({
+      data: {
+        ...createCouponDto,
+        code: createCouponDto.code.toUpperCase(),
+      },
     });
-
-    return this.couponRepository.save(coupon);
   }
 
-  async findAll(includeInactive = false): Promise<Coupon[]> {
-    const where: any = {};
+  async findAll(includeInactive = false) {
+    const where: Prisma.CouponWhereInput = {};
     if (!includeInactive) {
       where.isActive = true;
     }
 
-    return this.couponRepository.find({
+    return this.prisma.coupon.findMany({
       where,
-      order: { createdAt: 'DESC' },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: string): Promise<Coupon> {
-    const coupon = await this.couponRepository.findOne({ where: { id } });
+  async findOne(id: string) {
+    const coupon = await this.prisma.coupon.findUnique({ where: { id } });
 
     if (!coupon) {
       throw new NotFoundException(`Coupon with ID ${id} not found`);
@@ -82,8 +71,8 @@ export class CouponsService {
     return coupon;
   }
 
-  async findByCode(code: string): Promise<Coupon> {
-    const coupon = await this.couponRepository.findOne({
+  async findByCode(code: string) {
+    const coupon = await this.prisma.coupon.findFirst({
       where: { code: code.toUpperCase() },
     });
 
@@ -94,17 +83,18 @@ export class CouponsService {
     return coupon;
   }
 
-  async update(id: string, updateCouponDto: UpdateCouponDto): Promise<Coupon> {
-    const coupon = await this.findOne(id);
+  async update(id: string, updateCouponDto: UpdateCouponDto) {
+    await this.findOne(id);
 
-    Object.assign(coupon, updateCouponDto);
-
-    return this.couponRepository.save(coupon);
+    return this.prisma.coupon.update({
+      where: { id },
+      data: updateCouponDto,
+    });
   }
 
   async remove(id: string): Promise<void> {
-    const coupon = await this.findOne(id);
-    await this.couponRepository.remove(coupon);
+    await this.findOne(id);
+    await this.prisma.coupon.delete({ where: { id } });
   }
 
   async validateCoupon(
@@ -138,7 +128,7 @@ export class CouponsService {
 
       // Check user usage limit
       if (coupon.usageLimitPerUser) {
-        const userUsageCount = await this.usageRepository.count({
+        const userUsageCount = await this.prisma.couponUsage.count({
           where: { couponId: coupon.id, userId },
         });
 
@@ -149,7 +139,7 @@ export class CouponsService {
 
       // Check first purchase only
       if (coupon.isFirstPurchaseOnly) {
-        const previousOrders = await this.orderRepository.count({
+        const previousOrders = await this.prisma.order.count({
           where: { userId },
         });
 
@@ -159,7 +149,7 @@ export class CouponsService {
       }
 
       // Check minimum purchase
-      if (coupon.minPurchaseAmount && cartTotal < coupon.minPurchaseAmount) {
+      if (coupon.minPurchaseAmount && cartTotal < Number(coupon.minPurchaseAmount)) {
         return {
           isValid: false,
           discountAmount: 0,
@@ -178,8 +168,8 @@ export class CouponsService {
       let discountAmount = this.calculateDiscount(coupon, applicableAmount);
 
       // Apply max discount cap
-      if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
-        discountAmount = coupon.maxDiscountAmount;
+      if (coupon.maxDiscountAmount && discountAmount > Number(coupon.maxDiscountAmount)) {
+        discountAmount = Number(coupon.maxDiscountAmount);
       }
 
       return {
@@ -200,63 +190,68 @@ export class CouponsService {
     userId: string,
     orderId: string,
     discountApplied: number,
-  ): Promise<CouponUsage> {
-    const coupon = await this.findOne(couponId);
+  ) {
+    await this.findOne(couponId);
 
     // Record usage
-    const usage = this.usageRepository.create({
-      couponId,
-      userId,
-      orderId,
-      discountApplied,
+    const usage = await this.prisma.couponUsage.create({
+      data: {
+        couponId,
+        userId,
+        orderId,
+        discountApplied,
+      },
     });
 
-    await this.usageRepository.save(usage);
-
     // Increment usage count
-    coupon.usageCount++;
-    await this.couponRepository.save(coupon);
+    await this.prisma.coupon.update({
+      where: { id: couponId },
+      data: { usageCount: { increment: 1 } },
+    });
 
     return usage;
   }
 
-  async getCouponUsageHistory(couponId: string): Promise<CouponUsage[]> {
-    return this.usageRepository.find({
+  async getCouponUsageHistory(couponId: string) {
+    return this.prisma.couponUsage.findMany({
       where: { couponId },
-      relations: ['user', 'order'],
-      order: { usedAt: 'DESC' },
+      include: { user: true, order: true },
+      orderBy: { usedAt: 'desc' },
     });
   }
 
-  private calculateApplicableAmount(coupon: Coupon, cartItems: CartItem[]): number {
+  private calculateApplicableAmount(coupon: any, cartItems: CartItem[]): number {
     // If no restrictions, all items apply
     if (
-      !coupon.applicableCategories?.length &&
-      !coupon.applicableProducts?.length &&
-      !coupon.excludedProducts?.length
+      !(coupon.applicableCategories as string[])?.length &&
+      !(coupon.applicableProducts as string[])?.length &&
+      !(coupon.excludedProducts as string[])?.length
     ) {
       return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     }
 
     let applicableAmount = 0;
+    const applicableCategories = (coupon.applicableCategories as string[]) || [];
+    const applicableProducts = (coupon.applicableProducts as string[]) || [];
+    const excludedProducts = (coupon.excludedProducts as string[]) || [];
 
     for (const item of cartItems) {
       // Check if excluded
-      if (coupon.excludedProducts?.includes(item.productId)) {
+      if (excludedProducts.includes(item.productId)) {
         continue;
       }
 
       // Check if specifically included by product
-      if (coupon.applicableProducts?.length) {
-        if (coupon.applicableProducts.includes(item.productId)) {
+      if (applicableProducts.length) {
+        if (applicableProducts.includes(item.productId)) {
           applicableAmount += item.price * item.quantity;
         }
         continue;
       }
 
       // Check if included by category
-      if (coupon.applicableCategories?.length) {
-        if (item.categoryId && coupon.applicableCategories.includes(item.categoryId)) {
+      if (applicableCategories.length) {
+        if (item.categoryId && applicableCategories.includes(item.categoryId)) {
           applicableAmount += item.price * item.quantity;
         }
         continue;
@@ -269,13 +264,13 @@ export class CouponsService {
     return applicableAmount;
   }
 
-  private calculateDiscount(coupon: Coupon, applicableAmount: number): number {
+  private calculateDiscount(coupon: any, applicableAmount: number): number {
     switch (coupon.discountType) {
       case DiscountType.PERCENTAGE:
-        return (applicableAmount * coupon.discountValue) / 100;
+        return (applicableAmount * Number(coupon.discountValue)) / 100;
 
       case DiscountType.FIXED_AMOUNT:
-        return Math.min(coupon.discountValue, applicableAmount);
+        return Math.min(Number(coupon.discountValue), applicableAmount);
 
       case DiscountType.FREE_SHIPPING:
         return 0; // Handled separately in order service

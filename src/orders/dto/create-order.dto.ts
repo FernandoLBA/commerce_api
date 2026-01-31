@@ -6,24 +6,25 @@ import {
   IsEnum,
   MaxLength,
 } from 'class-validator';
-import { PaymentMethod } from '../enums/payment-method.enum';
+import { PaymentMethod } from '../../generated/prisma/client';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateOrderDto {
-  @IsNotEmpty({ message: 'Shipping address ID is required' })
-  @IsUUID('4', { message: 'Shipping address ID must be a valid UUID' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsUUID('4', { message: VALIDATION_MESSAGES.INVALID_UUID('Shipping address ID') })
   shippingAddressId: string;
 
-  @IsNotEmpty({ message: 'Payment method is required' })
-  @IsEnum(PaymentMethod, { message: 'Payment method must be stripe or mercadopago' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsEnum(PaymentMethod, { message: VALIDATION_MESSAGES.INVALID_ENUM('Payment method', 'STRIPE, MERCADOPAGO, CASH_ON_DELIVERY') })
   paymentMethod: PaymentMethod;
 
   @IsOptional()
-  @IsString({ message: 'Notes must be a string' })
-  @MaxLength(500, { message: 'Notes must be at most 500 characters' })
+  @IsString()
+  @MaxLength(500, { message: VALIDATION_MESSAGES.MAX_LENGTH('Notes', 500) })
   notes?: string;
 
   @IsOptional()
-  @IsString({ message: 'Discount code must be a string' })
-  @MaxLength(50, { message: 'Discount code must be at most 50 characters' })
+  @IsString()
+  @MaxLength(50, { message: VALIDATION_MESSAGES.MAX_LENGTH('Discount code', 50) })
   discountCode?: string;
 }

@@ -10,45 +10,55 @@ import {
   MaxLength,
   ArrayMinSize,
 } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateVariantDto {
-  @IsNotEmpty({ message: 'Product ID is required' })
-  @IsUUID('4', { message: 'Product ID must be a valid UUID' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsUUID('4', { message: VALIDATION_MESSAGES.INVALID_UUID('Product ID') })
   productId: string;
 
-  @IsNotEmpty({ message: 'SKU is required' })
-  @IsString({ message: 'SKU must be a string' })
-  @MaxLength(100, { message: 'SKU must be at most 100 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsString()
+  @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('SKU', 100) })
   sku: string;
 
-  @IsNotEmpty({ message: 'Price is required' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
   @IsNumber(
     { maxDecimalPlaces: 2 },
-    { message: 'Price must be a number with at most 2 decimal places' },
+    { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Price') },
   )
-  @Min(0, { message: 'Price must be at least 0' })
+  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Price') })
   price: number;
 
   @IsOptional()
   @IsNumber(
     { maxDecimalPlaces: 2 },
-    { message: 'Compare at price must be a number with at most 2 decimal places' },
+    { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Compare at price') },
   )
-  @Min(0, { message: 'Compare at price must be at least 0' })
+  @Min(0, {
+    message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Compare at price'),
+  })
   compareAtPrice?: number;
 
-  @IsNotEmpty({ message: 'Stock is required' })
-  @IsNumber({}, { message: 'Stock must be a number' })
-  @Min(0, { message: 'Stock must be at least 0' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNumber({}, { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Stock') })
+  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Stock') })
   stock: number;
 
   @IsOptional()
-  @IsBoolean({ message: 'isActive must be a boolean' })
+  @IsBoolean({ message: VALIDATION_MESSAGES.MUST_BE_BOOLEAN('isActive') })
   isActive?: boolean;
 
-  @IsNotEmpty({ message: 'Attribute value IDs are required' })
-  @IsArray({ message: 'Attribute value IDs must be an array' })
-  @ArrayMinSize(1, { message: 'At least one attribute value ID is required' })
-  @IsUUID('4', { each: true, message: 'Each attribute value ID must be a valid UUID' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsArray({
+    message: VALIDATION_MESSAGES.MUST_BE_ARRAY('Attribute value IDs'),
+  })
+  @ArrayMinSize(1, {
+    message: VALIDATION_MESSAGES.ARRAY_MIN_SIZE('Attribute value IDs', 1),
+  })
+  @IsUUID('4', {
+    each: true,
+    message: VALIDATION_MESSAGES.INVALID_UUID('Each attribute value ID'),
+  })
   attributeValueIds: string[];
 }

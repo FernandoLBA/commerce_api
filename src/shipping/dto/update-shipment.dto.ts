@@ -1,9 +1,10 @@
 import { IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
-import { ShippingStatus } from '../enums/shipping-status.enum';
+import { ShippingStatus } from '../../generated/prisma/client';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class UpdateShipmentDto {
   @IsOptional()
-  @IsEnum(ShippingStatus, { message: 'Invalid shipping status' })
+  @IsEnum(ShippingStatus, { message: VALIDATION_MESSAGES.INVALID_ENUM('Status', 'PENDING, PROCESSING, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, RETURNED, CANCELLED') })
   status?: ShippingStatus;
 
   @IsOptional()
@@ -15,7 +16,7 @@ export class UpdateShipmentDto {
   trackingUrl?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: 'Invalid date format' })
+  @IsDateString({}, { message: VALIDATION_MESSAGES.INVALID_DATE('Estimated delivery date') })
   estimatedDeliveryDate?: string;
 
   @IsOptional()

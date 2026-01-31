@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThan } from 'typeorm';
-import { Product } from '../products/entities/product.entity';
-import { ProductVariant } from '../products/entities/product-variant.entity';
-import { InventoryMovement } from './entities/inventory-movement.entity';
-import { StockAlert } from './entities/stock-alert.entity';
-import { MovementType } from './enums/movement-type.enum';
+import { PrismaService } from '../prisma';
+import { MovementType, Prisma } from '../generated/prisma/client';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
 import { SetAlertThresholdDto } from './dto/set-alert-threshold.dto';
 import { ValidationException, NotFoundException } from '../common';
@@ -30,21 +25,14 @@ export interface LowStockItem {
 @Injectable()
 export class InventoryService {
   constructor(
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
-    @InjectRepository(ProductVariant)
-    private variantRepository: Repository<ProductVariant>,
-    @InjectRepository(InventoryMovement)
-    private movementRepository: Repository<InventoryMovement>,
-    @InjectRepository(StockAlert)
-    private alertRepository: Repository<StockAlert>,
+    private prisma: PrismaService,
     private notificationsService: NotificationsService,
   ) {}
 
   /**
    * Adjust stock for a product or variant
    */
-  async adjustStock(dto: AdjustStockDto, performedBy?: string): Promise<InventoryMovement> {
+  async adjustStock(dto: AdjustStockDto, performedBy?: string) {
     if (!dto.productId && !dto.variantId) {
       throw new ValidationException('Either productId or variantId is required');
     }
@@ -56,7 +44,7 @@ export class InventoryService {
     let newStock: number;
 
     if (dto.variantId) {
-      const variant = await this.variantRepository.findOne({
+      const variant = await this.prisma.productVariant.findUnique({
         where: { id: dto.variantId },
       });
 
@@ -73,13 +61,15 @@ export class InventoryService {
         );
       }
 
-      variant.stock = newStock;
-      await this.variantRepository.save(variant);
+      await this.prisma.productVariant.update({
+        where: { id: dto.variantId },
+        data: { stock: newStock },
+      });
 
       // Check alerts
       await this.checkAndTriggerAlert(undefined, dto.variantId, newStock);
     } else if (dto.productId) {
-      const product = await this.productRepository.findOne({
+      const product = await this.prisma.product.findUnique({
         where: { id: dto.productId },
       });
 
@@ -96,28 +86,30 @@ export class InventoryService {
         );
       }
 
-      product.stock = newStock;
-      await this.productRepository.save(product);
+      await this.prisma.product.update({
+        where: { id: dto.productId },
+        data: { stock: newStock },
+      });
 
       // Check alerts
       await this.checkAndTriggerAlert(dto.productId, undefined, newStock);
     }
 
     // Record movement
-    const movement = this.movementRepository.create({
-      productId: dto.productId,
-      variantId: dto.variantId,
-      type: dto.type,
-      quantity: quantityChange,
-      previousStock: previousStock!,
-      newStock: newStock!,
-      referenceNumber: dto.referenceNumber,
-      notes: dto.notes,
-      unitCost: dto.unitCost,
-      performedBy,
+    return this.prisma.inventoryMovement.create({
+      data: {
+        productId: dto.productId,
+        variantId: dto.variantId,
+        type: dto.type,
+        quantity: quantityChange,
+        previousStock: previousStock!,
+        newStock: newStock!,
+        referenceNumber: dto.referenceNumber,
+        notes: dto.notes,
+        unitCost: dto.unitCost,
+        performedBy,
+      },
     });
-
-    return this.movementRepository.save(movement);
   }
 
   /**
@@ -127,8 +119,8 @@ export class InventoryService {
     reservations: StockReservation[],
     orderId: string,
     performedBy?: string,
-  ): Promise<InventoryMovement[]> {
-    const movements: InventoryMovement[] = [];
+  ) {
+    const movements: any[] = [];
 
     for (const reservation of reservations) {
       const movement = await this.adjustStock(
@@ -142,9 +134,12 @@ export class InventoryService {
         performedBy,
       );
 
-      movement.orderId = orderId;
-      await this.movementRepository.save(movement);
-      movements.push(movement);
+      const updatedMovement = await this.prisma.inventoryMovement.update({
+        where: { id: movement.id },
+        data: { orderId },
+      });
+
+      movements.push(updatedMovement);
     }
 
     return movements;
@@ -153,15 +148,15 @@ export class InventoryService {
   /**
    * Release reserved stock (when order is cancelled)
    */
-  async releaseStock(orderId: string, performedBy?: string): Promise<InventoryMovement[]> {
-    const reservations = await this.movementRepository.find({
+  async releaseStock(orderId: string, performedBy?: string) {
+    const reservations = await this.prisma.inventoryMovement.findMany({
       where: {
         orderId,
         type: MovementType.RESERVATION,
       },
     });
 
-    const movements: InventoryMovement[] = [];
+    const movements: any[] = [];
 
     for (const reservation of reservations) {
       const movement = await this.adjustStock(
@@ -175,9 +170,12 @@ export class InventoryService {
         performedBy,
       );
 
-      movement.orderId = orderId;
-      await this.movementRepository.save(movement);
-      movements.push(movement);
+      const updatedMovement = await this.prisma.inventoryMovement.update({
+        where: { id: movement.id },
+        data: { orderId },
+      });
+
+      movements.push(updatedMovement);
     }
 
     return movements;
@@ -187,7 +185,7 @@ export class InventoryService {
    * Confirm sale (convert reservation to sale when payment completes)
    */
   async confirmSale(orderId: string): Promise<void> {
-    const reservations = await this.movementRepository.find({
+    const reservations = await this.prisma.inventoryMovement.findMany({
       where: {
         orderId,
         type: MovementType.RESERVATION,
@@ -196,18 +194,18 @@ export class InventoryService {
 
     for (const reservation of reservations) {
       // Create a sale movement (stock already reduced by reservation)
-      const saleMovement = this.movementRepository.create({
-        productId: reservation.productId,
-        variantId: reservation.variantId,
-        type: MovementType.SALE,
-        quantity: 0, // No additional stock change
-        previousStock: reservation.newStock,
-        newStock: reservation.newStock,
-        orderId,
-        notes: `Sale confirmed`,
+      await this.prisma.inventoryMovement.create({
+        data: {
+          productId: reservation.productId,
+          variantId: reservation.variantId,
+          type: MovementType.SALE,
+          quantity: 0, // No additional stock change
+          previousStock: reservation.newStock,
+          newStock: reservation.newStock,
+          orderId,
+          notes: `Sale confirmed`,
+        },
       });
-
-      await this.movementRepository.save(saleMovement);
     }
   }
 
@@ -219,19 +217,22 @@ export class InventoryService {
     variantId?: string,
     page = 1,
     limit = 20,
-  ): Promise<{ data: InventoryMovement[]; total: number }> {
-    const where: any = {};
+  ) {
+    const where: Prisma.InventoryMovementWhereInput = {};
 
     if (productId) where.productId = productId;
     if (variantId) where.variantId = variantId;
 
-    const [data, total] = await this.movementRepository.findAndCount({
-      where,
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-      relations: ['product', 'variant'],
-    });
+    const [data, total] = await Promise.all([
+      this.prisma.inventoryMovement.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { product: true, variant: true },
+      }),
+      this.prisma.inventoryMovement.count({ where }),
+    ]);
 
     return { data, total };
   }
@@ -241,14 +242,14 @@ export class InventoryService {
    */
   async getStockLevel(productId?: string, variantId?: string): Promise<number> {
     if (variantId) {
-      const variant = await this.variantRepository.findOne({
+      const variant = await this.prisma.productVariant.findUnique({
         where: { id: variantId },
       });
       return variant?.stock ?? 0;
     }
 
     if (productId) {
-      const product = await this.productRepository.findOne({
+      const product = await this.prisma.product.findUnique({
         where: { id: productId },
       });
       return product?.stock ?? 0;
@@ -260,36 +261,37 @@ export class InventoryService {
   /**
    * Set alert threshold
    */
-  async setAlertThreshold(dto: SetAlertThresholdDto): Promise<StockAlert> {
+  async setAlertThreshold(dto: SetAlertThresholdDto) {
     if (!dto.productId && !dto.variantId) {
       throw new ValidationException('Either productId or variantId is required');
     }
 
-    let alert = await this.alertRepository.findOne({
+    const existingAlert = await this.prisma.stockAlert.findFirst({
       where: dto.productId
         ? { productId: dto.productId }
         : { variantId: dto.variantId },
     });
 
-    if (alert) {
-      alert.lowStockThreshold = dto.lowStockThreshold;
-      if (dto.criticalStockThreshold !== undefined) {
-        alert.criticalStockThreshold = dto.criticalStockThreshold;
-      }
-      if (dto.alertEnabled !== undefined) {
-        alert.alertEnabled = dto.alertEnabled;
-      }
+    if (existingAlert) {
+      return this.prisma.stockAlert.update({
+        where: { id: existingAlert.id },
+        data: {
+          lowStockThreshold: dto.lowStockThreshold,
+          criticalStockThreshold: dto.criticalStockThreshold ?? existingAlert.criticalStockThreshold,
+          alertEnabled: dto.alertEnabled ?? existingAlert.alertEnabled,
+        },
+      });
     } else {
-      alert = this.alertRepository.create({
-        productId: dto.productId,
-        variantId: dto.variantId,
-        lowStockThreshold: dto.lowStockThreshold,
-        criticalStockThreshold: dto.criticalStockThreshold ?? 0,
-        alertEnabled: dto.alertEnabled ?? true,
+      return this.prisma.stockAlert.create({
+        data: {
+          productId: dto.productId,
+          variantId: dto.variantId,
+          lowStockThreshold: dto.lowStockThreshold,
+          criticalStockThreshold: dto.criticalStockThreshold ?? 0,
+          alertEnabled: dto.alertEnabled ?? true,
+        },
       });
     }
-
-    return this.alertRepository.save(alert);
   }
 
   /**
@@ -299,9 +301,9 @@ export class InventoryService {
     const lowStockItems: LowStockItem[] = [];
 
     // Get product alerts
-    const productAlerts = await this.alertRepository.find({
-      where: { productId: MoreThan(''), alertEnabled: true },
-      relations: ['product'],
+    const productAlerts = await this.prisma.stockAlert.findMany({
+      where: { productId: { not: null }, alertEnabled: true },
+      include: { product: true },
     });
 
     for (const alert of productAlerts) {
@@ -318,9 +320,9 @@ export class InventoryService {
     }
 
     // Get variant alerts
-    const variantAlerts = await this.alertRepository.find({
-      where: { variantId: MoreThan(''), alertEnabled: true },
-      relations: ['variant', 'variant.product'],
+    const variantAlerts = await this.prisma.stockAlert.findMany({
+      where: { variantId: { not: null }, alertEnabled: true },
+      include: { variant: { include: { product: true } } },
     });
 
     for (const alert of variantAlerts) {
@@ -375,9 +377,12 @@ export class InventoryService {
     variantId?: string,
     currentStock?: number,
   ): Promise<void> {
-    const alert = await this.alertRepository.findOne({
+    const alert = await this.prisma.stockAlert.findFirst({
       where: productId ? { productId } : { variantId },
-      relations: productId ? ['product'] : ['variant', 'variant.product'],
+      include: { 
+        product: true, 
+        variant: { include: { product: true } } 
+      },
     });
 
     if (!alert || !alert.alertEnabled) return;
@@ -405,21 +410,26 @@ export class InventoryService {
           console.error('Failed to send low stock alert:', error);
         }
 
-        alert.lastAlertSentAt = now;
-        alert.alertCount++;
-        await this.alertRepository.save(alert);
+        await this.prisma.stockAlert.update({
+          where: { id: alert.id },
+          data: {
+            lastAlertSentAt: now,
+            alertCount: { increment: 1 },
+          },
+        });
       }
     }
   }
 
   private isOutgoingMovement(type: MovementType): boolean {
-    return [
+    const outgoingTypes: MovementType[] = [
       MovementType.SALE,
       MovementType.RESERVATION,
       MovementType.ADJUSTMENT_OUT,
       MovementType.DAMAGED,
       MovementType.EXPIRED,
       MovementType.TRANSFER_OUT,
-    ].includes(type);
+    ];
+    return outgoingTypes.includes(type);
   }
 }

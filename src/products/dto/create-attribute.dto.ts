@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString, IsEnum, MaxLength } from 'class-validator';
+import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export enum AttributeType {
   SELECT = 'select',
@@ -6,11 +7,13 @@ export enum AttributeType {
 }
 
 export class CreateAttributeDto {
-  @IsNotEmpty({ message: 'Name is required' })
-  @IsString({ message: 'Name must be a string' })
-  @MaxLength(50, { message: 'Name must be at most 50 characters' })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsString()
+  @MaxLength(50, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 50) })
   name: string;
 
-  @IsEnum(AttributeType, { message: 'Type must be either select or color' })
+  @IsEnum(AttributeType, {
+    message: VALIDATION_MESSAGES.INVALID_ENUM('Type', 'select, color'),
+  })
   type: AttributeType;
 }

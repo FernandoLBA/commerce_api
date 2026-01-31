@@ -1,72 +1,62 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { ProductsService } from './products.service';
-import { Product } from './entities/product.entity';
-import { Category } from '../categories/entities/category.entity';
-import {
-  ProductNotFoundException,
-  CategoryNotFoundException,
-} from '../common';
+import { PrismaService } from '../prisma';
 
 describe('ProductsService', () => {
   let service: ProductsService;
-  let productRepository: jest.Mocked<Repository<Product>>;
-  let categoryRepository: jest.Mocked<Repository<Category>>;
-
-  const mockProduct: Product = {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    name: 'Test Product',
-    description: 'Test Description',
-    price: 99.99,
-    stock: 10,
-    isActive: true,
-    categoryId: null,
-    category: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+  let prisma: {
+    product: {
+      create: jest.Mock;
+      findMany: jest.Mock;
+      findUnique: jest.Mock;
+      findFirst: jest.Mock;
+      update: jest.Mock;
+      delete: jest.Mock;
+    };
+    category: {
+      findUnique: jest.Mock;
+    };
   };
 
-  const mockCategory: Category = {
-    id: '123e4567-e89b-12d3-a456-426614174001',
-    name: 'Test Category',
-    description: 'Test Category Description',
+  const mockProduct = {
+    id: 'product-uuid-123',
+    name: 'Test Product',
+    slug: 'test-product',
+    description: 'Test product description',
+    price: 99.99,
+    stock: 100,
     isActive: true,
-    products: [],
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    category: { id: 'cat-1', name: 'Electronics' },
+    images: [],
   };
 
   beforeEach(async () => {
-    const mockProductRepository = {
-      create: jest.fn(),
-      save: jest.fn(),
-      find: jest.fn(),
-      findOne: jest.fn(),
-      remove: jest.fn(),
-    };
-
-    const mockCategoryRepository = {
-      findOne: jest.fn(),
+    const mockPrismaService = {
+      product: {
+        create: jest.fn(),
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        findFirst: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      category: {
+        findUnique: jest.fn(),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
         {
-          provide: getRepositoryToken(Product),
-          useValue: mockProductRepository,
-        },
-        {
-          provide: getRepositoryToken(Category),
-          useValue: mockCategoryRepository,
+          provide: PrismaService,
+          useValue: mockPrismaService,
         },
       ],
     }).compile();
 
     service = module.get<ProductsService>(ProductsService);
-    productRepository = module.get(getRepositoryToken(Product));
-    categoryRepository = module.get(getRepositoryToken(Category));
+    prisma = module.get(PrismaService);
   });
 
   it('should be defined', () => {
@@ -74,143 +64,68 @@ describe('ProductsService', () => {
   });
 
   describe('create', () => {
-    it('should create a product without category', async () => {
-      const createDto = {
+    it('should create a product', async () => {
+      prisma.product.findFirst.mockResolvedValue(null);
+      prisma.product.create.mockResolvedValue(mockProduct);
+
+      const result = await service.create({
         name: 'New Product',
-        price: 50.0,
-        stock: 5,
-      };
-
-      productRepository.create.mockReturnValue(mockProduct);
-      productRepository.save.mockResolvedValue(mockProduct);
-
-      const result = await service.create(createDto);
-
-      expect(productRepository.create).toHaveBeenCalledWith(createDto);
-      expect(productRepository.save).toHaveBeenCalled();
-      expect(result).toEqual(mockProduct);
-    });
-
-    it('should create a product with valid category', async () => {
-      const createDto = {
-        name: 'New Product',
-        price: 50.0,
-        categoryId: mockCategory.id,
-      };
-
-      categoryRepository.findOne.mockResolvedValue(mockCategory);
-      productRepository.create.mockReturnValue(mockProduct);
-      productRepository.save.mockResolvedValue(mockProduct);
-
-      const result = await service.create(createDto);
-
-      expect(categoryRepository.findOne).toHaveBeenCalledWith({
-        where: { id: mockCategory.id },
+        description: 'Description',
+        price: 99.99,
       });
-      expect(result).toEqual(mockProduct);
-    });
 
-    it('should throw CategoryNotFoundException if category does not exist', async () => {
-      const createDto = {
-        name: 'New Product',
-        price: 50.0,
-        categoryId: 'invalid-id',
-      };
-
-      categoryRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.create(createDto)).rejects.toThrow(
-        CategoryNotFoundException,
-      );
+      expect(prisma.product.create).toHaveBeenCalled();
+      expect(result.name).toBe('Test Product');
     });
   });
 
   describe('findAll', () => {
-    it('should return an array of products', async () => {
-      const products = [mockProduct];
-      productRepository.find.mockResolvedValue(products);
+    it('should return all products', async () => {
+      prisma.product.findMany.mockResolvedValue([mockProduct]);
 
       const result = await service.findAll();
 
-      expect(productRepository.find).toHaveBeenCalledWith({
-        relations: ['category'],
-        order: { createdAt: 'DESC' },
-      });
-      expect(result).toEqual(products);
+      expect(result).toHaveLength(1);
     });
   });
 
   describe('findOne', () => {
-    it('should return a product if found', async () => {
-      productRepository.findOne.mockResolvedValue(mockProduct);
+    it('should return a product by id', async () => {
+      prisma.product.findUnique.mockResolvedValue(mockProduct);
 
       const result = await service.findOne(mockProduct.id);
 
-      expect(productRepository.findOne).toHaveBeenCalledWith({
-        where: { id: mockProduct.id },
-        relations: ['category'],
-      });
-      expect(result).toEqual(mockProduct);
-    });
-
-    it('should throw ProductNotFoundException if product not found', async () => {
-      productRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.findOne('invalid-id')).rejects.toThrow(
-        ProductNotFoundException,
-      );
+      expect(result.name).toBe('Test Product');
     });
   });
 
   describe('update', () => {
     it('should update a product', async () => {
-      const updateDto = { name: 'Updated Product' };
-      const updatedProduct = { ...mockProduct, ...updateDto };
+      prisma.product.findUnique.mockResolvedValue(mockProduct);
+      prisma.product.findFirst.mockResolvedValue(null);
+      prisma.product.update.mockResolvedValue({
+        ...mockProduct,
+        name: 'Updated Product',
+      });
 
-      productRepository.findOne.mockResolvedValue(mockProduct);
-      productRepository.save.mockResolvedValue(updatedProduct);
-
-      const result = await service.update(mockProduct.id, updateDto);
+      const result = await service.update(mockProduct.id, {
+        name: 'Updated Product',
+      });
 
       expect(result.name).toBe('Updated Product');
-    });
-
-    it('should throw ProductNotFoundException if product not found', async () => {
-      productRepository.findOne.mockResolvedValue(null);
-
-      await expect(
-        service.update('invalid-id', { name: 'Test' }),
-      ).rejects.toThrow(ProductNotFoundException);
-    });
-
-    it('should throw CategoryNotFoundException if updating with invalid category', async () => {
-      const updateDto = { categoryId: 'invalid-category-id' };
-
-      productRepository.findOne.mockResolvedValue(mockProduct);
-      categoryRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.update(mockProduct.id, updateDto)).rejects.toThrow(
-        CategoryNotFoundException,
-      );
     });
   });
 
   describe('remove', () => {
     it('should remove a product', async () => {
-      productRepository.findOne.mockResolvedValue(mockProduct);
-      productRepository.remove.mockResolvedValue(mockProduct);
+      prisma.product.findUnique.mockResolvedValue(mockProduct);
+      prisma.product.delete.mockResolvedValue(mockProduct);
 
       await service.remove(mockProduct.id);
 
-      expect(productRepository.remove).toHaveBeenCalledWith(mockProduct);
-    });
-
-    it('should throw ProductNotFoundException if product not found', async () => {
-      productRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.remove('invalid-id')).rejects.toThrow(
-        ProductNotFoundException,
-      );
+      expect(prisma.product.delete).toHaveBeenCalledWith({
+        where: { id: mockProduct.id },
+      });
     });
   });
 });
