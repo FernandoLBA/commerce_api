@@ -8,7 +8,7 @@ import {
   Min,
   IsDateString,
 } from 'class-validator';
-import { ShippingCarrier } from '../enums/shipping-carrier.enum';
+import { ShippingCarrier } from '../../generated/prisma/client';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateShipmentDto {
@@ -17,7 +17,7 @@ export class CreateShipmentDto {
   orderId: string;
 
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
-  @IsEnum(ShippingCarrier, { message: VALIDATION_MESSAGES.INVALID_ENUM('Carrier', 'olva, shalom, 99minutos, rappi') })
+  @IsEnum(ShippingCarrier, { message: VALIDATION_MESSAGES.INVALID_ENUM('Carrier', 'OLVA, SHALOM, CRUZ_DEL_SUR, SERVIENTREGA, PICKUP') })
   carrier: ShippingCarrier;
 
   @IsOptional()

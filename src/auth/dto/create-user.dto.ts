@@ -6,7 +6,6 @@ import {
   IsOptional,
 } from 'class-validator';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
-import { Column } from 'typeorm/browser/decorator/columns/Column.js';
 
 export class CreateUserDto {
   @IsEmail({}, { message: VALIDATION_MESSAGES.INVALID_EMAIL })
@@ -19,7 +18,6 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
-  @Column({ name: 'first_name' })
   @MaxLength(100, {
     message: VALIDATION_MESSAGES.MAX_LENGTH('First name', 100),
   })
@@ -27,7 +25,6 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsString()
-  @Column({ name: 'last_name' })
   @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Last name', 100) })
   lastName?: string;
 }

@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
-import { MovementType } from '../enums/movement-type.enum';
+import { MovementType } from '../../generated/prisma/client';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class AdjustStockDto {
@@ -11,7 +11,7 @@ export class AdjustStockDto {
   @IsOptional()
   variantId?: string;
 
-  @IsEnum(MovementType, { message: VALIDATION_MESSAGES.INVALID_ENUM('Type', 'purchase, sale, adjustment, return, transfer_in, transfer_out') })
+  @IsEnum(MovementType, { message: VALIDATION_MESSAGES.INVALID_ENUM('Type', 'PURCHASE, SALE, ADJUSTMENT_IN, ADJUSTMENT_OUT, RETURN, RESERVATION, RELEASE, TRANSFER_IN, TRANSFER_OUT, DAMAGED, EXPIRED') })
   type: MovementType;
 
   @IsInt({ message: VALIDATION_MESSAGES.MUST_BE_INTEGER('Quantity') })

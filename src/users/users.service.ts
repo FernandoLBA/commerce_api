@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from '../auth/entities/user.entity';
-import { Address } from './entities/address.entity';
+import { PrismaService } from '../prisma';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -13,18 +10,21 @@ import {
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private userRepository: Repository<User>,
-    @InjectRepository(Address)
-    private addressRepository: Repository<Address>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   // Profile methods
-  async getProfile(userId: string): Promise<User> {
-    const user = await this.userRepository.findOne({
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: ['id', 'email', 'firstName', 'lastName', 'phone', 'role', 'createdAt'],
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+      },
     });
 
     if (!user) {
@@ -34,8 +34,8 @@ export class UsersService {
     return user;
   }
 
-  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto): Promise<User> {
-    const user = await this.userRepository.findOne({
+  async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -43,22 +43,24 @@ export class UsersService {
       throw new UserNotFoundException();
     }
 
-    Object.assign(user, updateProfileDto);
-    await this.userRepository.save(user);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: updateProfileDto,
+    });
 
     return this.getProfile(userId);
   }
 
   // Address methods
-  async getAddresses(userId: string): Promise<Address[]> {
-    return this.addressRepository.find({
+  async getAddresses(userId: string) {
+    return this.prisma.address.findMany({
       where: { userId },
-      order: { isDefault: 'DESC', createdAt: 'DESC' },
+      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
     });
   }
 
-  async getAddress(userId: string, addressId: string): Promise<Address> {
-    const address = await this.addressRepository.findOne({
+  async getAddress(userId: string, addressId: string) {
+    const address = await this.prisma.address.findFirst({
       where: { id: addressId, userId },
     });
 
@@ -69,78 +71,87 @@ export class UsersService {
     return address;
   }
 
-  async createAddress(userId: string, createAddressDto: CreateAddressDto): Promise<Address> {
+  async createAddress(userId: string, createAddressDto: CreateAddressDto) {
     // If this is the first address or marked as default, handle default logic
     if (createAddressDto.isDefault) {
-      await this.addressRepository.update(
-        { userId },
-        { isDefault: false },
-      );
+      await this.prisma.address.updateMany({
+        where: { userId },
+        data: { isDefault: false },
+      });
     }
 
     // Check if this is the first address
-    const addressCount = await this.addressRepository.count({ where: { userId } });
+    const addressCount = await this.prisma.address.count({ where: { userId } });
     const isFirstAddress = addressCount === 0;
 
-    const address = this.addressRepository.create({
-      ...createAddressDto,
-      userId,
-      isDefault: createAddressDto.isDefault || isFirstAddress,
-    });
+    const { recipientPhone, ...addressData } = createAddressDto;
 
-    return this.addressRepository.save(address);
+    return this.prisma.address.create({
+      data: {
+        ...addressData,
+        phone: recipientPhone,
+        userId,
+        isDefault: createAddressDto.isDefault || isFirstAddress,
+      },
+    });
   }
 
   async updateAddress(
     userId: string,
     addressId: string,
     updateAddressDto: UpdateAddressDto,
-  ): Promise<Address> {
-    const address = await this.getAddress(userId, addressId);
+  ) {
+    await this.getAddress(userId, addressId); // Verify exists
 
     // Handle default address logic
     if (updateAddressDto.isDefault) {
-      await this.addressRepository.update(
-        { userId },
-        { isDefault: false },
-      );
+      await this.prisma.address.updateMany({
+        where: { userId },
+        data: { isDefault: false },
+      });
     }
 
-    Object.assign(address, updateAddressDto);
-    return this.addressRepository.save(address);
+    return this.prisma.address.update({
+      where: { id: addressId },
+      data: updateAddressDto,
+    });
   }
 
   async deleteAddress(userId: string, addressId: string): Promise<void> {
     const address = await this.getAddress(userId, addressId);
     const wasDefault = address.isDefault;
 
-    await this.addressRepository.remove(address);
+    await this.prisma.address.delete({ where: { id: addressId } });
 
     // If deleted address was default, set another one as default
     if (wasDefault) {
-      const firstAddress = await this.addressRepository.findOne({
+      const firstAddress = await this.prisma.address.findFirst({
         where: { userId },
-        order: { createdAt: 'ASC' },
+        orderBy: { createdAt: 'asc' },
       });
 
       if (firstAddress) {
-        firstAddress.isDefault = true;
-        await this.addressRepository.save(firstAddress);
+        await this.prisma.address.update({
+          where: { id: firstAddress.id },
+          data: { isDefault: true },
+        });
       }
     }
   }
 
-  async setDefaultAddress(userId: string, addressId: string): Promise<Address> {
-    const address = await this.getAddress(userId, addressId);
+  async setDefaultAddress(userId: string, addressId: string) {
+    await this.getAddress(userId, addressId); // Verify exists
 
     // Remove default from all other addresses
-    await this.addressRepository.update(
-      { userId },
-      { isDefault: false },
-    );
+    await this.prisma.address.updateMany({
+      where: { userId },
+      data: { isDefault: false },
+    });
 
     // Set this address as default
-    address.isDefault = true;
-    return this.addressRepository.save(address);
+    return this.prisma.address.update({
+      where: { id: addressId },
+      data: { isDefault: true },
+    });
   }
 }

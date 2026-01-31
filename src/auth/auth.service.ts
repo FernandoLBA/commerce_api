@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { User } from './entities/user.entity';
+import { PrismaService } from '../prisma';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
 import {
@@ -15,8 +13,7 @@ import {
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
 
@@ -24,7 +21,7 @@ export class AuthService {
     const { email, password, firstName, lastName } = createUserDto;
 
     // Verificar si el usuario ya existe
-    const existingUser = await this.usersRepository.findOne({
+    const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
 
@@ -36,14 +33,14 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Crear nuevo usuario
-    const user = this.usersRepository.create({
-      email,
-      password: hashedPassword,
-      firstName,
-      lastName,
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+      },
     });
-
-    await this.usersRepository.save(user);
 
     return {
       id: user.id,
@@ -57,7 +54,7 @@ export class AuthService {
     const { email, password } = loginDto;
 
     // Buscar el usuario
-    const user = await this.usersRepository.findOne({
+    const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
@@ -97,9 +94,16 @@ export class AuthService {
   }
 
   async validateUser(id: string) {
-    return this.usersRepository.findOne({
+    return this.prisma.user.findUnique({
       where: { id },
-      select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive'],
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+      },
     });
   }
 }

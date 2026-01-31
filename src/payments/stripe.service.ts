@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import Stripe from 'stripe';
-import { Payment } from '../orders/entities/payment.entity';
-import { Order } from '../orders/entities/order.entity';
-import { PaymentStatus } from '../orders/enums/payment-status.enum';
-import { OrderStatus } from '../orders/enums/order-status.enum';
+import { PrismaService } from '../prisma';
+import { PaymentStatus, OrderStatus } from '../generated/prisma/client';
 import { ValidationException } from '../common';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -14,14 +10,11 @@ export class StripeService {
   private stripe: Stripe;
 
   constructor(
-    @InjectRepository(Payment)
-    private paymentRepository: Repository<Payment>,
-    @InjectRepository(Order)
-    private orderRepository: Repository<Order>,
+    private prisma: PrismaService,
     private notificationsService: NotificationsService,
   ) {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-      apiVersion: '2026-01-28.clover',
+      apiVersion: '2025-01-27.acacia' as any,
     });
   }
 
@@ -29,9 +22,9 @@ export class StripeService {
     clientSecret: string;
     paymentIntentId: string;
   }> {
-    const order = await this.orderRepository.findOne({
+    const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      relations: ['payments'],
+      include: { payments: true },
     });
 
     if (!order) {
@@ -58,10 +51,14 @@ export class StripeService {
     });
 
     // Update payment with Stripe info
-    payment.externalId = paymentIntent.id;
-    payment.externalStatus = paymentIntent.status;
-    payment.status = PaymentStatus.PROCESSING;
-    await this.paymentRepository.save(payment);
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        externalId: paymentIntent.id,
+        externalStatus: paymentIntent.status,
+        status: PaymentStatus.PROCESSING,
+      },
+    });
 
     return {
       clientSecret: paymentIntent.client_secret!,
@@ -113,9 +110,9 @@ export class StripeService {
   }
 
   private async handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    const payment = await this.paymentRepository.findOne({
+    const payment = await this.prisma.payment.findFirst({
       where: { externalId: paymentIntent.id },
-      relations: ['order'],
+      include: { order: true },
     });
 
     if (!payment) {
@@ -123,30 +120,37 @@ export class StripeService {
       return;
     }
 
-    payment.status = PaymentStatus.COMPLETED;
-    payment.externalStatus = paymentIntent.status;
-    payment.externalData = paymentIntent as any;
-    payment.completedAt = new Date();
-    await this.paymentRepository.save(payment);
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: PaymentStatus.COMPLETED,
+        externalStatus: paymentIntent.status,
+        externalData: paymentIntent as any,
+        completedAt: new Date(),
+      },
+    });
 
     // Update order status
-    const order = payment.order;
-    if (order.status === OrderStatus.PENDING) {
-      order.status = OrderStatus.CONFIRMED;
-      order.confirmedAt = new Date();
-      await this.orderRepository.save(order);
+    if (payment.order.status === OrderStatus.PENDING) {
+      await this.prisma.order.update({
+        where: { id: payment.order.id },
+        data: {
+          status: OrderStatus.CONFIRMED,
+          confirmedAt: new Date(),
+        },
+      });
 
       // Send payment confirmation email
       try {
-        const orderWithItems = await this.orderRepository.findOne({
-          where: { id: order.id },
-          relations: ['items', 'user'],
+        const orderWithItems = await this.prisma.order.findUnique({
+          where: { id: payment.order.id },
+          include: { items: true, user: true },
         });
         if (orderWithItems?.user?.email) {
           await this.notificationsService.sendPaymentConfirmation(
             orderWithItems,
             orderWithItems.user.email,
-            Number(order.total),
+            Number(payment.order.total),
           );
         }
       } catch (emailError) {
@@ -156,7 +160,7 @@ export class StripeService {
   }
 
   private async handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-    const payment = await this.paymentRepository.findOne({
+    const payment = await this.prisma.payment.findFirst({
       where: { externalId: paymentIntent.id },
     });
 
@@ -165,24 +169,28 @@ export class StripeService {
       return;
     }
 
-    payment.status = PaymentStatus.FAILED;
-    payment.externalStatus = paymentIntent.status;
-    payment.errorCode = paymentIntent.last_payment_error?.code || 'unknown';
-    payment.errorMessage = paymentIntent.last_payment_error?.message || 'Payment failed';
-    payment.externalData = paymentIntent as any;
-    await this.paymentRepository.save(payment);
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: PaymentStatus.FAILED,
+        externalStatus: paymentIntent.status,
+        errorCode: paymentIntent.last_payment_error?.code || 'unknown',
+        errorMessage: paymentIntent.last_payment_error?.message || 'Payment failed',
+        externalData: paymentIntent as any,
+      },
+    });
 
     // Send payment failed email
     try {
-      const order = await this.orderRepository.findOne({
+      const order = await this.prisma.order.findUnique({
         where: { id: payment.orderId },
-        relations: ['items', 'user'],
+        include: { items: true, user: true },
       });
       if (order?.user?.email) {
         await this.notificationsService.sendPaymentFailed(
           order,
           order.user.email,
-          payment.errorMessage,
+          paymentIntent.last_payment_error?.message || 'Payment failed',
         );
       }
     } catch (emailError) {
@@ -193,9 +201,9 @@ export class StripeService {
   private async handleRefund(charge: Stripe.Charge): Promise<void> {
     const paymentIntent = charge.payment_intent as string;
 
-    const payment = await this.paymentRepository.findOne({
+    const payment = await this.prisma.payment.findFirst({
       where: { externalId: paymentIntent },
-      relations: ['order'],
+      include: { order: true },
     });
 
     if (!payment) {
@@ -203,22 +211,27 @@ export class StripeService {
       return;
     }
 
-    payment.status = PaymentStatus.REFUNDED;
-    payment.refundedAmount = charge.amount_refunded / 100;
-    payment.refundId = charge.refunds?.data?.[0]?.id;
-    payment.refundedAt = new Date();
-    await this.paymentRepository.save(payment);
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        status: PaymentStatus.REFUNDED,
+        refundedAmount: charge.amount_refunded / 100,
+        refundId: charge.refunds?.data?.[0]?.id,
+        refundedAt: new Date(),
+      },
+    });
 
     // Update order status
-    const order = payment.order;
-    order.status = OrderStatus.REFUNDED;
-    await this.orderRepository.save(order);
+    await this.prisma.order.update({
+      where: { id: payment.order.id },
+      data: { status: OrderStatus.REFUNDED },
+    });
   }
 
-  async createRefund(paymentId: string, amount?: number): Promise<Payment> {
-    const payment = await this.paymentRepository.findOne({
+  async createRefund(paymentId: string, amount?: number) {
+    const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
-      relations: ['order'],
+      include: { order: true },
     });
 
     if (!payment) {
@@ -240,12 +253,14 @@ export class StripeService {
       amount: Math.round(refundAmount * 100),
     });
 
-    payment.status = PaymentStatus.REFUNDED;
-    payment.refundId = refund.id;
-    payment.refundedAmount = refundAmount;
-    payment.refundedAt = new Date();
-    await this.paymentRepository.save(payment);
-
-    return payment;
+    return this.prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: PaymentStatus.REFUNDED,
+        refundId: refund.id,
+        refundedAmount: refundAmount,
+        refundedAt: new Date(),
+      },
+    });
   }
 }

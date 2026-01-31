@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Review } from './entities/review.entity';
-import { Order } from '../orders/entities/order.entity';
+import { PrismaService } from '../prisma';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import {
@@ -10,6 +7,7 @@ import {
   ValidationException,
   ForbiddenException,
 } from '../common';
+import { Prisma, OrderStatus } from '../generated/prisma/client';
 
 export interface ProductRating {
   averageRating: number;
@@ -25,16 +23,11 @@ export interface ProductRating {
 
 @Injectable()
 export class ReviewsService {
-  constructor(
-    @InjectRepository(Review)
-    private reviewRepository: Repository<Review>,
-    @InjectRepository(Order)
-    private orderRepository: Repository<Order>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(userId: string, createReviewDto: CreateReviewDto): Promise<Review> {
+  async create(userId: string, createReviewDto: CreateReviewDto) {
     // Check if user already reviewed this product
-    const existingReview = await this.reviewRepository.findOne({
+    const existingReview = await this.prisma.review.findFirst({
       where: {
         userId,
         productId: createReviewDto.productId,
@@ -51,13 +44,13 @@ export class ReviewsService {
       createReviewDto.productId,
     );
 
-    const review = this.reviewRepository.create({
-      ...createReviewDto,
-      userId,
-      isVerifiedPurchase,
+    return this.prisma.review.create({
+      data: {
+        ...createReviewDto,
+        userId,
+        isVerifiedPurchase,
+      },
     });
-
-    return this.reviewRepository.save(review);
   }
 
   async findAll(
@@ -65,8 +58,8 @@ export class ReviewsService {
     page = 1,
     limit = 10,
     onlyVerified = false,
-  ): Promise<{ data: Review[]; total: number }> {
-    const where: any = { isApproved: true };
+  ) {
+    const where: Prisma.ReviewWhereInput = { isApproved: true };
     
     if (productId) {
       where.productId = productId;
@@ -76,28 +69,32 @@ export class ReviewsService {
       where.isVerifiedPurchase = true;
     }
 
-    const [data, total] = await this.reviewRepository.findAndCount({
-      where,
-      relations: ['user'],
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-      select: {
-        user: {
-          id: true,
-          firstName: true,
-          lastName: true,
+    const [data, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
         },
-      },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.review.count({ where }),
+    ]);
 
     return { data, total };
   }
 
-  async findOne(id: string): Promise<Review> {
-    const review = await this.reviewRepository.findOne({
+  async findOne(id: string) {
+    const review = await this.prisma.review.findUnique({
       where: { id },
-      relations: ['user', 'product'],
+      include: { user: true, product: true },
     });
 
     if (!review) {
@@ -107,11 +104,11 @@ export class ReviewsService {
     return review;
   }
 
-  async findByUser(userId: string): Promise<Review[]> {
-    return this.reviewRepository.find({
+  async findByUser(userId: string) {
+    return this.prisma.review.findMany({
       where: { userId },
-      relations: ['product'],
-      order: { createdAt: 'DESC' },
+      include: { product: true },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -120,29 +117,36 @@ export class ReviewsService {
     userId: string,
     updateReviewDto: UpdateReviewDto,
     isAdmin = false,
-  ): Promise<Review> {
+  ) {
     const review = await this.findOne(id);
 
     if (!isAdmin && review.userId !== userId) {
       throw new ForbiddenException('You can only update your own reviews');
     }
 
+    const updateData: Prisma.ReviewUpdateInput = {};
+
     // Users can only update rating, title, comment, images
     if (!isAdmin) {
-      const { rating, title, comment, images } = updateReviewDto;
-      Object.assign(review, { rating, title, comment, images });
+      if (updateReviewDto.rating !== undefined) updateData.rating = updateReviewDto.rating;
+      if (updateReviewDto.title !== undefined) updateData.title = updateReviewDto.title;
+      if (updateReviewDto.comment !== undefined) updateData.comment = updateReviewDto.comment;
+      if (updateReviewDto.images !== undefined) updateData.images = updateReviewDto.images;
     } else {
       // Admins can update approval and response
       if (updateReviewDto.isApproved !== undefined) {
-        review.isApproved = updateReviewDto.isApproved;
+        updateData.isApproved = updateReviewDto.isApproved;
       }
       if (updateReviewDto.adminResponse) {
-        review.adminResponse = updateReviewDto.adminResponse;
-        review.adminResponseAt = new Date();
+        updateData.adminResponse = updateReviewDto.adminResponse;
+        updateData.adminResponseAt = new Date();
       }
     }
 
-    return this.reviewRepository.save(review);
+    return this.prisma.review.update({
+      where: { id },
+      data: updateData,
+    });
   }
 
   async remove(id: string, userId: string, isAdmin = false): Promise<void> {
@@ -152,24 +156,26 @@ export class ReviewsService {
       throw new ForbiddenException('You can only delete your own reviews');
     }
 
-    await this.reviewRepository.remove(review);
+    await this.prisma.review.delete({ where: { id } });
   }
 
-  async markHelpful(id: string, userId: string): Promise<Review> {
+  async markHelpful(id: string, userId: string) {
     const review = await this.findOne(id);
 
     if (review.userId === userId) {
       throw new ValidationException('You cannot mark your own review as helpful');
     }
 
-    review.helpfulCount++;
-    return this.reviewRepository.save(review);
+    return this.prisma.review.update({
+      where: { id },
+      data: { helpfulCount: { increment: 1 } },
+    });
   }
 
   async getProductRating(productId: string): Promise<ProductRating> {
-    const reviews = await this.reviewRepository.find({
+    const reviews = await this.prisma.review.findMany({
       where: { productId, isApproved: true },
-      select: ['rating'],
+      select: { rating: true },
     });
 
     if (reviews.length === 0) {
@@ -195,14 +201,17 @@ export class ReviewsService {
     };
   }
 
-  async getPendingReviews(page = 1, limit = 20): Promise<{ data: Review[]; total: number }> {
-    const [data, total] = await this.reviewRepository.findAndCount({
-      where: { isApproved: false },
-      relations: ['user', 'product'],
-      order: { createdAt: 'ASC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+  async getPendingReviews(page = 1, limit = 20) {
+    const [data, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where: { isApproved: false },
+        include: { user: true, product: true },
+        orderBy: { createdAt: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.review.count({ where: { isApproved: false } }),
+    ]);
 
     return { data, total };
   }
@@ -211,15 +220,15 @@ export class ReviewsService {
     userId: string,
     productId: string,
   ): Promise<boolean> {
-    const order = await this.orderRepository
-      .createQueryBuilder('order')
-      .innerJoin('order.items', 'item')
-      .where('order.userId = :userId', { userId })
-      .andWhere('item.productId = :productId', { productId })
-      .andWhere('order.status IN (:...statuses)', {
-        statuses: ['delivered', 'completed'],
-      })
-      .getOne();
+    const order = await this.prisma.order.findFirst({
+      where: {
+        userId,
+        status: { in: [OrderStatus.DELIVERED] },
+        items: {
+          some: { productId },
+        },
+      },
+    });
 
     return !!order;
   }

@@ -13,7 +13,7 @@ import {
   IsNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { DiscountType } from '../enums/discount-type.enum';
+import { DiscountType } from '../../generated/prisma/client';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateCouponDto {
@@ -27,7 +27,7 @@ export class CreateCouponDto {
   @MaxLength(500, { message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 500) })
   description?: string;
 
-  @IsEnum(DiscountType, { message: VALIDATION_MESSAGES.INVALID_ENUM('Discount type', 'percentage, fixed_amount') })
+  @IsEnum(DiscountType, { message: VALIDATION_MESSAGES.INVALID_ENUM('Discount type', 'PERCENTAGE, FIXED_AMOUNT, FREE_SHIPPING') })
   discountType: DiscountType;
 
   @IsNumber({}, { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Discount value') })

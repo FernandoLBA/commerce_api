@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ProductVariant } from './entities/product-variant.entity';
-import { Product } from './entities/product.entity';
+import { PrismaService } from '../prisma';
 import { CreateVariantDto } from './dto/create-variant.dto';
 import { UpdateVariantDto } from './dto/update-variant.dto';
 import { AttributesService } from './attributes.service';
@@ -15,19 +12,16 @@ import {
 @Injectable()
 export class VariantsService {
   constructor(
-    @InjectRepository(ProductVariant)
-    private variantsRepository: Repository<ProductVariant>,
-    @InjectRepository(Product)
-    private productsRepository: Repository<Product>,
+    private prisma: PrismaService,
     private attributesService: AttributesService,
   ) {}
 
-  async create(createVariantDto: CreateVariantDto): Promise<ProductVariant> {
+  async create(createVariantDto: CreateVariantDto) {
     const { productId, sku, attributeValueIds, ...variantData } =
       createVariantDto;
 
     // Verify product exists
-    const product = await this.productsRepository.findOne({
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
@@ -38,7 +32,7 @@ export class VariantsService {
     }
 
     // Check SKU uniqueness
-    const existingSku = await this.variantsRepository.findOne({
+    const existingSku = await this.prisma.productVariant.findFirst({
       where: { sku },
     });
 
@@ -50,34 +44,55 @@ export class VariantsService {
     const attributeValues =
       await this.attributesService.findAttributeValuesByIds(attributeValueIds);
 
-    const variant = this.variantsRepository.create({
-      ...variantData,
-      sku,
-      product,
-      attributeValues,
+    // Create variant with attribute values
+    const variant = await this.prisma.productVariant.create({
+      data: {
+        ...variantData,
+        sku,
+        productId,
+        attributeValues: {
+          create: attributeValues.map((av) => ({ attributeValueId: av.id })),
+        },
+      },
+      include: {
+        attributeValues: {
+          include: { attributeValue: { include: { attribute: true } } },
+        },
+      },
     });
 
     // Update product to have variants
     if (!product.hasVariants) {
-      product.hasVariants = true;
-      await this.productsRepository.save(product);
+      await this.prisma.product.update({
+        where: { id: productId },
+        data: { hasVariants: true },
+      });
     }
 
-    return this.variantsRepository.save(variant);
+    return variant;
   }
 
-  async findAllByProduct(productId: string): Promise<ProductVariant[]> {
-    return this.variantsRepository.find({
-      where: { product: { id: productId } },
-      relations: ['attributeValues', 'attributeValues.attribute'],
-      order: { createdAt: 'ASC' },
+  async findAllByProduct(productId: string) {
+    return this.prisma.productVariant.findMany({
+      where: { productId },
+      include: {
+        attributeValues: {
+          include: { attributeValue: { include: { attribute: true } } },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
-  async findOne(id: string): Promise<ProductVariant> {
-    const variant = await this.variantsRepository.findOne({
+  async findOne(id: string) {
+    const variant = await this.prisma.productVariant.findUnique({
       where: { id },
-      relations: ['product', 'attributeValues', 'attributeValues.attribute'],
+      include: {
+        product: true,
+        attributeValues: {
+          include: { attributeValue: { include: { attribute: true } } },
+        },
+      },
     });
 
     if (!variant) {
@@ -89,10 +104,15 @@ export class VariantsService {
     return variant;
   }
 
-  async findBySku(sku: string): Promise<ProductVariant> {
-    const variant = await this.variantsRepository.findOne({
+  async findBySku(sku: string) {
+    const variant = await this.prisma.productVariant.findFirst({
       where: { sku },
-      relations: ['product', 'attributeValues', 'attributeValues.attribute'],
+      include: {
+        product: true,
+        attributeValues: {
+          include: { attributeValue: { include: { attribute: true } } },
+        },
+      },
     });
 
     if (!variant) {
@@ -104,15 +124,12 @@ export class VariantsService {
     return variant;
   }
 
-  async update(
-    id: string,
-    updateVariantDto: UpdateVariantDto,
-  ): Promise<ProductVariant> {
+  async update(id: string, updateVariantDto: UpdateVariantDto) {
     const variant = await this.findOne(id);
 
     // Check SKU uniqueness if updating SKU
     if (updateVariantDto.sku && updateVariantDto.sku !== variant.sku) {
-      const existingSku = await this.variantsRepository.findOne({
+      const existingSku = await this.prisma.productVariant.findFirst({
         where: { sku: updateVariantDto.sku },
       });
 
@@ -123,29 +140,47 @@ export class VariantsService {
       }
     }
 
+    const { attributeValueIds, ...updateData } = updateVariantDto;
+
+    // Build update data
+    const prismaUpdateData: any = { ...updateData };
+
     // Update attribute values if provided
-    if (updateVariantDto.attributeValueIds) {
-      variant.attributeValues =
+    if (attributeValueIds) {
+      const attributeValues =
         await this.attributesService.findAttributeValuesByIds(
-          updateVariantDto.attributeValueIds,
+          attributeValueIds,
         );
+
+      prismaUpdateData.attributeValues = {
+        set: attributeValues.map((av) => ({ id: av.id })),
+      };
     }
 
-    const { attributeValueIds, ...updateData } = updateVariantDto;
-    Object.assign(variant, updateData);
-
-    return this.variantsRepository.save(variant);
+    return this.prisma.productVariant.update({
+      where: { id },
+      data: prismaUpdateData,
+      include: {
+        attributeValues: {
+          include: { attributeValue: { include: { attribute: true } } },
+        },
+      },
+    });
   }
 
   async remove(id: string): Promise<void> {
-    const variant = await this.findOne(id);
-    await this.variantsRepository.remove(variant);
+    await this.findOne(id);
+    await this.prisma.productVariant.delete({ where: { id } });
   }
 
-  async updateStock(id: string, quantity: number): Promise<ProductVariant> {
+  async updateStock(id: string, quantity: number) {
     const variant = await this.findOne(id);
-    variant.stock = Math.max(0, variant.stock + quantity);
-    return this.variantsRepository.save(variant);
+    const newStock = Math.max(0, variant.stock + quantity);
+
+    return this.prisma.productVariant.update({
+      where: { id },
+      data: { stock: newStock },
+    });
   }
 
   async checkAvailability(id: string, quantity: number): Promise<boolean> {

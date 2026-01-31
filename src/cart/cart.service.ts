@@ -1,10 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Cart } from './entities/cart.entity';
-import { CartItem } from './entities/cart-item.entity';
-import { Product } from '../products/entities/product.entity';
-import { ProductVariant } from '../products/entities/product-variant.entity';
+import { PrismaService } from '../prisma';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import {
@@ -15,51 +10,75 @@ import {
 
 @Injectable()
 export class CartService {
-  constructor(
-    @InjectRepository(Cart)
-    private cartRepository: Repository<Cart>,
-    @InjectRepository(CartItem)
-    private cartItemRepository: Repository<CartItem>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
-    @InjectRepository(ProductVariant)
-    private variantRepository: Repository<ProductVariant>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async getOrCreateCart(userId: string): Promise<Cart> {
-    let cart = await this.cartRepository.findOne({
+  async getOrCreateCart(userId: string) {
+    let cart = await this.prisma.cart.findFirst({
       where: { userId },
-      relations: [
-        'items',
-        'items.product',
-        'items.variant',
-        'items.variant.attributeValues',
-        'items.variant.attributeValues.attribute',
-      ],
+      include: {
+        items: {
+          include: {
+            product: true,
+            variant: {
+              include: {
+                attributeValues: {
+                  include: {
+                    attributeValue: {
+                      include: {
+                        attribute: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!cart) {
-      cart = this.cartRepository.create({ userId, items: [] });
-      await this.cartRepository.save(cart);
+      cart = await this.prisma.cart.create({
+        data: { userId },
+        include: {
+          items: {
+            include: {
+              product: true,
+              variant: {
+                include: {
+                  attributeValues: {
+                    include: {
+                      attributeValue: {
+                        include: {
+                          attribute: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
     }
 
     return cart;
   }
 
-  async getCart(userId: string): Promise<Omit<Cart, 'generateId'> & { total: number; itemCount: number }> {
+  async getCart(userId: string) {
     const cart = await this.getOrCreateCart(userId);
     const total = this.calculateTotal(cart.items);
     const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
-    const { generateId, ...cartData } = cart;
-    return { ...cartData, total, itemCount };
+    return { ...cart, total, itemCount };
   }
 
-  async addToCart(userId: string, addToCartDto: AddToCartDto): Promise<Cart> {
+  async addToCart(userId: string, addToCartDto: AddToCartDto) {
     const { productId, variantId, quantity } = addToCartDto;
 
     // Verify product exists and is active
-    const product = await this.productRepository.findOne({
+    const product = await this.prisma.product.findFirst({
       where: { id: productId, isActive: true },
     });
 
@@ -72,13 +91,12 @@ export class CartService {
       throw new ValidationException('Variant is required for this product');
     }
 
-    let variant: ProductVariant | null = null;
-    let price = product.price;
+    let variant: { id: string; stock: number; productId: string; price: any } | null = null;
 
     // Verify variant if provided
     if (variantId) {
-      variant = await this.variantRepository.findOne({
-        where: { id: variantId, product: { id: productId }, isActive: true },
+      variant = await this.prisma.productVariant.findFirst({
+        where: { id: variantId, productId, isActive: true },
       });
 
       if (!variant) {
@@ -89,8 +107,6 @@ export class CartService {
       if (variant.stock < quantity) {
         throw new ValidationException(`Insufficient stock. Available: ${variant.stock}`);
       }
-
-      price = variant.price;
     } else {
       // Check product stock for non-variant products
       if (product.stock < quantity) {
@@ -114,17 +130,20 @@ export class CartService {
         throw new ValidationException(`Cannot add more. Available: ${availableStock}`);
       }
 
-      existingItem.quantity = newQuantity;
-      await this.cartItemRepository.save(existingItem);
+      await this.prisma.cartItem.update({
+        where: { id: existingItem.id },
+        data: { quantity: newQuantity },
+      });
     } else {
       // Add new item
-      const cartItem = this.cartItemRepository.create({
-        cartId: cart.id,
-        productId,
-        variantId,
-        quantity,
+      await this.prisma.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId,
+          variantId,
+          quantity,
+        },
       });
-      await this.cartItemRepository.save(cartItem);
     }
 
     return this.getOrCreateCart(userId);
@@ -134,7 +153,7 @@ export class CartService {
     userId: string,
     itemId: string,
     updateDto: UpdateCartItemDto,
-  ): Promise<Cart> {
+  ) {
     const cart = await this.getOrCreateCart(userId);
     const item = cart.items.find((i) => i.id === itemId);
 
@@ -148,7 +167,7 @@ export class CartService {
         throw new ValidationException(`Insufficient stock. Available: ${item.variant.stock}`);
       }
     } else {
-      const product = await this.productRepository.findOne({
+      const product = await this.prisma.product.findUnique({
         where: { id: item.productId },
       });
       if (product && product.stock < updateDto.quantity) {
@@ -156,13 +175,15 @@ export class CartService {
       }
     }
 
-    item.quantity = updateDto.quantity;
-    await this.cartItemRepository.save(item);
+    await this.prisma.cartItem.update({
+      where: { id: itemId },
+      data: { quantity: updateDto.quantity },
+    });
 
     return this.getOrCreateCart(userId);
   }
 
-  async removeCartItem(userId: string, itemId: string): Promise<Cart> {
+  async removeCartItem(userId: string, itemId: string) {
     const cart = await this.getOrCreateCart(userId);
     const item = cart.items.find((i) => i.id === itemId);
 
@@ -170,14 +191,14 @@ export class CartService {
       throw new ValidationException(`Cart item with ID "${itemId}" not found`);
     }
 
-    await this.cartItemRepository.remove(item);
+    await this.prisma.cartItem.delete({ where: { id: itemId } });
 
     return this.getOrCreateCart(userId);
   }
 
   async clearCart(userId: string): Promise<void> {
     const cart = await this.getOrCreateCart(userId);
-    await this.cartItemRepository.remove(cart.items);
+    await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
   }
 
   async validateCartForCheckout(userId: string): Promise<{ valid: boolean; errors: string[] }> {
@@ -191,7 +212,7 @@ export class CartService {
 
     for (const item of cart.items) {
       // Check product availability
-      const product = await this.productRepository.findOne({
+      const product = await this.prisma.product.findFirst({
         where: { id: item.productId, isActive: true },
       });
 
@@ -202,7 +223,7 @@ export class CartService {
 
       // Check variant/stock
       if (item.variantId) {
-        const variant = await this.variantRepository.findOne({
+        const variant = await this.prisma.productVariant.findFirst({
           where: { id: item.variantId, isActive: true },
         });
 
@@ -223,7 +244,7 @@ export class CartService {
     return { valid: errors.length === 0, errors };
   }
 
-  private calculateTotal(items: CartItem[]): number {
+  private calculateTotal(items: any[]): number {
     return items.reduce((total, item) => {
       // Get price from variant if exists, otherwise from product
       const price = item.variant ? Number(item.variant.price) : Number(item.product?.price || 0);

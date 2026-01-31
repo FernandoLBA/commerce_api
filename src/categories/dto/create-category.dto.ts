@@ -15,7 +15,9 @@ export class CreateCategoryDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(500, { message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 500) })
+  @MaxLength(500, {
+    message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 500),
+  })
   description?: string;
 
   @IsOptional()

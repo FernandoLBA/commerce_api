@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
-import { Order } from '../orders/entities/order.entity';
-import { Shipment } from '../shipping/entities/shipment.entity';
+import { Order, Shipment } from '../generated/prisma/client';
 
 export interface EmailContext {
   [key: string]: any;
@@ -15,9 +14,12 @@ export class NotificationsService {
    * Send order confirmation email
    */
   async sendOrderConfirmation(order: Order, customerEmail: string): Promise<void> {
-    const itemsList = order.items
-      .map((item) => `- ${item.productName} x${item.quantity}: S/. ${item.subtotal}`)
+    const itemsArray = (order as any).items || [];
+    const itemsList = itemsArray
+      .map((item: any) => `- ${item.productName} x${item.quantity}: S/. ${item.subtotal}`)
       .join('\n');
+
+    const shippingAddress = order.shippingAddress as any;
 
     const text = `
 ¡Gracias por tu compra!
@@ -29,14 +31,14 @@ ${itemsList}
 
 Subtotal: S/. ${order.subtotal}
 Envío: S/. ${order.shippingCost}
-${order.discount > 0 ? `Descuento: -S/. ${order.discount}` : ''}
+${Number(order.discount) > 0 ? `Descuento: -S/. ${order.discount}` : ''}
 Total: S/. ${order.total}
 
 Dirección de envío:
-${order.shippingAddress.recipientName}
-${order.shippingAddress.street} ${order.shippingAddress.number || ''}
-${order.shippingAddress.district}, ${order.shippingAddress.city}
-${order.shippingAddress.department}
+${shippingAddress?.recipientName || ''}
+${shippingAddress?.street || ''} ${shippingAddress?.number || ''}
+${shippingAddress?.district || ''}, ${shippingAddress?.city || ''}
+${shippingAddress?.department || ''}
 
 Te notificaremos cuando tu pedido sea enviado.
 
@@ -62,6 +64,9 @@ Te notificaremos cuando tu pedido sea enviado.
       ? `\nNúmero de seguimiento: ${shipment.trackingNumber}${shipment.trackingUrl ? `\nRastrear envío: ${shipment.trackingUrl}` : ''}`
       : '';
 
+    const shippingAddress = order.shippingAddress as any;
+    const estimatedDate = shipment.estimatedDeliveryDate ? this.formatDate(shipment.estimatedDeliveryDate) : 'Por confirmar';
+
     const text = `
 ¡Tu pedido está en camino!
 
@@ -70,13 +75,13 @@ El pedido #${order.orderNumber} ha sido enviado.
 Carrier: ${this.getCarrierName(shipment.carrier)}
 ${trackingInfo}
 
-Fecha estimada de entrega: ${this.formatDate(shipment.estimatedDeliveryDate)}
+Fecha estimada de entrega: ${estimatedDate}
 
 Dirección de entrega:
-${order.shippingAddress.recipientName}
-${order.shippingAddress.street} ${order.shippingAddress.number || ''}
-${order.shippingAddress.district}, ${order.shippingAddress.city}
-${order.shippingAddress.department}
+${shippingAddress?.recipientName || ''}
+${shippingAddress?.street || ''} ${shippingAddress?.number || ''}
+${shippingAddress?.district || ''}, ${shippingAddress?.city || ''}
+${shippingAddress?.department || ''}
 
 ¡Gracias por tu compra!
     `.trim();

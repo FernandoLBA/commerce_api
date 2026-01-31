@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { MercadoPagoConfig, Preference, Payment as MPPayment } from 'mercadopago';
-import { Payment } from '../orders/entities/payment.entity';
-import { Order } from '../orders/entities/order.entity';
-import { PaymentStatus } from '../orders/enums/payment-status.enum';
-import { OrderStatus } from '../orders/enums/order-status.enum';
+import MercadoPagoConfig, { Payment as MPPayment, Preference } from 'mercadopago';
+import { PrismaService } from '../prisma';
+import { NotificationsService } from '../notifications';
 import { ValidationException } from '../common';
-import { NotificationsService } from '../notifications/notifications.service';
+import {
+  Payment,
+  PaymentStatus,
+  OrderStatus,
+} from '../generated/prisma/client';
 
 @Injectable()
 export class MercadoPagoService {
@@ -16,11 +16,8 @@ export class MercadoPagoService {
   private mpPayment: MPPayment;
 
   constructor(
-    @InjectRepository(Payment)
-    private paymentRepository: Repository<Payment>,
-    @InjectRepository(Order)
-    private orderRepository: Repository<Order>,
-    private notificationsService: NotificationsService,
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
   ) {
     this.client = new MercadoPagoConfig({
       accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
@@ -29,14 +26,16 @@ export class MercadoPagoService {
     this.mpPayment = new MPPayment(this.client);
   }
 
-  async createPreference(orderId: string): Promise<{
-    preferenceId: string;
-    initPoint: string;
-    sandboxInitPoint: string;
-  }> {
-    const order = await this.orderRepository.findOne({
+  async createPreference(
+    orderId: string,
+  ): Promise<{ preferenceId: string; initPoint: string; sandboxInitPoint: string }> {
+    const order = await this.prisma.order.findUnique({
       where: { id: orderId },
-      relations: ['payments', 'items'],
+      include: {
+        items: true,
+        payments: true,
+        user: true,
+      },
     });
 
     if (!order) {
@@ -60,7 +59,7 @@ export class MercadoPagoService {
           id: item.productId,
           title: item.productName,
           description: item.variantAttributes
-            ? item.variantAttributes.map((a) => `${a.name}: ${a.value}`).join(', ')
+            ? (item.variantAttributes as any[]).map((a) => `${a.name}: ${a.value}`).join(', ')
             : undefined,
           quantity: item.quantity,
           unit_price: Number(item.unitPrice),
@@ -93,9 +92,13 @@ export class MercadoPagoService {
     const response = await this.preference.create(preferenceData);
 
     // Update payment with MercadoPago info
-    payment.externalId = response.id;
-    payment.status = PaymentStatus.PROCESSING;
-    await this.paymentRepository.save(payment);
+    await this.prisma.payment.update({
+      where: { id: payment.id },
+      data: {
+        externalId: response.id,
+        status: PaymentStatus.PROCESSING,
+      },
+    });
 
     return {
       preferenceId: response.id!,
@@ -124,9 +127,13 @@ export class MercadoPagoService {
         return;
       }
 
-      const order = await this.orderRepository.findOne({
+      const order = await this.prisma.order.findUnique({
         where: { id: externalReference },
-        relations: ['payments'],
+        include: {
+          payments: true,
+          items: true,
+          user: true,
+        },
       });
 
       if (!order) {
@@ -144,31 +151,33 @@ export class MercadoPagoService {
       }
 
       // Update payment based on MercadoPago status
-      payment.externalId = String(mpPaymentData.id);
-      payment.externalStatus = mpPaymentData.status;
-      payment.externalData = mpPaymentData as any;
+      const updateData: any = {
+        externalId: String(mpPaymentData.id),
+        externalStatus: mpPaymentData.status,
+        externalData: mpPaymentData as any,
+      };
 
       switch (mpPaymentData.status) {
         case 'approved':
-          payment.status = PaymentStatus.COMPLETED;
-          payment.completedAt = new Date();
+          updateData.status = PaymentStatus.COMPLETED;
+          updateData.completedAt = new Date();
           
           // Update order status
           if (order.status === OrderStatus.PENDING) {
-            order.status = OrderStatus.CONFIRMED;
-            order.confirmedAt = new Date();
-            await this.orderRepository.save(order);
+            await this.prisma.order.update({
+              where: { id: order.id },
+              data: {
+                status: OrderStatus.CONFIRMED,
+                confirmedAt: new Date(),
+              },
+            });
 
             // Send payment confirmation email
             try {
-              const orderWithUser = await this.orderRepository.findOne({
-                where: { id: order.id },
-                relations: ['items', 'user'],
-              });
-              if (orderWithUser?.user?.email) {
+              if (order.user?.email) {
                 await this.notificationsService.sendPaymentConfirmation(
-                  orderWithUser,
-                  orderWithUser.user.email,
+                  order as any,
+                  order.user.email,
                   Number(order.total),
                 );
               }
@@ -180,26 +189,22 @@ export class MercadoPagoService {
 
         case 'pending':
         case 'in_process':
-          payment.status = PaymentStatus.PROCESSING;
+          updateData.status = PaymentStatus.PROCESSING;
           break;
 
         case 'rejected':
         case 'cancelled':
-          payment.status = PaymentStatus.FAILED;
-          payment.errorCode = mpPaymentData.status_detail || 'rejected';
-          payment.errorMessage = this.getStatusDetailMessage(mpPaymentData.status_detail);
+          updateData.status = PaymentStatus.FAILED;
+          updateData.errorCode = mpPaymentData.status_detail || 'rejected';
+          updateData.errorMessage = this.getStatusDetailMessage(mpPaymentData.status_detail);
           
           // Send payment failed email
           try {
-            const orderWithUser = await this.orderRepository.findOne({
-              where: { id: order.id },
-              relations: ['items', 'user'],
-            });
-            if (orderWithUser?.user?.email) {
+            if (order.user?.email) {
               await this.notificationsService.sendPaymentFailed(
-                orderWithUser,
-                orderWithUser.user.email,
-                payment.errorMessage,
+                order as any,
+                order.user.email,
+                updateData.errorMessage,
               );
             }
           } catch (emailError) {
@@ -208,13 +213,16 @@ export class MercadoPagoService {
           break;
 
         case 'refunded':
-          payment.status = PaymentStatus.REFUNDED;
-          payment.refundedAt = new Date();
-          payment.refundedAmount = Number(mpPaymentData.transaction_amount);
+          updateData.status = PaymentStatus.REFUNDED;
+          updateData.refundedAt = new Date();
+          updateData.refundedAmount = Number(mpPaymentData.transaction_amount);
           break;
       }
 
-      await this.paymentRepository.save(payment);
+      await this.prisma.payment.update({
+        where: { id: payment.id },
+        data: updateData,
+      });
     } catch (error) {
       console.error('Error handling MercadoPago notification:', error);
     }
@@ -225,9 +233,9 @@ export class MercadoPagoService {
   }
 
   async createRefund(paymentId: string, amount?: number): Promise<Payment> {
-    const payment = await this.paymentRepository.findOne({
+    const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
-      relations: ['order'],
+      include: { order: true },
     });
 
     if (!payment) {
@@ -249,12 +257,16 @@ export class MercadoPagoService {
     // In production, you would call the refund API
     // For now, we'll update the local record
     
-    payment.status = PaymentStatus.REFUNDED;
-    payment.refundedAmount = refundAmount;
-    payment.refundedAt = new Date();
-    await this.paymentRepository.save(payment);
+    const updatedPayment = await this.prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: PaymentStatus.REFUNDED,
+        refundedAmount: refundAmount,
+        refundedAt: new Date(),
+      },
+    });
 
-    return payment;
+    return updatedPayment;
   }
 
   private getStatusDetailMessage(statusDetail: string | undefined): string {

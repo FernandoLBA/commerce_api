@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Category } from './entities/category.entity';
+import { PrismaService } from '../prisma';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import {
@@ -9,16 +7,17 @@ import {
   CategoryAlreadyExistsException,
   CategoryHasProductsException,
 } from '../common';
+import { SlugService } from 'src/common/services/slug.service';
 
 @Injectable()
 export class CategoriesService {
   constructor(
-    @InjectRepository(Category)
-    private categoryRepository: Repository<Category>,
+    private prisma: PrismaService,
+    private slugService: SlugService,
   ) {}
 
-  async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
-    const existingCategory = await this.categoryRepository.findOne({
+  async create(createCategoryDto: CreateCategoryDto) {
+    const existingCategory = await this.prisma.category.findFirst({
       where: { name: createCategoryDto.name },
     });
 
@@ -26,20 +25,31 @@ export class CategoriesService {
       throw new CategoryAlreadyExistsException();
     }
 
-    const category = this.categoryRepository.create(createCategoryDto);
-    return this.categoryRepository.save(category);
-  }
+    // Generate slug from name if not provided
+    const slug = await this.slugService.generateSlug(
+      createCategoryDto.name,
+      undefined,
+      this.prisma.category,
+    );
 
-  async findAll(): Promise<Category[]> {
-    return this.categoryRepository.find({
-      order: { name: 'ASC' },
+    return this.prisma.category.create({
+      data: {
+        ...createCategoryDto,
+        slug,
+      },
     });
   }
 
-  async findOne(id: string): Promise<Category> {
-    const category = await this.categoryRepository.findOne({
+  async findAll() {
+    return this.prisma.category.findMany({
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async findOne(id: string) {
+    const category = await this.prisma.category.findUnique({
       where: { id },
-      relations: ['products'],
+      include: { products: true },
     });
 
     if (!category) {
@@ -49,11 +59,11 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: string, updateCategoryDto: UpdateCategoryDto): Promise<Category> {
+  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
     const category = await this.findOne(id);
 
     if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
-      const existingCategory = await this.categoryRepository.findOne({
+      const existingCategory = await this.prisma.category.findFirst({
         where: { name: updateCategoryDto.name },
       });
 
@@ -62,14 +72,25 @@ export class CategoriesService {
       }
     }
 
-    Object.assign(category, updateCategoryDto);
-    return this.categoryRepository.save(category);
+    return this.prisma.category.update({
+      where: { id },
+      data: {
+        ...updateCategoryDto,
+        slug: updateCategoryDto.name
+          ? await this.slugService.generateSlug(
+              updateCategoryDto.name,
+              id,
+              this.prisma.category,
+            )
+          : undefined,
+      },
+    });
   }
 
   async remove(id: string): Promise<void> {
-    const category = await this.categoryRepository.findOne({
+    const category = await this.prisma.category.findUnique({
       where: { id },
-      relations: ['products'],
+      include: { products: true },
     });
 
     if (!category) {
@@ -80,6 +101,6 @@ export class CategoriesService {
       throw new CategoryHasProductsException();
     }
 
-    await this.categoryRepository.remove(category);
+    await this.prisma.category.delete({ where: { id } });
   }
 }

@@ -1,6 +1,6 @@
 # Commerce API 🛒
 
-API RESTful completa para e-commerce construida con NestJS, TypeORM y Prisma.
+API RESTful completa para e-commerce construida con NestJS y Prisma.
 
 ## 🚀 Características
 
@@ -17,7 +17,7 @@ API RESTful completa para e-commerce construida con NestJS, TypeORM y Prisma.
 - **Wishlist** - Lista de deseos para usuarios
 - **Notificaciones** - Emails transaccionales
 
-## � Seguridad
+## 🛡️ Seguridad
 
 Esta API implementa múltiples capas de seguridad:
 
@@ -38,7 +38,7 @@ Esta API implementa múltiples capas de seguridad:
 | `/auth/login` | 5 requests | 1 minuto |
 | `/auth/register` | 5 requests | 1 minuto |
 
-## �📋 Requisitos
+## 📋 Requisitos
 
 - Node.js v18+
 - pnpm
@@ -70,6 +70,22 @@ pnpm prisma db seed
 
 # Iniciar en modo desarrollo
 pnpm start:dev
+```
+
+## 🐳 Docker
+
+```bash
+# Levantar servicios (PostgreSQL)
+make up
+
+# Ver logs
+make logs
+
+# Detener servicios
+make down
+
+# Reiniciar servicios
+make restart
 ```
 
 ## ⚙️ Variables de Entorno
@@ -169,6 +185,7 @@ src/
 ├── notifications/  # Emails y notificaciones
 ├── orders/         # Órdenes y pagos
 ├── payments/       # Stripe y MercadoPago
+├── prisma/         # PrismaModule y PrismaService
 ├── products/       # Productos, variantes, imágenes
 ├── reviews/        # Reseñas y calificaciones
 ├── security/       # 🔒 Pruebas de seguridad
@@ -177,7 +194,24 @@ src/
 ├── wishlist/       # Lista de deseos
 ├── app.module.ts
 └── main.ts
+prisma/
+├── schema.prisma   # Schema de base de datos
+├── migrations/     # Historial de migraciones
+└── seed.ts         # Datos de prueba
 ```
+
+## 🔧 Tecnologías
+
+| Componente | Tecnología |
+|------------|------------|
+| Framework | NestJS v11 |
+| ORM | Prisma v7 |
+| Base de Datos | PostgreSQL 15 |
+| Autenticación | Passport + JWT |
+| Validación | class-validator |
+| Documentación | Swagger (OpenAPI) |
+| Testing | Jest |
+| Containerización | Docker |
 
 ## 📖 Documentación
 

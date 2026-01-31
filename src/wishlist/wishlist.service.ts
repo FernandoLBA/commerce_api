@@ -1,27 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { WishlistItem } from './entities/wishlist-item.entity';
-import { Product } from '../products/entities/product.entity';
-import { ProductVariant } from '../products/entities/product-variant.entity';
+import { PrismaService } from '../prisma';
 import { AddToWishlistDto } from './dto/add-to-wishlist.dto';
 import { UpdateWishlistItemDto } from './dto/update-wishlist-item.dto';
 import { NotFoundException, ValidationException } from '../common';
 
 @Injectable()
 export class WishlistService {
-  constructor(
-    @InjectRepository(WishlistItem)
-    private wishlistRepository: Repository<WishlistItem>,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
-    @InjectRepository(ProductVariant)
-    private variantRepository: Repository<ProductVariant>,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
-  async addItem(userId: string, dto: AddToWishlistDto): Promise<WishlistItem> {
+  async addItem(userId: string, dto: AddToWishlistDto) {
     // Check if product exists
-    const product = await this.productRepository.findOne({
+    const product = await this.prisma.product.findUnique({
       where: { id: dto.productId },
     });
 
@@ -30,9 +19,9 @@ export class WishlistService {
     }
 
     // Check if variant exists (if provided)
-    let variant: ProductVariant | null = null;
+    let variant: any = null;
     if (dto.variantId) {
-      variant = await this.variantRepository.findOne({
+      variant = await this.prisma.productVariant.findFirst({
         where: { id: dto.variantId, productId: dto.productId },
       });
 
@@ -42,11 +31,11 @@ export class WishlistService {
     }
 
     // Check if already in wishlist
-    const existing = await this.wishlistRepository.findOne({
+    const existing = await this.prisma.wishlistItem.findFirst({
       where: {
         userId,
         productId: dto.productId,
-        variantId: dto.variantId || undefined,
+        variantId: dto.variantId || null,
       },
     });
 
@@ -56,24 +45,27 @@ export class WishlistService {
 
     const price = variant ? variant.price : product.price;
 
-    const wishlistItem = this.wishlistRepository.create({
-      userId,
-      productId: dto.productId,
-      variantId: dto.variantId,
-      notes: dto.notes,
-      priceWhenAdded: price,
-      notifyOnPriceDrop: dto.notifyOnPriceDrop ?? false,
-      notifyOnBackInStock: dto.notifyOnBackInStock ?? false,
+    return this.prisma.wishlistItem.create({
+      data: {
+        userId,
+        productId: dto.productId,
+        variantId: dto.variantId,
+        notes: dto.notes,
+        priceWhenAdded: price,
+        notifyOnPriceDrop: dto.notifyOnPriceDrop ?? false,
+        notifyOnBackInStock: dto.notifyOnBackInStock ?? false,
+      },
     });
-
-    return this.wishlistRepository.save(wishlistItem);
   }
 
-  async findAll(userId: string): Promise<WishlistItem[]> {
-    const items = await this.wishlistRepository.find({
+  async findAll(userId: string) {
+    const items = await this.prisma.wishlistItem.findMany({
       where: { userId },
-      relations: ['product', 'product.images', 'variant'],
-      order: { createdAt: 'DESC' },
+      include: {
+        product: { include: { images: true } },
+        variant: true,
+      },
+      orderBy: { createdAt: 'desc' },
     });
 
     // Add current price and availability info
@@ -82,16 +74,19 @@ export class WishlistService {
       currentPrice: item.variant?.price ?? item.product.price,
       isAvailable: (item.variant?.stock ?? item.product.stock) > 0,
       priceDrop:
-        item.priceWhenAdded && item.priceWhenAdded > (item.variant?.price ?? item.product.price)
-          ? item.priceWhenAdded - (item.variant?.price ?? item.product.price)
+        item.priceWhenAdded && Number(item.priceWhenAdded) > Number(item.variant?.price ?? item.product.price)
+          ? Number(item.priceWhenAdded) - Number(item.variant?.price ?? item.product.price)
           : 0,
-    })) as any;
+    }));
   }
 
-  async findOne(id: string, userId: string): Promise<WishlistItem> {
-    const item = await this.wishlistRepository.findOne({
+  async findOne(id: string, userId: string) {
+    const item = await this.prisma.wishlistItem.findFirst({
       where: { id, userId },
-      relations: ['product', 'product.images', 'variant'],
+      include: {
+        product: { include: { images: true } },
+        variant: true,
+      },
     });
 
     if (!item) {
@@ -105,17 +100,18 @@ export class WishlistService {
     id: string,
     userId: string,
     dto: UpdateWishlistItemDto,
-  ): Promise<WishlistItem> {
-    const item = await this.findOne(id, userId);
+  ) {
+    await this.findOne(id, userId);
 
-    Object.assign(item, dto);
-
-    return this.wishlistRepository.save(item);
+    return this.prisma.wishlistItem.update({
+      where: { id },
+      data: dto,
+    });
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    const item = await this.findOne(id, userId);
-    await this.wishlistRepository.remove(item);
+    await this.findOne(id, userId);
+    await this.prisma.wishlistItem.delete({ where: { id } });
   }
 
   async removeByProduct(
@@ -123,21 +119,21 @@ export class WishlistService {
     productId: string,
     variantId?: string,
   ): Promise<void> {
-    const item = await this.wishlistRepository.findOne({
+    const item = await this.prisma.wishlistItem.findFirst({
       where: {
         userId,
         productId,
-        variantId: variantId || undefined,
+        variantId: variantId || null,
       },
     });
 
     if (item) {
-      await this.wishlistRepository.remove(item);
+      await this.prisma.wishlistItem.delete({ where: { id: item.id } });
     }
   }
 
   async clearWishlist(userId: string): Promise<void> {
-    await this.wishlistRepository.delete({ userId });
+    await this.prisma.wishlistItem.deleteMany({ where: { userId } });
   }
 
   async isInWishlist(
@@ -145,11 +141,11 @@ export class WishlistService {
     productId: string,
     variantId?: string,
   ): Promise<boolean> {
-    const item = await this.wishlistRepository.findOne({
+    const item = await this.prisma.wishlistItem.findFirst({
       where: {
         userId,
         productId,
-        variantId: variantId || undefined,
+        variantId: variantId || null,
       },
     });
 
@@ -157,10 +153,10 @@ export class WishlistService {
   }
 
   async getWishlistCount(userId: string): Promise<number> {
-    return this.wishlistRepository.count({ where: { userId } });
+    return this.prisma.wishlistItem.count({ where: { userId } });
   }
 
-  async moveToCart(id: string, userId: string): Promise<WishlistItem> {
+  async moveToCart(id: string, userId: string) {
     const item = await this.findOne(id, userId);
     
     // Mark for removal (cart service should call removeByProduct after adding)
@@ -168,18 +164,18 @@ export class WishlistService {
   }
 
   // For scheduled jobs: get items with price drop notifications enabled
-  async getItemsForPriceDropNotification(): Promise<WishlistItem[]> {
-    return this.wishlistRepository.find({
+  async getItemsForPriceDropNotification() {
+    return this.prisma.wishlistItem.findMany({
       where: { notifyOnPriceDrop: true },
-      relations: ['user', 'product', 'variant'],
+      include: { user: true, product: true, variant: true },
     });
   }
 
   // For scheduled jobs: get items for back in stock notifications
-  async getItemsForBackInStockNotification(): Promise<WishlistItem[]> {
-    return this.wishlistRepository.find({
+  async getItemsForBackInStockNotification() {
+    return this.prisma.wishlistItem.findMany({
       where: { notifyOnBackInStock: true },
-      relations: ['user', 'product', 'variant'],
+      include: { user: true, product: true, variant: true },
     });
   }
 }

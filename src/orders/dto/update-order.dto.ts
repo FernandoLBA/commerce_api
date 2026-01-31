@@ -1,10 +1,10 @@
 import { IsOptional, IsString, IsEnum, MaxLength } from 'class-validator';
-import { OrderStatus } from '../enums/order-status.enum';
+import { OrderStatus } from '../../generated/prisma/client';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class UpdateOrderDto {
   @IsOptional()
-  @IsEnum(OrderStatus, { message: VALIDATION_MESSAGES.INVALID_ENUM('Status', 'pending, confirmed, processing, shipped, delivered, cancelled, refunded') })
+  @IsEnum(OrderStatus, { message: VALIDATION_MESSAGES.INVALID_ENUM('Status', 'PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED') })
   status?: OrderStatus;
 
   @IsOptional()

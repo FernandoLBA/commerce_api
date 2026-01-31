@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ProductImage } from './entities/product-image.entity';
-import { Product } from './entities/product.entity';
+import { PrismaService } from '../prisma';
 import { CreateProductImageDto } from './dto/create-product-image.dto';
 import { UpdateProductImageDto } from './dto/update-product-image.dto';
 import {
@@ -14,18 +11,12 @@ import {
 @Injectable()
 export class ImagesService {
   constructor(
-    @InjectRepository(ProductImage)
-    private imagesRepository: Repository<ProductImage>,
-    @InjectRepository(Product)
-    private productsRepository: Repository<Product>,
+    private prisma: PrismaService,
     private cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(
-    productId: string,
-    createImageDto: CreateProductImageDto,
-  ): Promise<ProductImage> {
-    const product = await this.productsRepository.findOne({
+  async create(productId: string, createImageDto: CreateProductImageDto) {
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
@@ -36,23 +27,22 @@ export class ImagesService {
     }
 
     // Get the highest displayOrder for this product
-    const maxOrder = await this.imagesRepository
-      .createQueryBuilder('image')
-      .where('image.productId = :productId', { productId })
-      .select('MAX(image.displayOrder)', 'maxOrder')
-      .getRawOne();
-
-    const displayOrder =
-      createImageDto.displayOrder ?? (maxOrder?.maxOrder ?? -1) + 1;
-
-    const image = this.imagesRepository.create({
-      url: createImageDto.url,
-      alt: createImageDto.alt,
-      displayOrder,
-      product,
+    const maxOrderResult = await this.prisma.productImage.aggregate({
+      where: { productId },
+      _max: { displayOrder: true },
     });
 
-    return this.imagesRepository.save(image);
+    const displayOrder =
+      createImageDto.displayOrder ?? (maxOrderResult._max.displayOrder ?? -1) + 1;
+
+    return this.prisma.productImage.create({
+      data: {
+        url: createImageDto.url,
+        alt: createImageDto.alt,
+        displayOrder,
+        productId,
+      },
+    });
   }
 
   /**
@@ -62,8 +52,8 @@ export class ImagesService {
     productId: string,
     file: Express.Multer.File,
     options?: { alt?: string },
-  ): Promise<ProductImage> {
-    const product = await this.productsRepository.findOne({
+  ) {
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
@@ -87,25 +77,24 @@ export class ImagesService {
     );
 
     // Get next displayOrder
-    const maxOrder = await this.imagesRepository
-      .createQueryBuilder('image')
-      .where('image.productId = :productId', { productId })
-      .select('MAX(image.displayOrder)', 'maxOrder')
-      .getRawOne();
-
-    const displayOrder = (maxOrder?.maxOrder ?? -1) + 1;
-
-    const image = this.imagesRepository.create({
-      url: urls.large,
-      publicId: uploadResult.publicId,
-      alt: options?.alt || product.name,
-      width: uploadResult.width,
-      height: uploadResult.height,
-      displayOrder,
-      product,
+    const maxOrderResult = await this.prisma.productImage.aggregate({
+      where: { productId },
+      _max: { displayOrder: true },
     });
 
-    return this.imagesRepository.save(image);
+    const displayOrder = (maxOrderResult._max.displayOrder ?? -1) + 1;
+
+    return this.prisma.productImage.create({
+      data: {
+        url: urls.large,
+        publicId: uploadResult.publicId,
+        alt: options?.alt || product.name,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        displayOrder,
+        productId,
+      },
+    });
   }
 
   /**
@@ -115,8 +104,8 @@ export class ImagesService {
     productId: string,
     url: string,
     options?: { alt?: string },
-  ): Promise<ProductImage> {
-    const product = await this.productsRepository.findOne({
+  ) {
+    const product = await this.prisma.product.findUnique({
       where: { id: productId },
     });
 
@@ -137,38 +126,37 @@ export class ImagesService {
     );
 
     // Get next displayOrder
-    const maxOrder = await this.imagesRepository
-      .createQueryBuilder('image')
-      .where('image.productId = :productId', { productId })
-      .select('MAX(image.displayOrder)', 'maxOrder')
-      .getRawOne();
-
-    const displayOrder = (maxOrder?.maxOrder ?? -1) + 1;
-
-    const image = this.imagesRepository.create({
-      url: urls.large,
-      publicId: uploadResult.publicId,
-      alt: options?.alt || product.name,
-      width: uploadResult.width,
-      height: uploadResult.height,
-      displayOrder,
-      product,
+    const maxOrderResult = await this.prisma.productImage.aggregate({
+      where: { productId },
+      _max: { displayOrder: true },
     });
 
-    return this.imagesRepository.save(image);
-  }
+    const displayOrder = (maxOrderResult._max.displayOrder ?? -1) + 1;
 
-  async findAllByProduct(productId: string): Promise<ProductImage[]> {
-    return this.imagesRepository.find({
-      where: { product: { id: productId } },
-      order: { displayOrder: 'ASC' },
+    return this.prisma.productImage.create({
+      data: {
+        url: urls.large,
+        publicId: uploadResult.publicId,
+        alt: options?.alt || product.name,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        displayOrder,
+        productId,
+      },
     });
   }
 
-  async findOne(id: string): Promise<ProductImage> {
-    const image = await this.imagesRepository.findOne({
+  async findAllByProduct(productId: string) {
+    return this.prisma.productImage.findMany({
+      where: { productId },
+      orderBy: { displayOrder: 'asc' },
+    });
+  }
+
+  async findOne(id: string) {
+    const image = await this.prisma.productImage.findUnique({
       where: { id },
-      relations: ['product'],
+      include: { product: true },
     });
 
     if (!image) {
@@ -180,23 +168,13 @@ export class ImagesService {
     return image;
   }
 
-  async update(
-    id: string,
-    updateImageDto: UpdateProductImageDto,
-  ): Promise<ProductImage> {
-    const image = await this.findOne(id);
+  async update(id: string, updateImageDto: UpdateProductImageDto) {
+    await this.findOne(id); // Verify exists
 
-    if (updateImageDto.url !== undefined) {
-      image.url = updateImageDto.url;
-    }
-    if (updateImageDto.alt !== undefined) {
-      image.alt = updateImageDto.alt;
-    }
-    if (updateImageDto.displayOrder !== undefined) {
-      image.displayOrder = updateImageDto.displayOrder;
-    }
-
-    return this.imagesRepository.save(image);
+    return this.prisma.productImage.update({
+      where: { id },
+      data: updateImageDto,
+    });
   }
 
   async remove(id: string): Promise<void> {
@@ -207,7 +185,7 @@ export class ImagesService {
       await this.cloudinaryService.delete(image.publicId);
     }
 
-    await this.imagesRepository.remove(image);
+    await this.prisma.productImage.delete({ where: { id } });
   }
 
   /**
@@ -219,7 +197,7 @@ export class ImagesService {
     // Get all public IDs
     const publicIds = images
       .filter((img) => img.publicId)
-      .map((img) => img.publicId);
+      .map((img) => img.publicId as string);
 
     // Delete from Cloudinary
     if (publicIds.length > 0) {
@@ -227,23 +205,16 @@ export class ImagesService {
     }
 
     // Delete from database
-    await this.imagesRepository.remove(images);
+    await this.prisma.productImage.deleteMany({ where: { productId } });
   }
 
-  async reorder(
-    productId: string,
-    imageIds: string[],
-  ): Promise<ProductImage[]> {
-    const images = await this.findAllByProduct(productId);
-
-    const updatePromises = imageIds.map((imageId, index) => {
-      const image = images.find((img) => img.id === imageId);
-      if (image) {
-        image.displayOrder = index;
-        return this.imagesRepository.save(image);
-      }
-      return Promise.resolve(null);
-    });
+  async reorder(productId: string, imageIds: string[]) {
+    const updatePromises = imageIds.map((imageId, index) =>
+      this.prisma.productImage.update({
+        where: { id: imageId },
+        data: { displayOrder: index },
+      }),
+    );
 
     await Promise.all(updatePromises);
     return this.findAllByProduct(productId);

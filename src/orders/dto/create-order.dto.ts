@@ -6,7 +6,7 @@ import {
   IsEnum,
   MaxLength,
 } from 'class-validator';
-import { PaymentMethod } from '../enums/payment-method.enum';
+import { PaymentMethod } from '../../generated/prisma/client';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateOrderDto {
@@ -15,7 +15,7 @@ export class CreateOrderDto {
   shippingAddressId: string;
 
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
-  @IsEnum(PaymentMethod, { message: VALIDATION_MESSAGES.INVALID_ENUM('Payment method', 'stripe, mercadopago') })
+  @IsEnum(PaymentMethod, { message: VALIDATION_MESSAGES.INVALID_ENUM('Payment method', 'STRIPE, MERCADOPAGO, CASH_ON_DELIVERY') })
   paymentMethod: PaymentMethod;
 
   @IsOptional()
