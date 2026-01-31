@@ -9,7 +9,7 @@ import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages'
 
 export class CreateCategoryDto {
   @IsString()
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Name') })
   @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 100) })
   name: string;
 

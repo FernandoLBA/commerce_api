@@ -1,22 +1,26 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UseGuards,
-  Request,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   ParseUUIDPipe,
+  Patch,
+  Post,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
+import { RolesGuard } from '../common/guards/roles.guard';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UpdateRoleDto } from './dto/update-role.dto';
+import { UsersService } from './users.service';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -68,5 +72,23 @@ export class UsersController {
   @Patch('addresses/:id/default')
   setDefaultAddress(@Request() req, @Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.setDefaultAddress(req.user.id, id);
+  }
+
+  // Admin endpoints - Manage user roles
+  @Patch(':userId/role')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  updateUserRole(
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() updateRoleDto: UpdateRoleDto,
+  ) {
+    return this.usersService.updateUserRole(userId, updateRoleDto.role);
+  }
+
+  @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  getAllUsers() {
+    return this.usersService.getAllUsers();
   }
 }

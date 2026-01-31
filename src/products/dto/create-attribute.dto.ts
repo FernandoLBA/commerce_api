@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsEnum, MaxLength } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export enum AttributeType {
@@ -7,7 +7,7 @@ export enum AttributeType {
 }
 
 export class CreateAttributeDto {
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Name') })
   @IsString()
   @MaxLength(50, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 50) })
   name: string;

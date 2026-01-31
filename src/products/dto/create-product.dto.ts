@@ -1,20 +1,20 @@
 import {
-  IsString,
+  IsBoolean,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsBoolean,
+  IsPositive,
+  IsString,
   IsUUID,
+  Matches,
   MaxLength,
   Min,
-  IsPositive,
-  Matches,
-  IsNotEmpty,
 } from 'class-validator';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateProductDto {
   @IsString()
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Name') })
   @MaxLength(200, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 200) })
   name: string;
 
@@ -27,7 +27,7 @@ export class CreateProductDto {
   slug?: string;
 
   @IsString()
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Description') })
   @MaxLength(2000, {
     message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 2000),
   })

@@ -134,6 +134,9 @@ pnpm test:cov
 |--------|----------|-------------|
 | Auth | `POST /api/auth/register` | Registrar usuario |
 | Auth | `POST /api/auth/login` | Iniciar sesión |
+| Users | `GET /api/users/profile` | Ver perfil |
+| Users | `PATCH /api/users/:userId/role` | Cambiar rol (admin) |
+| Users | `GET /api/users/admin/all` | Listar usuarios (admin) |
 | Products | `GET /api/products` | Listar productos |
 | Products | `POST /api/products` | Crear producto (admin) |
 | Categories | `GET /api/categories` | Listar categorías |

@@ -4,7 +4,7 @@
  */
 export const VALIDATION_MESSAGES = Object.freeze({
   // General
-  REQUIRED: 'This field is required',
+  REQUIRED: (field: string) => `The ${field} field is required`,
   INVALID_FORMAT: 'Invalid format',
 
   // String validations

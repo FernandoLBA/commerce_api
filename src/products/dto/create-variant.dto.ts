@@ -1,28 +1,28 @@
 import {
+  ArrayMinSize,
+  IsArray,
+  IsBoolean,
   IsNotEmpty,
-  IsString,
   IsNumber,
   IsOptional,
-  IsBoolean,
+  IsString,
   IsUUID,
-  IsArray,
-  Min,
   MaxLength,
-  ArrayMinSize,
+  Min,
 } from 'class-validator';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateVariantDto {
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Product ID') })
   @IsUUID('4', { message: VALIDATION_MESSAGES.INVALID_UUID('Product ID') })
   productId: string;
 
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('SKU') })
   @IsString()
   @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('SKU', 100) })
   sku: string;
 
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Price') })
   @IsNumber(
     { maxDecimalPlaces: 2 },
     { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Price') },
@@ -40,7 +40,7 @@ export class CreateVariantDto {
   })
   compareAtPrice?: number;
 
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Stock') })
   @IsNumber({}, { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Stock') })
   @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Stock') })
   stock: number;
@@ -49,7 +49,7 @@ export class CreateVariantDto {
   @IsBoolean({ message: VALIDATION_MESSAGES.MUST_BE_BOOLEAN('isActive') })
   isActive?: boolean;
 
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Attribute value IDs') })
   @IsArray({
     message: VALIDATION_MESSAGES.MUST_BE_ARRAY('Attribute value IDs'),
   })

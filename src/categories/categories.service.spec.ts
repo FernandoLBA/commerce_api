@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CategoriesService } from './categories.service';
 import { PrismaService } from '../prisma';
+import { SlugService } from '../common/services/slug.service';
 import {
   CategoryNotFoundException,
   CategoryAlreadyExistsException,
@@ -35,6 +36,10 @@ describe('CategoriesService', () => {
     updatedAt: new Date(),
   };
 
+  const mockSlugService = {
+    generateSlug: jest.fn().mockResolvedValue('test-category'),
+  };
+
   beforeEach(async () => {
     const mockPrismaService = {
       category: {
@@ -53,6 +58,10 @@ describe('CategoriesService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: SlugService,
+          useValue: mockSlugService,
         },
       ],
     }).compile();

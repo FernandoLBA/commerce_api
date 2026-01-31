@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductNotFoundException, CategoryNotFoundException } from '../common';
-import { SlugService } from 'src/common/services/slug.service';
+import { SlugService } from '../common/services/slug.service';
 
 @Injectable()
 export class ProductsService {
@@ -11,48 +11,6 @@ export class ProductsService {
     private prisma: PrismaService,
     private slugService: SlugService,
   ) {}
-
-  /**
-   * Genera un slug único a partir del nombre del producto
-   */
-  // async generateUniqueSlug(name: string, excludeId?: string): Promise<string> {
-  //   // Generar slug base del nombre
-  //   const slug = name
-  //     .toLowerCase()
-  //     .normalize('NFD') // Normalizar caracteres especiales
-  //     .replace(/[\u0300-\u036f]/g, '') // Remover diacríticos (tildes)
-  //     .replace(/[^a-z0-9\s-]/g, '') // Remover caracteres especiales
-  //     .trim()
-  //     .replace(/\s+/g, '-') // Reemplazar espacios por guiones
-  //     .replace(/-+/g, '-'); // Remover guiones duplicados
-
-  //   // Verificar si ya existe
-  //   let finalSlug = slug;
-  //   let count = 1;
-
-  //   while (true) {
-  //     const existingProduct = await this.prisma.product.findFirst({
-  //       where: {
-  //         slug: finalSlug,
-  //         ...(excludeId && { NOT: { id: excludeId } }),
-  //       },
-  //     });
-
-  //     if (!existingProduct) {
-  //       break; // Slug es único
-  //     }
-
-  //     finalSlug = `${slug}-${count++}`; // Agregar sufijo numérico
-  //   }
-
-  //   return finalSlug;
-  // }
-
-  generateComparePrice = (price: number): number => {
-    const randomFactor = Math.random() * (1.2 - 1.1) + 1.1; // Entre 10% y 20% más
-    const comparePrice = parseFloat((price * randomFactor).toFixed(2));
-    return comparePrice;
-  };
 
   async create(createProductDto: CreateProductDto) {
     if (createProductDto.categoryId) {
@@ -71,15 +29,10 @@ export class ProductsService {
       this.prisma.product,
     );
 
-    const compareAtPrice =
-      createProductDto.compareAtPrice ??
-      this.generateComparePrice(createProductDto.price);
-
     return this.prisma.product.create({
       data: {
         ...createProductDto,
         slug,
-        compareAtPrice,
       },
       include: { category: true },
     });

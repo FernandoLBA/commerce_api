@@ -3,10 +3,8 @@ import { PrismaService } from '../prisma';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import {
-  UserNotFoundException,
-  AddressNotFoundException,
-} from '../common';
+import { Role } from '../common/enums/role.enum';
+import { UserNotFoundException, AddressNotFoundException } from '../common';
 
 @Injectable()
 export class UsersService {
@@ -152,6 +150,47 @@ export class UsersService {
     return this.prisma.address.update({
       where: { id: addressId },
       data: { isDefault: true },
+    });
+  }
+
+  // Admin methods
+  async updateUserRole(userId: string, role: Role) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { role },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+    });
+  }
+
+  async getAllUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
     });
   }
 }

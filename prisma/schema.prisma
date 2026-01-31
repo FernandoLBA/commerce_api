@@ -110,6 +110,7 @@ model User {
 model Address {
   id            String   @id @default(uuid())
   userId        String   @map("user_id")
+  label         String
   recipientName String   @map("recipient_name")
   phone         String
   street        String

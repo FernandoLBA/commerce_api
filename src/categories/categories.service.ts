@@ -7,7 +7,7 @@ import {
   CategoryAlreadyExistsException,
   CategoryHasProductsException,
 } from '../common';
-import { SlugService } from 'src/common/services/slug.service';
+import { SlugService } from '../common/services/slug.service';
 
 @Injectable()
 export class CategoriesService {
