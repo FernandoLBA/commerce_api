@@ -974,13 +974,45 @@ Content-Type: application/json
   "sku": "POLO-BAS-M-ROJO",            # Requerido, único
   "price": 49.99,                      # Requerido, número positivo
   "compareAtPrice": 59.99,             # Opcional
-  "stock": 100,                        # Opcional, default: 0
-  "attributeValueIds": [               # Array de UUIDs de valores
+  "stock": 100,                        # Requerido, número >= 0
+  "attributeValueIds": [               # Array de UUIDs de valores, mínimo 1
     "talla-m-uuid",
     "color-rojo-uuid"
   ]
 }
 ```
+
+### Tests de Variantes
+
+El servicio de variantes tiene tests unitarios en `src/products/variants.service.spec.ts`:
+
+```bash
+# Ejecutar solo tests de variantes
+pnpm test variants.service
+```
+
+**Casos de prueba cubiertos:**
+| Método | Caso de Prueba |
+|--------|----------------|
+| `create` | Crear variante exitosamente |
+| `create` | Error si producto no existe (`ProductNotFoundException`) |
+| `create` | Error si SKU ya existe (`ProductSkuExistsException`) |
+| `create` | No actualizar `hasVariants` si ya es `true` |
+| `findAllByProduct` | Listar todas las variantes de un producto |
+| `findOne` | Obtener variante por ID |
+| `findOne` | Error si variante no existe (`ProductVariantNotFoundException`) |
+| `findBySku` | Buscar variante por SKU |
+| `findBySku` | Error si SKU no existe |
+| `update` | Actualizar variante exitosamente |
+| `update` | Error al actualizar a SKU existente |
+| `update` | Actualizar atributos de variante |
+| `remove` | Eliminar variante |
+| `updateStock` | Incrementar stock |
+| `updateStock` | Decrementar stock |
+| `updateStock` | No permitir stock negativo |
+| `checkAvailability` | Verificar disponibilidad con stock suficiente |
+| `checkAvailability` | Retornar `false` si variante inactiva |
+| `checkAvailability` | Retornar `false` si stock insuficiente |
 
 ---
 
@@ -2136,7 +2168,8 @@ pnpm test:e2e          # E2E tests
 ```
 src/
 ├── products/
-│   └── products.service.spec.ts
+│   ├── products.service.spec.ts
+│   └── variants.service.spec.ts
 ├── categories/
 │   └── categories.service.spec.ts
 test/
