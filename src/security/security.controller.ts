@@ -26,10 +26,10 @@ class PasswordTestDto {
   password: string;
 }
 
-class BruteForceTestDto {
-  endpoint?: string;
-  requests?: number;
-}
+// class BruteForceTestDto {
+//   endpoint?: string;
+//   requests?: number;
+// }
 
 /**
  * Security Controller
@@ -246,9 +246,10 @@ export class SecurityController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
-  testValidation(
-    @Body() body: Record<string, any>,
-  ): { success: boolean; data: Record<string, any> } {
+  testValidation(@Body() body: Record<string, unknown>): {
+    success: boolean;
+    data: Record<string, unknown>;
+  } {
     // Si llega aquí, el ValidationPipe no bloqueó el request
     return {
       success: true,
@@ -277,8 +278,7 @@ export class SecurityController {
           'X-Content-Type-Options': 'nosniff',
           'X-Frame-Options': 'SAMEORIGIN',
           'X-XSS-Protection': '0',
-          'Strict-Transport-Security':
-            'max-age=15552000; includeSubDomains',
+          'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
           'Cross-Origin-Resource-Policy': 'cross-origin',
         },
         note: 'Estos headers son añadidos automáticamente por Helmet a cada response',

@@ -1,8 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import {
   v2 as cloudinary,
-  UploadApiResponse,
   UploadApiErrorResponse,
+  UploadApiResponse,
 } from 'cloudinary';
 import { ValidationException } from '../exceptions/api.exception';
 
@@ -111,9 +111,9 @@ export class CloudinaryService implements OnModuleInit {
         format: result.format,
         bytes: result.bytes,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new ValidationException(
-        `Failed to upload image from URL: ${error.message}`,
+        `Failed to upload image from URL: ${(error as Error).message}`,
       );
     }
   }
@@ -123,10 +123,14 @@ export class CloudinaryService implements OnModuleInit {
    */
   async delete(publicId: string): Promise<boolean> {
     try {
-      const result = await cloudinary.uploader.destroy(publicId);
+      const result = (await cloudinary.uploader.destroy(publicId)) as {
+        result: string;
+      };
       return result.result === 'ok';
-    } catch (error: any) {
-      throw new ValidationException(`Failed to delete image: ${error.message}`);
+    } catch (error: unknown) {
+      throw new ValidationException(
+        `Failed to delete image: ${(error as Error).message}`,
+      );
     }
   }
 
@@ -162,7 +166,7 @@ export class CloudinaryService implements OnModuleInit {
     publicId: string,
     options: CloudinaryTransformOptions = {},
   ): string {
-    const transformation: any = {};
+    const transformation: Record<string, string | number> = {};
 
     if (options.width) transformation.width = options.width;
     if (options.height) transformation.height = options.height;

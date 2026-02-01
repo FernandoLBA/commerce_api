@@ -33,6 +33,7 @@ Este manual proporciona instrucciones prácticas para trabajar en el proyecto si
 27. [Módulo de Pruebas de Seguridad](#27-módulo-de-pruebas-de-seguridad)
 28. [Testing](#28-testing)
 29. [Comandos Útiles](#29-comandos-útiles)
+30. [Lineamientos de Tipado TypeScript](#lineamientos-de-tipado-typescript)
 
 ---
 
@@ -566,6 +567,11 @@ GET /users/addresses/:id
 Authorization: Bearer <token>
 ```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la dirección (obtenido de `GET /users/addresses`) |
+
 **Response (200):**
 ```json
 {
@@ -644,7 +650,15 @@ Content-Type: application/json
 PATCH /users/addresses/:id
 Authorization: Bearer <token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la dirección a actualizar (obtenido de `GET /users/addresses`) |
+
+**Body:**
+```json
 {
   "label": "Oficina",                  # Opcional
   "street": "Av. Javier Prado 500",    # Opcional
@@ -682,6 +696,11 @@ DELETE /users/addresses/:id
 Authorization: Bearer <token>
 ```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la dirección a eliminar (obtenido de `GET /users/addresses`) |
+
 **Response (204):** Sin contenido
 
 > **Nota:** Si la dirección eliminada era la predeterminada, otra dirección se establecerá automáticamente como predeterminada.
@@ -692,6 +711,11 @@ Authorization: Bearer <token>
 PATCH /users/addresses/:id/default
 Authorization: Bearer <token>
 ```
+
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la dirección a establecer como predeterminada |
 
 **Response (200):**
 ```json
@@ -745,7 +769,15 @@ Authorization: Bearer <admin_token>
 PATCH /users/:userId/role
 Authorization: Bearer <admin_token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `userId` | UUID del usuario a modificar (obtenido de `GET /users/admin/all`) |
+
+**Body:**
+```json
 {
   "role": "ADMIN"                      # Requerido: "USER" | "ADMIN"
 }
@@ -776,11 +808,17 @@ Content-Type: application/json
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
 | GET | `/products` | ❌ | - | Listar productos |
-| GET | `/products/:id` | ❌ | - | Obtener producto |
+| GET | `/products/:id` | ❌ | - | Obtener producto por ID |
 | GET | `/products/slug/:slug` | ❌ | - | Buscar por slug |
 | POST | `/products` | ✅ | ADMIN | Crear producto |
 | PATCH | `/products/:id` | ✅ | ADMIN | Actualizar producto |
 | DELETE | `/products/:id` | ✅ | ADMIN | Eliminar producto |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID del producto (obtenido de `GET /products`) |
+| `slug` | Slug único del producto (ej: `polo-basico`) |
 
 ### Listar Productos
 
@@ -836,7 +874,15 @@ Content-Type: application/json
 PATCH /products/:id
 Authorization: Bearer <admin_token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID del producto a actualizar (obtenido de `GET /products`) |
+
+**Body:**
+```json
 {
   "name": "Polo Básico Premium",       # Todos los campos son opcionales
   "price": 54.99,
@@ -854,10 +900,15 @@ Content-Type: application/json
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
 | GET | `/categories` | ❌ | - | Listar categorías |
-| GET | `/categories/:id` | ❌ | - | Obtener categoría |
+| GET | `/categories/:id` | ❌ | - | Obtener categoría por ID |
 | POST | `/categories` | ✅ | ADMIN | Crear categoría |
 | PATCH | `/categories/:id` | ✅ | ADMIN | Actualizar categoría |
 | DELETE | `/categories/:id` | ✅ | ADMIN | Eliminar categoría |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la categoría (obtenido de `GET /categories`) |
 
 ### Crear Categoría
 
@@ -896,13 +947,20 @@ Content-Type: application/json
 
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
-| GET | `/variants/product/:productId` | ❌ | - | Listar variantes |
-| GET | `/variants/:id` | ❌ | - | Obtener variante |
+| GET | `/variants/product/:productId` | ❌ | - | Listar variantes de un producto |
+| GET | `/variants/:id` | ❌ | - | Obtener variante por ID |
 | GET | `/variants/sku/:sku` | ❌ | - | Buscar por SKU |
 | POST | `/variants` | ✅ | ADMIN | Crear variante |
 | PATCH | `/variants/:id` | ✅ | ADMIN | Actualizar variante |
 | DELETE | `/variants/:id` | ✅ | ADMIN | Eliminar variante |
 | GET | `/variants/:id/availability` | ❌ | - | Verificar disponibilidad |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `productId` | UUID del producto padre (obtenido de `GET /products`) |
+| `id` | UUID de la variante (obtenido de `GET /variants/product/:productId`) |
+| `sku` | Código SKU único de la variante (ej: `POLO-BAS-M-ROJO`) |
 
 ### Crear Variante
 
@@ -932,11 +990,17 @@ Content-Type: application/json
 
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
-| GET | `/products/:productId/images` | ❌ | - | Listar imágenes |
+| GET | `/products/:productId/images` | ❌ | - | Listar imágenes del producto |
 | POST | `/products/:productId/images` | ✅ | ADMIN | Agregar imagen |
 | DELETE | `/products/:productId/images/:id` | ✅ | ADMIN | Eliminar imagen |
-| PATCH | `/products/:productId/images/:id/primary` | ✅ | ADMIN | Establecer principal |
-| PATCH | `/products/:productId/images/reorder` | ✅ | ADMIN | Reordenar |
+| PATCH | `/products/:productId/images/:id/primary` | ✅ | ADMIN | Establecer como principal |
+| PATCH | `/products/:productId/images/reorder` | ✅ | ADMIN | Reordenar imágenes |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `productId` | UUID del producto (obtenido de `GET /products`) |
+| `id` | UUID de la imagen (obtenido de `GET /products/:productId/images`) |
 
 ### Agregar Imagen
 
@@ -974,12 +1038,17 @@ displayOrder: 0
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| GET | `/cart` | ✅ | Obtener carrito |
-| POST | `/cart/items` | ✅ | Agregar item |
-| PATCH | `/cart/items/:itemId` | ✅ | Actualizar cantidad |
-| DELETE | `/cart/items/:itemId` | ✅ | Eliminar item |
-| DELETE | `/cart` | ✅ | Vaciar carrito |
-| GET | `/cart/validate` | ✅ | Validar para checkout |
+| GET | `/cart` | ✅ | Obtener carrito del usuario |
+| POST | `/cart/items` | ✅ | Agregar item al carrito |
+| PATCH | `/cart/items/:itemId` | ✅ | Actualizar cantidad de item |
+| DELETE | `/cart/items/:itemId` | ✅ | Eliminar item del carrito |
+| DELETE | `/cart` | ✅ | Vaciar carrito completo |
+| GET | `/cart/validate` | ✅ | Validar carrito para checkout |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `itemId` | UUID del item en el carrito (obtenido de `GET /cart` en `items[].id`) |
 
 ### Obtener Carrito
 
@@ -1046,7 +1115,15 @@ Content-Type: application/json
 PATCH /cart/items/:itemId
 Authorization: Bearer <token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `itemId` | UUID del item en el carrito (obtenido de `GET /cart` en `items[].id`) |
+
+**Body:**
+```json
 {
   "quantity": 5                        # Requerido, entre 1 y 99
 }
@@ -1092,11 +1169,17 @@ Si hay problemas:
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
 | GET | `/orders` | ✅ | - | Listar mis órdenes |
-| GET | `/orders/:id` | ✅ | - | Obtener orden |
-| GET | `/orders/number/:orderNumber` | ✅ | - | Buscar por número |
-| POST | `/orders` | ✅ | - | Crear orden |
-| POST | `/orders/:id/cancel` | ✅ | - | Cancelar orden |
-| PATCH | `/orders/:id` | ✅ | ADMIN | Actualizar orden |
+| GET | `/orders/:id` | ✅ | - | Obtener orden por ID |
+| GET | `/orders/number/:orderNumber` | ✅ | - | Buscar por número de orden |
+| POST | `/orders` | ✅ | - | Crear orden desde carrito |
+| POST | `/orders/:id/cancel` | ✅ | - | Cancelar mi orden |
+| PATCH | `/orders/:id` | ✅ | ADMIN | Actualizar estado de orden |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la orden (obtenido de `GET /orders` o al crearla) |
+| `orderNumber` | Número legible de la orden (ej: `ORD202601300001`) |
 
 ### Estados de Orden
 
@@ -1175,7 +1258,15 @@ Content-Type: application/json
 PATCH /orders/:id
 Authorization: Bearer <admin_token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la orden a actualizar (obtenido de `GET /orders`) |
+
+**Body:**
+```json
 {
   "status": "SHIPPED",
   "trackingNumber": "PE123456789",
@@ -1191,13 +1282,19 @@ Content-Type: application/json
 
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
-| GET | `/coupons` | ✅ | ADMIN | Listar cupones |
-| GET | `/coupons/:id` | ✅ | ADMIN | Obtener cupón |
-| GET | `/coupons/code/:code` | ✅ | - | Buscar por código |
+| GET | `/coupons` | ✅ | ADMIN | Listar todos los cupones |
+| GET | `/coupons/:id` | ✅ | ADMIN | Obtener cupón por ID |
+| GET | `/coupons/code/:code` | ✅ | - | Buscar cupón por código |
 | POST | `/coupons` | ✅ | ADMIN | Crear cupón |
 | PATCH | `/coupons/:id` | ✅ | ADMIN | Actualizar cupón |
 | DELETE | `/coupons/:id` | ✅ | ADMIN | Eliminar cupón |
-| POST | `/coupons/validate` | ✅ | - | Validar cupón |
+| POST | `/coupons/validate` | ✅ | - | Validar cupón para carrito |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID del cupón (obtenido de `GET /coupons`) |
+| `code` | Código del cupón (ej: `VERANO2026`, `BIENVENIDO10`) |
 
 ### Tipos de Descuento
 
@@ -1296,9 +1393,15 @@ APP_URL=http://localhost:3000
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| POST | `/payments/stripe/create-intent/:orderId` | ✅ | Crear PaymentIntent |
-| POST | `/payments/stripe/webhook` | ❌ | Webhook de Stripe |
-| POST | `/payments/stripe/refund/:paymentId` | ✅ ADMIN | Reembolsar |
+| POST | `/payments/stripe/create-intent/:orderId` | ✅ | Crear PaymentIntent para orden |
+| POST | `/payments/stripe/webhook` | ❌ | Webhook de eventos Stripe |
+| POST | `/payments/stripe/refund/:paymentId` | ✅ ADMIN | Reembolsar pago |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `orderId` | UUID de la orden (obtenido al crear orden con `POST /orders`) |
+| `paymentId` | UUID del pago (obtenido de `order.payments[].id`) |
 
 ### Crear PaymentIntent (Stripe)
 
@@ -1322,9 +1425,15 @@ Authorization: Bearer <token>
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| POST | `/payments/mercadopago/create-preference/:orderId` | ✅ | Crear preferencia |
-| POST | `/payments/mercadopago/webhook` | ❌ | Webhook IPN |
-| POST | `/payments/mercadopago/refund/:paymentId` | ✅ ADMIN | Reembolsar |
+| POST | `/payments/mercadopago/create-preference/:orderId` | ✅ | Crear preferencia de pago |
+| POST | `/payments/mercadopago/webhook` | ❌ | Webhook IPN de MercadoPago |
+| POST | `/payments/mercadopago/refund/:paymentId` | ✅ ADMIN | Reembolsar pago |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `orderId` | UUID de la orden (obtenido al crear orden con `POST /orders`) |
+| `paymentId` | UUID del pago (obtenido de `order.payments[].id`) |
 
 ### Crear Preferencia (MercadoPago)
 
@@ -1351,7 +1460,15 @@ Authorization: Bearer <token>
 POST /payments/stripe/refund/:paymentId
 Authorization: Bearer <admin_token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `paymentId` | UUID del pago a reembolsar (obtenido de `order.payments[].id`) |
+
+**Body:**
+```json
 {
   "amount": 50.00                      # Opcional, si no se envía es reembolso total
 }
@@ -1393,11 +1510,17 @@ enum ShippingStatus {
 
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
-| GET | `/shipping/calculate` | ❌ | - | Calcular costo |
-| GET | `/shipping/carriers` | ❌ | - | Listar carriers |
-| GET | `/shipping/track/:trackingNumber` | ❌ | - | Rastrear envío |
-| POST | `/shipping` | ✅ | ADMIN | Crear envío |
-| PATCH | `/shipping/:id` | ✅ | ADMIN | Actualizar estado |
+| GET | `/shipping/calculate` | ❌ | - | Calcular costo de envío |
+| GET | `/shipping/carriers` | ❌ | - | Listar transportistas disponibles |
+| GET | `/shipping/track/:trackingNumber` | ❌ | - | Rastrear envío por número |
+| POST | `/shipping` | ✅ | ADMIN | Crear envío para orden |
+| PATCH | `/shipping/:id` | ✅ | ADMIN | Actualizar estado de envío |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `trackingNumber` | Número de rastreo del envío (ej: `OLV123456789`) |
+| `id` | UUID del envío (obtenido al crear envío o de la orden) |
 
 ### Calcular Costo de Envío
 
@@ -1476,7 +1599,15 @@ Content-Type: application/json
 PATCH /shipping/:id
 Authorization: Bearer <admin_token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID del envío a actualizar (obtenido al crear envío) |
+
+**Body:**
+```json
 {
   "status": "SHIPPED",
   "trackingNumber": "OLV123456789",
@@ -1510,13 +1641,19 @@ enum MovementType {
 
 | Método | Endpoint | Auth | Rol | Descripción |
 |--------|----------|------|-----|-------------|
-| POST | `/inventory/adjust` | ✅ | ADMIN | Ajustar stock |
-| POST | `/inventory/alerts` | ✅ | ADMIN | Configurar alertas |
-| GET | `/inventory/low-stock` | ✅ | ADMIN | Items con bajo stock |
-| GET | `/inventory/stock/product/:productId` | ✅ | - | Stock de producto |
-| GET | `/inventory/stock/variant/:variantId` | ✅ | - | Stock de variante |
-| GET | `/inventory/movements/product/:productId` | ✅ | ADMIN | Historial |
-| POST | `/inventory/check-availability` | ❌ | - | Verificar disponibilidad |
+| POST | `/inventory/adjust` | ✅ | ADMIN | Ajustar stock de producto/variante |
+| POST | `/inventory/alerts` | ✅ | ADMIN | Configurar alertas de stock bajo |
+| GET | `/inventory/low-stock` | ✅ | ADMIN | Obtener items con stock bajo |
+| GET | `/inventory/stock/product/:productId` | ✅ | - | Consultar stock de producto |
+| GET | `/inventory/stock/variant/:variantId` | ✅ | - | Consultar stock de variante |
+| GET | `/inventory/movements/product/:productId` | ✅ | ADMIN | Historial de movimientos |
+| POST | `/inventory/check-availability` | ❌ | - | Verificar disponibilidad masiva |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `productId` | UUID del producto (obtenido de `GET /products`) |
+| `variantId` | UUID de la variante (obtenido de `GET /variants/product/:productId`) |
 
 ### Ajustar Stock
 
@@ -1629,12 +1766,18 @@ Content-Type: application/json
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| GET | `/reviews/product/:productId` | ❌ | Reviews de producto |
-| GET | `/reviews/:id` | ❌ | Obtener review |
-| POST | `/reviews` | ✅ | Crear review |
+| GET | `/reviews/product/:productId` | ❌ | Obtener reviews de un producto |
+| GET | `/reviews/:id` | ❌ | Obtener review por ID |
+| POST | `/reviews` | ✅ | Crear review de producto comprado |
 | PATCH | `/reviews/:id` | ✅ | Actualizar mi review |
 | DELETE | `/reviews/:id` | ✅ | Eliminar mi review |
-| GET | `/reviews/user/me` | ✅ | Mis reviews |
+| GET | `/reviews/user/me` | ✅ | Listar mis reviews |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `productId` | UUID del producto (obtenido de `GET /products`) |
+| `id` | UUID de la review (obtenido de `GET /reviews/product/:productId` o `GET /reviews/user/me`) |
 
 ### Crear Review
 
@@ -1679,7 +1822,15 @@ Content-Type: application/json
 PATCH /reviews/:id
 Authorization: Bearer <token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `id` | UUID de la review a actualizar (solo puedes actualizar tus propias reviews) |
+
+**Body:**
+```json
 {
   "rating": 4,                         # Todos los campos son opcionales
   "title": "Buen producto",
@@ -1728,12 +1879,17 @@ GET /reviews/product/:productId?page=1&limit=10&sortBy=rating&order=desc
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| GET | `/wishlist` | ✅ | Obtener mi wishlist |
-| POST | `/wishlist` | ✅ | Agregar item |
-| PATCH | `/wishlist/:itemId` | ✅ | Actualizar item |
-| DELETE | `/wishlist/:itemId` | ✅ | Eliminar item |
-| DELETE | `/wishlist` | ✅ | Vaciar wishlist |
-| POST | `/wishlist/:itemId/move-to-cart` | ✅ | Mover al carrito |
+| GET | `/wishlist` | ✅ | Obtener mi wishlist completa |
+| POST | `/wishlist` | ✅ | Agregar producto a wishlist |
+| PATCH | `/wishlist/:itemId` | ✅ | Actualizar item de wishlist |
+| DELETE | `/wishlist/:itemId` | ✅ | Eliminar item de wishlist |
+| DELETE | `/wishlist` | ✅ | Vaciar wishlist completa |
+| POST | `/wishlist/:itemId/move-to-cart` | ✅ | Mover item al carrito |
+
+**Descripción de parámetros:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `itemId` | UUID del item en wishlist (obtenido de `GET /wishlist` en `items[].id`) |
 
 ### Agregar a Wishlist
 
@@ -1812,7 +1968,15 @@ Authorization: Bearer <token>
 POST /wishlist/:itemId/move-to-cart
 Authorization: Bearer <token>
 Content-Type: application/json
+```
 
+**Parámetros de ruta:**
+| Parámetro | Descripción |
+|-----------|-------------|
+| `itemId` | UUID del item en wishlist a mover al carrito |
+
+**Body:**
+```json
 {
   "quantity": 1                        # Opcional, default: 1
 }
@@ -2022,14 +2186,118 @@ make docker-down       # Docker down
 
 ---
 
+## Lineamientos de Tipado TypeScript
+
+### ❌ Prohibido: Uso de `any`
+
+El uso de `any` está **prohibido** en el proyecto. Evita la verificación de tipos y anula los beneficios de TypeScript.
+
+```typescript
+// ❌ MAL - Nunca usar any
+function processData(data: any) {
+  return data.name;
+}
+
+// ❌ MAL - any implícito
+function processData(data) { // Error: Parameter 'data' implicitly has an 'any' type
+  return data.name;
+}
+```
+
+### ✅ Alternativas a `any`
+
+#### 1. Usar tipos específicos
+
+```typescript
+// ✅ BIEN - Tipo específico
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
+
+function processUser(user: User) {
+  return user.name;
+}
+```
+
+#### 2. Usar `unknown` cuando no conoces el tipo
+
+```typescript
+// ✅ BIEN - unknown requiere verificación de tipo
+function processData(data: unknown) {
+  if (typeof data === 'object' && data !== null && 'name' in data) {
+    return (data as { name: string }).name;
+  }
+  throw new Error('Invalid data');
+}
+```
+
+#### 3. Usar genéricos para flexibilidad
+
+```typescript
+// ✅ BIEN - Genérico mantiene el tipo
+function getFirst<T>(items: T[]): T | undefined {
+  return items[0];
+}
+
+const firstUser = getFirst<User>(users); // tipo: User | undefined
+```
+
+#### 4. Usar tipos de unión
+
+```typescript
+// ✅ BIEN - Tipos de unión específicos
+type ApiResponse = SuccessResponse | ErrorResponse;
+
+function handleResponse(response: ApiResponse) {
+  if ('error' in response) {
+    throw new Error(response.error);
+  }
+  return response.data;
+}
+```
+
+#### 5. Usar `Record` para objetos dinámicos
+
+```typescript
+// ✅ BIEN - Record con tipos definidos
+const config: Record<string, string | number> = {
+  apiUrl: 'https://api.example.com',
+  timeout: 5000,
+};
+```
+
+### Casos especiales permitidos
+
+En casos muy específicos donde `any` es inevitable (ej: decoradores, librerías externas sin tipos), usar `// eslint-disable-next-line @typescript-eslint/no-explicit-any` con justificación:
+
+```typescript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Required by NestJS decorator
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    // ...
+  }
+}
+```
+
+### Configuración de ESLint
+
+El proyecto tiene configurado `@typescript-eslint/no-explicit-any: "error"` para prevenir el uso de `any`.
+
+---
+
 ## Checklist de Desarrollo
 
 - [ ] El código compila sin errores (`pnpm build`)
 - [ ] Los tests pasan (`pnpm test`)
-- [ ] No hay tipos `any`
+- [ ] No hay tipos `any` (usar `unknown`, genéricos o tipos específicos)
 - [ ] Los errores usan excepciones de `src/common/exceptions/`
-- [ ] Los DTOs tienen validaciones
+- [ ] Los DTOs tienen validaciones con `class-validator`
 - [ ] El commit sigue la convención (`feat:`, `fix:`, etc.)
+- [ ] Las funciones tienen tipos de retorno explícitos
+- [ ] Los parámetros tienen tipos definidos
 
 ---
 

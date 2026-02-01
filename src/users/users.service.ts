@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { AddressNotFoundException, UserNotFoundException } from '../common';
+import { Role } from '../common/enums/role.enum';
 import { PrismaService } from '../prisma';
 import { CreateAddressDto } from './dto/create-address.dto';
 import { UpdateAddressDto } from './dto/update-address.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { Role } from '../common/enums/role.enum';
-import { UserNotFoundException, AddressNotFoundException } from '../common';
 
 @Injectable()
 export class UsersService {

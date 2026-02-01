@@ -1,12 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client/extension';
+
+interface SlugDelegate {
+  findFirst(args: {
+    where: { slug: string; NOT?: { id: string } };
+  }): Promise<{ slug: string } | null>;
+}
 
 @Injectable()
 export class SlugService {
   async generateSlug(
     name: string,
     excludeId: string | undefined,
-    prismaClient: PrismaClient,
+    prismaClient: SlugDelegate,
   ): Promise<string> {
     const slugName = name
       .toLowerCase()

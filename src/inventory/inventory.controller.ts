@@ -82,7 +82,12 @@ export class InventoryController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
-    return this.inventoryService.getMovementHistory(productId, undefined, page, limit);
+    return this.inventoryService.getMovementHistory(
+      productId,
+      undefined,
+      page,
+      limit,
+    );
   }
 
   /**
@@ -95,7 +100,12 @@ export class InventoryController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
   ) {
-    return this.inventoryService.getMovementHistory(undefined, variantId, page, limit);
+    return this.inventoryService.getMovementHistory(
+      undefined,
+      variantId,
+      page,
+      limit,
+    );
   }
 
   /**
