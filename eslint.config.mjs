@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs'],
+    ignores: ['**/*'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -26,11 +26,11 @@ export default tseslint.config(
   },
   {
     rules: {
-      'no-alert': 'off',
-      //   '@typescript-eslint/no-explicit-any': 'off',
-      //   '@typescript-eslint/no-floating-promises': 'warn',
-      //   '@typescript-eslint/no-unsafe-argument': 'warn',
-      //   "prettier/prettier": ["error", { endOfLine: "auto" }],
+      // 'no-alert': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
   },
 );

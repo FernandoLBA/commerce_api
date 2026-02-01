@@ -9,7 +9,7 @@ import {
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class AddToCartDto {
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Product ID') })
   @IsUUID('4', { message: VALIDATION_MESSAGES.INVALID_UUID('Product ID') })
   productId: string;
 
@@ -17,7 +17,7 @@ export class AddToCartDto {
   @IsUUID('4', { message: VALIDATION_MESSAGES.INVALID_UUID('Variant ID') })
   variantId?: string;
 
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Quantity') })
   @IsNumber({}, { message: VALIDATION_MESSAGES.MUST_BE_NUMBER('Quantity') })
   @Min(1, { message: VALIDATION_MESSAGES.QUANTITY_MIN })
   @Max(99, { message: VALIDATION_MESSAGES.QUANTITY_MAX })

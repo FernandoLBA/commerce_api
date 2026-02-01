@@ -80,7 +80,12 @@ export class CouponsController {
     @Body()
     body: {
       code: string;
-      cartItems: { productId: string; categoryId?: string; price: number; quantity: number }[];
+      cartItems: {
+        productId: string;
+        categoryId?: string;
+        price: number;
+        quantity: number;
+      }[];
       cartTotal: number;
     },
   ) {

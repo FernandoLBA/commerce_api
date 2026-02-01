@@ -110,6 +110,7 @@ model User {
 model Address {
   id            String   @id @default(uuid())
   userId        String   @map("user_id")
+  label         String
   recipientName String   @map("recipient_name")
   phone         String
   street        String
@@ -132,16 +133,16 @@ model Address {
 // ==================== PRODUCTS ====================
 
 model Category {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String   @unique
-  description String?
-  image       String?
-  parentId    String?  @map("parent_id")
-  isActive    Boolean  @default(true) @map("is_active")
-  displayOrder Int     @default(0) @map("display_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  description  String?
+  image        String?
+  parentId     String?  @map("parent_id")
+  isActive     Boolean  @default(true) @map("is_active")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   children Category[] @relation("CategoryHierarchy")
@@ -189,7 +190,7 @@ model ProductVariant {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
-  product            Product                    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product            Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
   attributeValues    VariantAttributeValue[]
   cartItems          CartItem[]
   orderItems         OrderItem[]
@@ -321,16 +322,16 @@ model Order {
 }
 
 model OrderItem {
-  id                 String   @id @default(uuid())
-  orderId            String   @map("order_id")
-  productId          String   @map("product_id")
-  variantId          String?  @map("variant_id")
-  productName        String   @map("product_name")
-  variantAttributes  Json?    @map("variant_attributes")
-  quantity           Int
-  unitPrice          Decimal  @map("unit_price") @db.Decimal(10, 2)
-  subtotal           Decimal  @db.Decimal(10, 2)
-  createdAt          DateTime @default(now()) @map("created_at")
+  id                String   @id @default(uuid())
+  orderId           String   @map("order_id")
+  productId         String   @map("product_id")
+  variantId         String?  @map("variant_id")
+  productName       String   @map("product_name")
+  variantAttributes Json?    @map("variant_attributes")
+  quantity          Int
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(10, 2)
+  subtotal          Decimal  @db.Decimal(10, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
 
   order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product         @relation(fields: [productId], references: [id], onDelete: SetNull)
@@ -434,16 +435,16 @@ model InventoryMovement {
 }
 
 model StockAlert {
-  id                     String   @id @default(uuid())
-  productId              String?  @unique @map("product_id")
-  variantId              String?  @unique @map("variant_id")
-  lowStockThreshold      Int      @default(10) @map("low_stock_threshold")
-  criticalStockThreshold Int      @default(0) @map("critical_stock_threshold")
-  alertEnabled           Boolean  @default(true) @map("alert_enabled")
+  id                     String    @id @default(uuid())
+  productId              String?   @unique @map("product_id")
+  variantId              String?   @unique @map("variant_id")
+  lowStockThreshold      Int       @default(10) @map("low_stock_threshold")
+  criticalStockThreshold Int       @default(0) @map("critical_stock_threshold")
+  alertEnabled           Boolean   @default(true) @map("alert_enabled")
   lastAlertSentAt        DateTime? @map("last_alert_sent_at")
-  alertCount             Int      @default(0) @map("alert_count")
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+  alertCount             Int       @default(0) @map("alert_count")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
   product Product?        @relation(fields: [productId], references: [id], onDelete: Cascade)
   variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: Cascade)
@@ -524,15 +525,15 @@ model CouponUsage {
 // ==================== WISHLIST ====================
 
 model WishlistItem {
-  id                   String   @id @default(uuid())
-  userId               String   @map("user_id")
-  productId            String   @map("product_id")
-  variantId            String?  @map("variant_id")
-  notes                String?
-  priceWhenAdded       Decimal? @map("price_when_added") @db.Decimal(10, 2)
-  notifyOnPriceDrop    Boolean  @default(false) @map("notify_on_price_drop")
-  notifyOnBackInStock  Boolean  @default(false) @map("notify_on_back_in_stock")
-  createdAt            DateTime @default(now()) @map("created_at")
+  id                  String   @id @default(uuid())
+  userId              String   @map("user_id")
+  productId           String   @map("product_id")
+  variantId           String?  @map("variant_id")
+  notes               String?
+  priceWhenAdded      Decimal? @map("price_when_added") @db.Decimal(10, 2)
+  notifyOnPriceDrop   Boolean  @default(false) @map("notify_on_price_drop")
+  notifyOnBackInStock Boolean  @default(false) @map("notify_on_back_in_stock")
+  createdAt           DateTime @default(now()) @map("created_at")
 
   user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)

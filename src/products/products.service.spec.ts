@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsService } from './products.service';
 import { PrismaService } from '../prisma';
+import { SlugService } from '../common/services/slug.service';
 
 describe('ProductsService', () => {
   let service: ProductsService;
@@ -30,6 +31,10 @@ describe('ProductsService', () => {
     images: [],
   };
 
+  const mockSlugService = {
+    generateSlug: jest.fn().mockResolvedValue('test-product'),
+  };
+
   beforeEach(async () => {
     const mockPrismaService = {
       product: {
@@ -51,6 +56,10 @@ describe('ProductsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: SlugService,
+          useValue: mockSlugService,
         },
       ],
     }).compile();

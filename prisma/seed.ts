@@ -1,9 +1,19 @@
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { PrismaClient, Role, DiscountType, OrderStatus, PaymentStatus, PaymentMethod, ShippingCarrier, ShippingStatus, MovementType } = require('../src/generated/prisma/client');
-import * as bcrypt from 'bcrypt';
+const {
+  PrismaClient,
+  Role,
+  DiscountType,
+  OrderStatus,
+  PaymentStatus,
+  PaymentMethod,
+  ShippingCarrier,
+  ShippingStatus,
+  MovementType,
+} = require('../src/generated/prisma/client');
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Pool } from 'pg';
+import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
+import { Pool } from 'pg';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -97,6 +107,7 @@ async function main() {
     prisma.address.create({
       data: {
         userId: customers[0].id,
+        label: 'Casa',
         recipientName: 'Juan Pérez',
         phone: '+51912345678',
         street: 'Av. Javier Prado Este',
@@ -113,6 +124,7 @@ async function main() {
     prisma.address.create({
       data: {
         userId: customers[0].id,
+        label: 'Oficina',
         recipientName: 'Juan Pérez (Oficina)',
         phone: '+51912345678',
         street: 'Calle Las Begonias',
@@ -128,6 +140,7 @@ async function main() {
     prisma.address.create({
       data: {
         userId: customers[1].id,
+        label: 'Casa',
         recipientName: 'María García',
         phone: '+51987654321',
         street: 'Av. Arequipa',
@@ -142,6 +155,7 @@ async function main() {
     prisma.address.create({
       data: {
         userId: customers[2].id,
+        label: 'Casa',
         recipientName: 'Carlos Rodríguez',
         phone: '+51956789012',
         street: 'Av. El Sol',
@@ -241,7 +255,9 @@ async function main() {
       },
     }),
   ]);
-  console.log(`✅ Created ${categories.length + subcategories.length} categories\n`);
+  console.log(
+    `✅ Created ${categories.length + subcategories.length} categories\n`,
+  );
 
   // ==================== PRODUCT ATTRIBUTES ====================
   console.log('🏷️ Creating product attributes...');
@@ -256,38 +272,63 @@ async function main() {
   });
 
   const colorValues = await Promise.all([
-    prisma.productAttributeValue.create({ data: { attributeId: colorAttribute.id, value: 'Negro' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: colorAttribute.id, value: 'Blanco' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: colorAttribute.id, value: 'Azul' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: colorAttribute.id, value: 'Rojo' } }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: colorAttribute.id, value: 'Negro' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: colorAttribute.id, value: 'Blanco' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: colorAttribute.id, value: 'Azul' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: colorAttribute.id, value: 'Rojo' },
+    }),
   ]);
 
   const sizeValues = await Promise.all([
-    prisma.productAttributeValue.create({ data: { attributeId: sizeAttribute.id, value: 'S' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: sizeAttribute.id, value: 'M' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: sizeAttribute.id, value: 'L' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: sizeAttribute.id, value: 'XL' } }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: sizeAttribute.id, value: 'S' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: sizeAttribute.id, value: 'M' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: sizeAttribute.id, value: 'L' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: sizeAttribute.id, value: 'XL' },
+    }),
   ]);
 
   const storageValues = await Promise.all([
-    prisma.productAttributeValue.create({ data: { attributeId: storageAttribute.id, value: '128GB' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: storageAttribute.id, value: '256GB' } }),
-    prisma.productAttributeValue.create({ data: { attributeId: storageAttribute.id, value: '512GB' } }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: storageAttribute.id, value: '128GB' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: storageAttribute.id, value: '256GB' },
+    }),
+    prisma.productAttributeValue.create({
+      data: { attributeId: storageAttribute.id, value: '512GB' },
+    }),
   ]);
-  console.log(`✅ Created 3 attributes with ${colorValues.length + sizeValues.length + storageValues.length} values\n`);
+  console.log(
+    `✅ Created 3 attributes with ${colorValues.length + sizeValues.length + storageValues.length} values\n`,
+  );
 
   // ==================== PRODUCTS ====================
   console.log('📦 Creating products...');
-  
+
   // Product 1: iPhone (with variants)
   const iphone = await prisma.product.create({
     data: {
       name: 'iPhone 15 Pro',
       slug: 'iphone-15-pro',
-      description: 'El iPhone más avanzado con chip A17 Pro, cámara de 48MP y titanio de grado aeroespacial.',
+      description:
+        'El iPhone más avanzado con chip A17 Pro, cámara de 48MP y titanio de grado aeroespacial.',
       shortDescription: 'iPhone 15 Pro con chip A17 Pro',
-      price: 4999.00,
-      compareAtPrice: 5499.00,
+      price: 4999.0,
+      compareAtPrice: 5499.0,
       stock: 0,
       isActive: true,
       hasVariants: true,
@@ -301,7 +342,7 @@ async function main() {
       data: {
         productId: iphone.id,
         sku: 'IPHONE15PRO-128-NE',
-        price: 4999.00,
+        price: 4999.0,
         stock: 15,
         isActive: true,
       },
@@ -310,7 +351,7 @@ async function main() {
       data: {
         productId: iphone.id,
         sku: 'IPHONE15PRO-256-NE',
-        price: 5499.00,
+        price: 5499.0,
         stock: 10,
         isActive: true,
       },
@@ -319,7 +360,7 @@ async function main() {
       data: {
         productId: iphone.id,
         sku: 'IPHONE15PRO-128-BL',
-        price: 4999.00,
+        price: 4999.0,
         stock: 8,
         isActive: true,
       },
@@ -330,24 +371,42 @@ async function main() {
   await Promise.all([
     // Variant 1: Negro 128GB
     prisma.variantAttributeValue.create({
-      data: { variantId: iphoneVariants[0].id, attributeValueId: colorValues[0].id },
+      data: {
+        variantId: iphoneVariants[0].id,
+        attributeValueId: colorValues[0].id,
+      },
     }),
     prisma.variantAttributeValue.create({
-      data: { variantId: iphoneVariants[0].id, attributeValueId: storageValues[0].id },
+      data: {
+        variantId: iphoneVariants[0].id,
+        attributeValueId: storageValues[0].id,
+      },
     }),
     // Variant 2: Negro 256GB
     prisma.variantAttributeValue.create({
-      data: { variantId: iphoneVariants[1].id, attributeValueId: colorValues[0].id },
+      data: {
+        variantId: iphoneVariants[1].id,
+        attributeValueId: colorValues[0].id,
+      },
     }),
     prisma.variantAttributeValue.create({
-      data: { variantId: iphoneVariants[1].id, attributeValueId: storageValues[1].id },
+      data: {
+        variantId: iphoneVariants[1].id,
+        attributeValueId: storageValues[1].id,
+      },
     }),
     // Variant 3: Blanco 128GB
     prisma.variantAttributeValue.create({
-      data: { variantId: iphoneVariants[2].id, attributeValueId: colorValues[1].id },
+      data: {
+        variantId: iphoneVariants[2].id,
+        attributeValueId: colorValues[1].id,
+      },
     }),
     prisma.variantAttributeValue.create({
-      data: { variantId: iphoneVariants[2].id, attributeValueId: storageValues[0].id },
+      data: {
+        variantId: iphoneVariants[2].id,
+        attributeValueId: storageValues[0].id,
+      },
     }),
   ]);
 
@@ -356,10 +415,11 @@ async function main() {
     data: {
       name: 'Polo Premium Algodón Pima',
       slug: 'polo-premium-algodon-pima',
-      description: 'Polo de algodón pima peruano, el más suave del mundo. Fabricado en Perú con materiales de primera calidad.',
+      description:
+        'Polo de algodón pima peruano, el más suave del mundo. Fabricado en Perú con materiales de primera calidad.',
       shortDescription: 'Polo 100% algodón pima peruano',
-      price: 89.90,
-      compareAtPrice: 119.90,
+      price: 89.9,
+      compareAtPrice: 119.9,
       stock: 0,
       isActive: true,
       hasVariants: true,
@@ -370,28 +430,92 @@ async function main() {
   // Polo variants
   const poloVariants = await Promise.all([
     prisma.productVariant.create({
-      data: { productId: polo.id, sku: 'POLO-PIMA-NE-M', price: 89.90, stock: 25, isActive: true },
+      data: {
+        productId: polo.id,
+        sku: 'POLO-PIMA-NE-M',
+        price: 89.9,
+        stock: 25,
+        isActive: true,
+      },
     }),
     prisma.productVariant.create({
-      data: { productId: polo.id, sku: 'POLO-PIMA-NE-L', price: 89.90, stock: 20, isActive: true },
+      data: {
+        productId: polo.id,
+        sku: 'POLO-PIMA-NE-L',
+        price: 89.9,
+        stock: 20,
+        isActive: true,
+      },
     }),
     prisma.productVariant.create({
-      data: { productId: polo.id, sku: 'POLO-PIMA-BL-M', price: 89.90, stock: 30, isActive: true },
+      data: {
+        productId: polo.id,
+        sku: 'POLO-PIMA-BL-M',
+        price: 89.9,
+        stock: 30,
+        isActive: true,
+      },
     }),
     prisma.productVariant.create({
-      data: { productId: polo.id, sku: 'POLO-PIMA-AZ-L', price: 89.90, stock: 15, isActive: true },
+      data: {
+        productId: polo.id,
+        sku: 'POLO-PIMA-AZ-L',
+        price: 89.9,
+        stock: 15,
+        isActive: true,
+      },
     }),
   ]);
 
   await Promise.all([
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[0].id, attributeValueId: colorValues[0].id } }),
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[0].id, attributeValueId: sizeValues[1].id } }),
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[1].id, attributeValueId: colorValues[0].id } }),
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[1].id, attributeValueId: sizeValues[2].id } }),
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[2].id, attributeValueId: colorValues[1].id } }),
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[2].id, attributeValueId: sizeValues[1].id } }),
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[3].id, attributeValueId: colorValues[2].id } }),
-    prisma.variantAttributeValue.create({ data: { variantId: poloVariants[3].id, attributeValueId: sizeValues[2].id } }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[0].id,
+        attributeValueId: colorValues[0].id,
+      },
+    }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[0].id,
+        attributeValueId: sizeValues[1].id,
+      },
+    }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[1].id,
+        attributeValueId: colorValues[0].id,
+      },
+    }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[1].id,
+        attributeValueId: sizeValues[2].id,
+      },
+    }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[2].id,
+        attributeValueId: colorValues[1].id,
+      },
+    }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[2].id,
+        attributeValueId: sizeValues[1].id,
+      },
+    }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[3].id,
+        attributeValueId: colorValues[2].id,
+      },
+    }),
+    prisma.variantAttributeValue.create({
+      data: {
+        variantId: poloVariants[3].id,
+        attributeValueId: sizeValues[2].id,
+      },
+    }),
   ]);
 
   // Product 3: Simple product (no variants)
@@ -399,10 +523,11 @@ async function main() {
     data: {
       name: 'MacBook Air M3',
       slug: 'macbook-air-m3',
-      description: 'El MacBook Air más potente con el chip M3. Pantalla Liquid Retina de 13.6 pulgadas.',
+      description:
+        'El MacBook Air más potente con el chip M3. Pantalla Liquid Retina de 13.6 pulgadas.',
       shortDescription: 'MacBook Air con chip M3',
-      price: 5999.00,
-      compareAtPrice: 6499.00,
+      price: 5999.0,
+      compareAtPrice: 6499.0,
       stock: 12,
       isActive: true,
       hasVariants: false,
@@ -415,9 +540,10 @@ async function main() {
     data: {
       name: 'Set Mancuernas Ajustables 20kg',
       slug: 'set-mancuernas-ajustables-20kg',
-      description: 'Set de mancuernas ajustables de 2kg a 20kg. Ideal para entrenamiento en casa.',
+      description:
+        'Set de mancuernas ajustables de 2kg a 20kg. Ideal para entrenamiento en casa.',
       shortDescription: 'Mancuernas ajustables hasta 20kg',
-      price: 349.00,
+      price: 349.0,
       stock: 50,
       isActive: true,
       hasVariants: false,
@@ -430,10 +556,11 @@ async function main() {
     data: {
       name: 'Cafetera Express Italiana',
       slug: 'cafetera-express-italiana',
-      description: 'Cafetera express de acero inoxidable. Capacidad para 6 tazas.',
+      description:
+        'Cafetera express de acero inoxidable. Capacidad para 6 tazas.',
       shortDescription: 'Cafetera italiana 6 tazas',
-      price: 159.00,
-      compareAtPrice: 199.00,
+      price: 159.0,
+      compareAtPrice: 199.0,
       stock: 5,
       isActive: true,
       hasVariants: false,
@@ -636,10 +763,10 @@ async function main() {
         department: 'Lima',
         postalCode: '15036',
       },
-      subtotal: 5088.90,
-      shippingCost: 15.00,
+      subtotal: 5088.9,
+      shippingCost: 15.0,
       discount: 0,
-      total: 5103.90,
+      total: 5103.9,
       deliveredAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
     },
   });
@@ -653,8 +780,8 @@ async function main() {
         productName: 'iPhone 15 Pro',
         variantAttributes: { Color: 'Negro', Almacenamiento: '128GB' },
         quantity: 1,
-        unitPrice: 4999.00,
-        subtotal: 4999.00,
+        unitPrice: 4999.0,
+        subtotal: 4999.0,
       },
     }),
     prisma.orderItem.create({
@@ -665,8 +792,8 @@ async function main() {
         productName: 'Polo Premium Algodón Pima',
         variantAttributes: { Color: 'Negro', Talla: 'M' },
         quantity: 1,
-        unitPrice: 89.90,
-        subtotal: 89.90,
+        unitPrice: 89.9,
+        subtotal: 89.9,
       },
     }),
   ]);
@@ -677,7 +804,7 @@ async function main() {
       orderId: order1.id,
       method: PaymentMethod.STRIPE,
       status: PaymentStatus.COMPLETED,
-      amount: 5103.90,
+      amount: 5103.9,
       currency: 'PEN',
       externalId: 'pi_test_123456789',
       externalStatus: 'succeeded',
@@ -699,7 +826,7 @@ async function main() {
       city: 'Lima',
       department: 'Lima',
       postalCode: '15036',
-      shippingCost: 15.00,
+      shippingCost: 15.0,
       weightKg: 0.5,
       shippedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
       deliveredAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
@@ -747,11 +874,11 @@ async function main() {
         city: 'Lima',
         department: 'Lima',
       },
-      subtotal: 6348.00,
+      subtotal: 6348.0,
       shippingCost: 0,
-      discount: 30.00,
+      discount: 30.0,
       discountCode: 'VERANO2025',
-      total: 6318.00,
+      total: 6318.0,
     },
   });
 
@@ -761,8 +888,8 @@ async function main() {
       productId: laptop.id,
       productName: 'MacBook Air M3',
       quantity: 1,
-      unitPrice: 5999.00,
-      subtotal: 5999.00,
+      unitPrice: 5999.0,
+      subtotal: 5999.0,
     },
   });
 
@@ -772,8 +899,8 @@ async function main() {
       productId: mancuernas.id,
       productName: 'Set Mancuernas Ajustables 20kg',
       quantity: 1,
-      unitPrice: 349.00,
-      subtotal: 349.00,
+      unitPrice: 349.0,
+      subtotal: 349.0,
     },
   });
 
@@ -782,7 +909,7 @@ async function main() {
       orderId: order2.id,
       method: PaymentMethod.MERCADOPAGO,
       status: PaymentStatus.COMPLETED,
-      amount: 6318.00,
+      amount: 6318.0,
       currency: 'PEN',
       externalId: 'mp_payment_987654321',
       completedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
@@ -795,7 +922,7 @@ async function main() {
       couponId: coupons[1].id,
       userId: customers[1].id,
       orderId: order2.id,
-      discountApplied: 30.00,
+      discountApplied: 30.0,
     },
   });
 
@@ -815,10 +942,10 @@ async function main() {
         department: 'Cusco',
         reference: 'A 2 cuadras de la Plaza de Armas',
       },
-      subtotal: 159.00,
-      shippingCost: 25.00,
+      subtotal: 159.0,
+      shippingCost: 25.0,
       discount: 0,
-      total: 184.00,
+      total: 184.0,
     },
   });
 
@@ -828,8 +955,8 @@ async function main() {
       productId: cafetera.id,
       productName: 'Cafetera Express Italiana',
       quantity: 1,
-      unitPrice: 159.00,
-      subtotal: 159.00,
+      unitPrice: 159.0,
+      subtotal: 159.0,
     },
   });
 
@@ -838,7 +965,7 @@ async function main() {
       orderId: order3.id,
       method: PaymentMethod.CASH_ON_DELIVERY,
       status: PaymentStatus.PENDING,
-      amount: 184.00,
+      amount: 184.0,
       currency: 'PEN',
     },
   });
@@ -858,7 +985,7 @@ async function main() {
         referenceNumber: 'PO-2025-001',
         notes: 'Compra inicial de inventario',
         performedBy: adminUser.id,
-        unitCost: 3500.00,
+        unitCost: 3500.0,
       },
       {
         productId: iphone.id,
@@ -879,7 +1006,7 @@ async function main() {
         newStock: 50,
         referenceNumber: 'PO-2025-002',
         performedBy: adminUser.id,
-        unitCost: 35.00,
+        unitCost: 35.0,
       },
       {
         productId: laptop.id,
@@ -889,7 +1016,7 @@ async function main() {
         newStock: 15,
         referenceNumber: 'PO-2025-003',
         performedBy: adminUser.id,
-        unitCost: 4200.00,
+        unitCost: 4200.0,
       },
       {
         productId: laptop.id,
@@ -922,7 +1049,8 @@ async function main() {
         productId: iphone.id,
         rating: 5,
         title: '¡Excelente teléfono!',
-        comment: 'Increíble calidad de cámara y rendimiento. El envío fue muy rápido. Totalmente recomendado.',
+        comment:
+          'Increíble calidad de cámara y rendimiento. El envío fue muy rápido. Totalmente recomendado.',
         isVerifiedPurchase: true,
         isApproved: true,
         helpfulCount: 12,
@@ -934,7 +1062,8 @@ async function main() {
         productId: polo.id,
         rating: 5,
         title: 'El mejor polo que he comprado',
-        comment: 'La calidad del algodón pima es incomparable. Muy suave y cómodo.',
+        comment:
+          'La calidad del algodón pima es incomparable. Muy suave y cómodo.',
         isVerifiedPurchase: true,
         isApproved: true,
         helpfulCount: 8,
@@ -946,11 +1075,13 @@ async function main() {
         productId: laptop.id,
         rating: 4,
         title: 'Muy buena laptop',
-        comment: 'Excelente rendimiento para trabajo. El único punto en contra es que podría tener más puertos USB.',
+        comment:
+          'Excelente rendimiento para trabajo. El único punto en contra es que podría tener más puertos USB.',
         isVerifiedPurchase: true,
         isApproved: true,
         helpfulCount: 5,
-        adminResponse: '¡Gracias por tu feedback! Te recomendamos el hub USB-C que tenemos disponible.',
+        adminResponse:
+          '¡Gracias por tu feedback! Te recomendamos el hub USB-C que tenemos disponible.',
         adminResponseAt: new Date(),
       },
     }),
@@ -960,7 +1091,8 @@ async function main() {
         productId: mancuernas.id,
         rating: 5,
         title: 'Perfectas para casa',
-        comment: 'Excelente relación calidad-precio. El ajuste de peso es muy fácil.',
+        comment:
+          'Excelente relación calidad-precio. El ajuste de peso es muy fácil.',
         isVerifiedPurchase: false,
         isApproved: true,
         helpfulCount: 3,
@@ -976,7 +1108,7 @@ async function main() {
       data: {
         userId: customers[0].id,
         productId: laptop.id,
-        priceWhenAdded: 5999.00,
+        priceWhenAdded: 5999.0,
         notifyOnPriceDrop: true,
         notifyOnBackInStock: false,
         notes: 'Para el próximo año',
@@ -987,7 +1119,7 @@ async function main() {
         userId: customers[1].id,
         productId: iphone.id,
         variantId: iphoneVariants[1].id,
-        priceWhenAdded: 5499.00,
+        priceWhenAdded: 5499.0,
         notifyOnPriceDrop: true,
         notifyOnBackInStock: false,
       },
@@ -997,7 +1129,7 @@ async function main() {
         userId: customers[2].id,
         productId: polo.id,
         variantId: poloVariants[3].id,
-        priceWhenAdded: 89.90,
+        priceWhenAdded: 89.9,
         notifyOnBackInStock: true,
       },
     }),
@@ -1019,7 +1151,9 @@ async function main() {
   console.log(`   📋 Orders: ${await prisma.order.count()}`);
   console.log(`   💳 Payments: ${await prisma.payment.count()}`);
   console.log(`   🚚 Shipments: ${await prisma.shipment.count()}`);
-  console.log(`   📊 Inventory Movements: ${await prisma.inventoryMovement.count()}`);
+  console.log(
+    `   📊 Inventory Movements: ${await prisma.inventoryMovement.count()}`,
+  );
   console.log(`   🔔 Stock Alerts: ${await prisma.stockAlert.count()}`);
   console.log(`   ⭐ Reviews: ${await prisma.review.count()}`);
   console.log(`   🎟️  Coupons: ${await prisma.coupon.count()}`);
@@ -1029,7 +1163,9 @@ async function main() {
   console.log('   User 1: juan.perez@gmail.com / password123');
   console.log('   User 2: maria.garcia@gmail.com / password123');
   console.log('   User 3: carlos.rodriguez@gmail.com / password123');
-  console.log('\n🎟️  Test Coupons: BIENVENIDO10, VERANO2025, ENVIOGRATIS, TECH20');
+  console.log(
+    '\n🎟️  Test Coupons: BIENVENIDO10, VERANO2025, ENVIOGRATIS, TECH20',
+  );
   console.log('═'.repeat(50));
 }
 

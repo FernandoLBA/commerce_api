@@ -9,6 +9,14 @@ import {
   ParseUUIDPipe,
   Req,
 } from '@nestjs/common';
+
+interface MercadoPagoWebhookBody {
+  action?: string;
+  type?: string;
+  data?: {
+    id?: string;
+  };
+}
 import type { RawBodyRequest } from '@nestjs/common';
 import { Request } from 'express';
 import { StripeService } from './stripe.service';
@@ -55,12 +63,14 @@ export class PaymentsController {
 
   @Post('mercadopago/create-preference/:orderId')
   @UseGuards(JwtAuthGuard)
-  createMercadoPagoPreference(@Param('orderId', ParseUUIDPipe) orderId: string) {
+  createMercadoPagoPreference(
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+  ) {
     return this.mercadoPagoService.createPreference(orderId);
   }
 
   @Post('mercadopago/webhook')
-  async handleMercadoPagoWebhook(@Body() body: any) {
+  async handleMercadoPagoWebhook(@Body() body: MercadoPagoWebhookBody) {
     return this.mercadoPagoService.handleWebhook(body);
   }
 

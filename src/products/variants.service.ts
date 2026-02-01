@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma';
-import { CreateVariantDto } from './dto/create-variant.dto';
-import { UpdateVariantDto } from './dto/update-variant.dto';
-import { AttributesService } from './attributes.service';
 import {
   ProductNotFoundException,
-  ProductVariantNotFoundException,
   ProductSkuExistsException,
+  ProductVariantNotFoundException,
 } from '../common';
+import { Prisma } from '../generated/prisma/client';
+import { PrismaService } from '../prisma';
+import { AttributesService } from './attributes.service';
+import { CreateVariantDto } from './dto/create-variant.dto';
+import { UpdateVariantDto } from './dto/update-variant.dto';
 
 @Injectable()
 export class VariantsService {
@@ -143,7 +144,9 @@ export class VariantsService {
     const { attributeValueIds, ...updateData } = updateVariantDto;
 
     // Build update data
-    const prismaUpdateData: any = { ...updateData };
+    const prismaUpdateData: Prisma.ProductVariantUpdateInput = {
+      ...updateData,
+    };
 
     // Update attribute values if provided
     if (attributeValueIds) {
@@ -153,7 +156,8 @@ export class VariantsService {
         );
 
       prismaUpdateData.attributeValues = {
-        set: attributeValues.map((av) => ({ id: av.id })),
+        deleteMany: {},
+        create: attributeValues.map((av) => ({ attributeValueId: av.id })),
       };
     }
 
@@ -174,12 +178,9 @@ export class VariantsService {
   }
 
   async updateStock(id: string, quantity: number) {
-    const variant = await this.findOne(id);
-    const newStock = Math.max(0, variant.stock + quantity);
-
     return this.prisma.productVariant.update({
       where: { id },
-      data: { stock: newStock },
+      data: { stock: Number(quantity) },
     });
   }
 

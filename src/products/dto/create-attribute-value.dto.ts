@@ -9,11 +9,11 @@ import {
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateAttributeValueDto {
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Attribute ID') })
   @IsUUID('4', { message: VALIDATION_MESSAGES.INVALID_UUID('Attribute ID') })
   attributeId: string;
 
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Value') })
   @IsString()
   @MaxLength(50, { message: VALIDATION_MESSAGES.MAX_LENGTH('Value', 50) })
   value: string;

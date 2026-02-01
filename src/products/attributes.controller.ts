@@ -80,7 +80,10 @@ export class AttributesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateAttributeValueDto: UpdateAttributeValueDto,
   ) {
-    return this.attributesService.updateAttributeValue(id, updateAttributeValueDto);
+    return this.attributesService.updateAttributeValue(
+      id,
+      updateAttributeValueDto,
+    );
   }
 
   @Delete('values/:id')

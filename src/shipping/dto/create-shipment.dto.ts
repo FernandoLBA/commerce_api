@@ -1,23 +1,28 @@
 import {
-  IsNotEmpty,
-  IsEnum,
-  IsOptional,
-  IsNumber,
-  IsString,
-  IsObject,
-  Min,
   IsDateString,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+  Min,
 } from 'class-validator';
-import { ShippingCarrier } from '../../generated/prisma/client';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
+import { ShippingCarrier } from '../../generated/prisma/client';
 
 export class CreateShipmentDto {
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Order ID') })
   @IsString()
   orderId: string;
 
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
-  @IsEnum(ShippingCarrier, { message: VALIDATION_MESSAGES.INVALID_ENUM('Carrier', 'OLVA, SHALOM, CRUZ_DEL_SUR, SERVIENTREGA, PICKUP') })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Carrier') })
+  @IsEnum(ShippingCarrier, {
+    message: VALIDATION_MESSAGES.INVALID_ENUM(
+      'Carrier',
+      'OLVA, SHALOM, CRUZ_DEL_SUR, SERVIENTREGA, PICKUP',
+    ),
+  })
   carrier: ShippingCarrier;
 
   @IsOptional()
@@ -38,6 +43,9 @@ export class CreateShipmentDto {
   };
 
   @IsOptional()
-  @IsDateString({}, { message: VALIDATION_MESSAGES.INVALID_DATE('Estimated delivery date') })
+  @IsDateString(
+    {},
+    { message: VALIDATION_MESSAGES.INVALID_DATE('Estimated delivery date') },
+  )
   estimatedDeliveryDate?: string;
 }

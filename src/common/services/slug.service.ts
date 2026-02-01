@@ -1,12 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client/extension';
+
+/**
+ * Minimal interface for slug lookups, extracted from the Prisma client.
+ * This is used instead of depending directly on PrismaClient to avoid
+ * tight coupling (and potential circular dependencies) and to improve
+ * testability by allowing easy mocking in unit tests.
+ */
+interface SlugDelegate {
+  findFirst(args: {
+    where: { slug: string; NOT?: { id: string } };
+  }): Promise<{ slug: string } | null>;
+}
 
 @Injectable()
 export class SlugService {
   async generateSlug(
     name: string,
     excludeId: string | undefined,
-    prismaClient: PrismaClient,
+    prismaClient: SlugDelegate,
   ): Promise<string> {
     const slugName = name
       .toLowerCase()

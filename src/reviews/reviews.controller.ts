@@ -42,7 +42,8 @@ export class ReviewsController {
     @Query('productId') productId?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
-    @Query('verified', new DefaultValuePipe(false), ParseBoolPipe) onlyVerified?: boolean,
+    @Query('verified', new DefaultValuePipe(false), ParseBoolPipe)
+    onlyVerified?: boolean,
   ) {
     return this.reviewsService.findAll(productId, page, limit, onlyVerified);
   }

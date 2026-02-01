@@ -1,8 +1,8 @@
 import {
   IsNotEmpty,
-  IsString,
   IsNumber,
   IsOptional,
+  IsString,
   IsUrl,
   MaxLength,
   Min,
@@ -10,7 +10,7 @@ import {
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateProductImageDto {
-  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED })
+  @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('URL') })
   @IsUrl({}, { message: VALIDATION_MESSAGES.INVALID_URL('URL') })
   url: string;
 
