@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '../generated/prisma/client';
 import {
   ProductNotFoundException,
   ProductSkuExistsException,
   ProductVariantNotFoundException,
 } from '../common';
+import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma';
 import { AttributesService } from './attributes.service';
 import { CreateVariantDto } from './dto/create-variant.dto';
@@ -178,12 +178,9 @@ export class VariantsService {
   }
 
   async updateStock(id: string, quantity: number) {
-    const variant = await this.findOne(id);
-    const newStock = Math.max(0, variant.stock + quantity);
-
     return this.prisma.productVariant.update({
       where: { id },
-      data: { stock: newStock },
+      data: { stock: Number(quantity) },
     });
   }
 
