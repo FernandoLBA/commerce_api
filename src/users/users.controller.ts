@@ -23,8 +23,14 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { UsersService } from './users.service';
 
+interface RequestUser {
+  id: string;
+  email?: string;
+  role?: Role;
+}
+
 interface RequestWithUser extends ExpressRequest {
-  user: { id: string };
+  user: RequestUser;
 }
 
 @Controller('users')

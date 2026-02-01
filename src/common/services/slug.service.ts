@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
+/**
+ * Minimal interface for slug lookups, extracted from the Prisma client.
+ * This is used instead of depending directly on PrismaClient to avoid
+ * tight coupling (and potential circular dependencies) and to improve
+ * testability by allowing easy mocking in unit tests.
+ */
 interface SlugDelegate {
   findFirst(args: {
     where: { slug: string; NOT?: { id: string } };
