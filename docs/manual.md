@@ -129,6 +129,10 @@ MAIL_SECURE=false
 MAIL_USER=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
 MAIL_FROM="E-commerce <noreply@example.com>"
+
+# Frontend URL (para enlaces de activación)
+FRONTEND_URL=http://localhost:3000
+MAIL_FROM="E-commerce <noreply@example.com>"
 ```
 
 ---
@@ -271,6 +275,9 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ActivationTokenInvalidException,
+  ActivationTokenExpiredException,
+  AccountAlreadyActiveException,
 } from '../common';
 ```
 
@@ -282,6 +289,9 @@ import {
 | AUTH_002 | 404         | Usuario no encontrado         |
 | AUTH_003 | 401         | Credenciales inválidas        |
 | AUTH_004 | 401         | Token inválido                |
+| AUTH_007 | 400         | Token de activación inválido  |
+| AUTH_008 | 400         | Token de activación expirado  |
+| AUTH_009 | 409         | Cuenta ya activada            |
 | VAL_001  | 400         | Error de validación           |
 | GEN_002  | 404         | Recurso no encontrado         |
 | GEN_003  | 400         | Solicitud incorrecta          |
@@ -353,8 +363,20 @@ pnpm prisma studio                               # Abrir Prisma Studio
 
 | Método | Endpoint | Auth | Descripción |
 |--------|----------|------|-------------|
-| POST | `/auth/register` | ❌ | Registrar usuario |
+| POST | `/auth/register` | ❌ | Registrar usuario (envía email de activación) |
 | POST | `/auth/login` | ❌ | Iniciar sesión |
+| POST | `/auth/activate` | ❌ | Activar cuenta con token |
+| POST | `/auth/resend-activation` | ❌ | Reenviar email de activación |
+| POST | `/auth/validate` | ❌ | Validar token JWT |
+
+### Flujo de Registro y Activación
+
+1. El usuario se registra con `/auth/register`
+2. Se crea la cuenta con `isActive: false`
+3. Se envía un email con un enlace de activación (válido por 24 horas)
+4. El usuario hace clic en el enlace que llama a `/auth/activate`
+5. La cuenta se activa (`isActive: true`, `emailVerified: true`)
+6. El usuario puede iniciar sesión con `/auth/login`
 
 ### Registrar Usuario
 
@@ -379,11 +401,70 @@ Content-Type: application/json
     "email": "usuario@ejemplo.com",
     "firstName": "Juan",
     "lastName": "Pérez",
-    "role": "USER",
-    "accessToken": "eyJhbGciOiJIUzI1NiIs..."
+    "message": "Registration successful. Please check your email to activate your account."
   }
 }
 ```
+
+> **Nota:** Después del registro, se envía un email de activación automáticamente. La cuenta no estará activa hasta que el usuario haga clic en el enlace de activación.
+
+### Activar Cuenta
+
+```bash
+POST /auth/activate
+Content-Type: application/json
+
+{
+  "token": "abc123..."  # Token recibido en el email de activación
+}
+```
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "message": "Account activated successfully. You can now log in.",
+    "user": {
+      "id": "uuid",
+      "email": "usuario@ejemplo.com",
+      "firstName": "Juan",
+      "lastName": "Pérez",
+      "role": "USER"
+    }
+  }
+}
+```
+
+**Errores posibles:**
+| Código | HTTP | Descripción |
+|--------|------|-------------|
+| AUTH_007 | 400 | Token de activación inválido |
+| AUTH_008 | 400 | Token de activación expirado |
+| AUTH_009 | 409 | La cuenta ya está activada |
+
+### Reenviar Email de Activación
+
+```bash
+POST /auth/resend-activation
+Content-Type: application/json
+
+{
+  "email": "usuario@ejemplo.com"
+}
+```
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "message": "Activation email sent. Please check your inbox."
+  }
+}
+```
+
+> **Rate limit:** 3 intentos por minuto para evitar spam.
 
 ### Iniciar Sesión
 
@@ -396,6 +477,8 @@ Content-Type: application/json
   "password": "password123"            # Requerido
 }
 ```
+
+> **Nota:** El usuario debe tener la cuenta activada para poder iniciar sesión.
 
 **Response (200):**
 ```json

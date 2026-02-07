@@ -62,6 +62,37 @@ export class UnauthorizedException extends ApiException {
   }
 }
 
+// Activation exceptions
+export class ActivationTokenInvalidException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.AUTH_ACTIVATION_TOKEN_INVALID,
+      HttpStatus.BAD_REQUEST,
+      message || ErrorMessages[ErrorCodes.AUTH_ACTIVATION_TOKEN_INVALID],
+    );
+  }
+}
+
+export class ActivationTokenExpiredException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.AUTH_ACTIVATION_TOKEN_EXPIRED,
+      HttpStatus.BAD_REQUEST,
+      message || ErrorMessages[ErrorCodes.AUTH_ACTIVATION_TOKEN_EXPIRED],
+    );
+  }
+}
+
+export class AccountAlreadyActiveException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.AUTH_ACCOUNT_ALREADY_ACTIVE,
+      HttpStatus.CONFLICT,
+      message || ErrorMessages[ErrorCodes.AUTH_ACCOUNT_ALREADY_ACTIVE],
+    );
+  }
+}
+
 // Validation exceptions
 export class ValidationException extends ApiException {
   constructor(details: string | string[]) {

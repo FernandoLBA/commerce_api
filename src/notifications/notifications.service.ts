@@ -267,4 +267,67 @@ Este es un mensaje automático del sistema de inventario.
       day: 'numeric',
     });
   }
+
+  /**
+   * Send account activation email
+   */
+  async sendActivationEmail(
+    email: string,
+    activationToken: string,
+    firstName: string,
+  ): Promise<void> {
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const activationUrl = `${frontendUrl}/auth/activate?token=${activationToken}`;
+
+    const text = `
+¡Hola ${firstName}!
+
+Gracias por registrarte en nuestra tienda.
+
+Para activar tu cuenta, haz clic en el siguiente enlace:
+${activationUrl}
+
+Este enlace expirará en 24 horas.
+
+Si no creaste esta cuenta, puedes ignorar este correo.
+
+¡Gracias!
+    `.trim();
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; margin: 20px 0; }
+    .footer { margin-top: 30px; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>¡Hola ${firstName}!</h1>
+    <p>Gracias por registrarte en nuestra tienda.</p>
+    <p>Para activar tu cuenta, haz clic en el siguiente botón:</p>
+    <a href="${activationUrl}" class="button">Activar mi cuenta</a>
+    <p>O copia y pega este enlace en tu navegador:</p>
+    <p><a href="${activationUrl}">${activationUrl}</a></p>
+    <p><strong>Este enlace expirará en 24 horas.</strong></p>
+    <div class="footer">
+      <p>Si no creaste esta cuenta, puedes ignorar este correo.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `.trim();
+
+    await this.sendEmail({
+      to: email,
+      subject: 'Activa tu cuenta',
+      text,
+      html,
+    });
+  }
 }
