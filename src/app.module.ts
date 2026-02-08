@@ -19,6 +19,7 @@ import { CouponsModule } from './coupons/coupons.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { SecurityModule } from './security/security.module';
 import { securityConfig } from './common';
+import { BcryptModule } from './bcrypt/bcrypt.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { securityConfig } from './common';
     CouponsModule,
     WishlistModule,
     SecurityModule,
+    BcryptModule,
   ],
   controllers: [AppController],
   providers: [

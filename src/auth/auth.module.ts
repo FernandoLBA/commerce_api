@@ -5,6 +5,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { NotificationsModule } from '../notifications';
+import { BcryptModule } from 'src/bcrypt/bcrypt.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NotificationsModule } from '../notifications';
       signOptions: { expiresIn: '24h' },
     }),
     NotificationsModule,
+    BcryptModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],

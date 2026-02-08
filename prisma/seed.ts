@@ -73,7 +73,7 @@ async function main() {
         lastName: 'Pérez',
         phone: '+51912345678',
         role: Role.USER,
-        isActive: true,
+        isActive: false,
       },
     }),
     prisma.user.create({
@@ -84,7 +84,7 @@ async function main() {
         lastName: 'García',
         phone: '+51987654321',
         role: Role.USER,
-        isActive: true,
+        isActive: false,
       },
     }),
     prisma.user.create({
@@ -95,7 +95,7 @@ async function main() {
         lastName: 'Rodríguez',
         phone: '+51956789012',
         role: Role.USER,
-        isActive: true,
+        isActive: false,
       },
     }),
   ]);

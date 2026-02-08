@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { PrismaService } from '../prisma';
-import { NotificationsService } from '../notifications';
-import { CreateUserDto } from './dto/create-user.dto';
-import { LoginDto } from './dto/login.dto';
+import { BcryptService } from 'src/bcrypt/bcrypt.service';
 import {
+  AccountAlreadyActiveException,
+  ActivationTokenExpiredException,
+  ActivationTokenInvalidException,
+  InvalidCredentialsException,
   UserAlreadyExistsException,
   UserNotFoundException,
-  InvalidCredentialsException,
-  ActivationTokenInvalidException,
-  ActivationTokenExpiredException,
-  AccountAlreadyActiveException,
 } from '../common';
+import { NotificationsService } from '../notifications';
+import { PrismaService } from '../prisma';
+import { CreateUserDto } from './dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +21,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private notificationsService: NotificationsService,
+    private bcryptService: BcryptService,
   ) {}
 
   /**
@@ -31,14 +32,17 @@ export class AuthService {
   }
 
   /**
-   * Get activation token expiration date (24 hours from now)
+   * Get activation token expiration date (in hours from now)
    */
-  private getActivationExpiration(): Date {
+  private getActivationExpiration(expirationHours: number): Date {
     const expiration = new Date();
-    expiration.setHours(expiration.getHours() + 24);
+    expiration.setHours(expiration.getHours() + expirationHours);
     return expiration;
   }
 
+  /**
+   * Register a new user, generate activation token, and send activation email
+   */
   async register(createUserDto: CreateUserDto) {
     const { email, password, firstName, lastName } = createUserDto;
 
@@ -52,11 +56,11 @@ export class AuthService {
     }
 
     // Encriptar la contraseña
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await this.bcryptService.hashPassword(password);
 
     // Generar token de activación
     const activationToken = this.generateActivationToken();
-    const activationExpires = this.getActivationExpiration();
+    const activationExpires = this.getActivationExpiration(24);
 
     // Crear nuevo usuario (isActive = false por defecto)
     const user = await this.prisma.user.create({
@@ -84,10 +88,14 @@ export class AuthService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      message: 'Registration successful. Please check your email to activate your account.',
+      message:
+        'Registration successful. Please check your email to activate your account.',
     };
   }
 
+  /**
+   * Login user, verify password, check if account is active, and return JWT token with role in payload
+   */
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
@@ -102,11 +110,16 @@ export class AuthService {
 
     // Check if user is active
     if (!user.isActive) {
-      throw new InvalidCredentialsException('Account not activated. Please check your email to activate your account.');
+      throw new InvalidCredentialsException(
+        'Account not activated. Please check your email to activate your account.',
+      );
     }
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await this.bcryptService.comparePasswords(
+      password,
+      user.password,
+    );
 
     if (!isPasswordValid) {
       throw new InvalidCredentialsException();
@@ -131,6 +144,9 @@ export class AuthService {
     };
   }
 
+  /**
+   * Validate user by ID (used in JWT strategy)
+   */
   async validateUser(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
@@ -211,7 +227,7 @@ export class AuthService {
 
     // Generate new activation token
     const activationToken = this.generateActivationToken();
-    const activationExpires = this.getActivationExpiration();
+    const activationExpires = this.getActivationExpiration(24);
 
     // Update user with new token
     await this.prisma.user.update({
@@ -231,6 +247,80 @@ export class AuthService {
 
     return {
       message: 'Activation email sent. Please check your inbox.',
+    };
+  }
+
+  /**
+   * Forgot password - generate reset token and send email with instructions
+   */
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    // This method would generate a password reset token, save it to the user, and send an email with instructions
+    const passwordResetToken = this.generateActivationToken();
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken,
+        passwordResetExpires: this.getActivationExpiration(1),
+      },
+    });
+
+    await this.notificationsService.sendPasswordResetEmail(
+      email,
+      passwordResetToken,
+      user.firstName || 'Usuario',
+    );
+
+    return {
+      message: 'Password reset email sent. Please check your inbox.',
+    };
+  }
+
+  /**
+   * Reset password using the token sent to the user's email. The token is valid for 1 hour.
+   */
+  async passwordReset(token: string, password: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { passwordResetToken: token },
+    });
+
+    if (!user) {
+      throw new ActivationTokenInvalidException(
+        'Invalid password reset token.',
+      );
+    }
+
+    // Check if token has expired
+    if (user.passwordResetExpires && user.passwordResetExpires < new Date()) {
+      throw new ActivationTokenExpiredException(
+        'Password reset token has expired.',
+      );
+    }
+
+    // Hash the new password
+    const hashedPassword = await this.bcryptService.hashPassword(password);
+
+    // Update user's password and clear reset token
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    return {
+      message:
+        'Password has been reset successfully. You can now log in with your new password.',
     };
   }
 }

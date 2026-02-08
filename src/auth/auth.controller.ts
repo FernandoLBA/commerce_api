@@ -1,10 +1,10 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
-import { ActivateAccountDto } from './dto/activate-account.dto';
 import { ResendActivationDto } from './dto/resend-activation.dto';
+import { ActivateAccountDto } from './dto/activate-account.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,8 +24,8 @@ export class AuthController {
 
   @Post('activate')
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 intentos por minuto
-  async activateAccount(@Body() activateAccountDto: ActivateAccountDto) {
-    return this.authService.activateAccount(activateAccountDto.token);
+  async activateAccount(@Body() body: ActivateAccountDto) {
+    return this.authService.activateAccount(body.token);
   }
 
   @Post('resend-activation')
@@ -37,5 +37,18 @@ export class AuthController {
   @Post('validate')
   async validateUser(@Body('token') token: string) {
     return this.authService.validateUser(token);
+  }
+
+  @Post('forgot-password')
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('password-reset')
+  async passwordReset(
+    @Body('token') token: string,
+    @Body('password') password: string,
+  ) {
+    return this.authService.passwordReset(token, password);
   }
 }

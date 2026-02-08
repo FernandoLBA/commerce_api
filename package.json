@@ -23,7 +23,8 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:reset": "prisma migrate reset --force",
-    "db:setup": "pnpm prisma:generate && pnpm prisma:migrate && pnpm prisma:seed"
+    "db:setup": "pnpm prisma:generate && pnpm prisma:migrate && pnpm prisma:seed",
+    "server:clean": "rm -rf node_modules pnpm-lock.yaml && pnpm install && pnpm store prune"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -73,8 +74,6 @@
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^11.0.0",
     "eslint": "^9.18.0",
-    "eslint-config-prettier": "^10.0.1",
-    "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^30.0.0",
     "prettier": "^3.4.2",

@@ -97,6 +97,8 @@ model User {
   emailVerified     Boolean   @default(false) @map("email_verified")
   activationToken   String?   @unique @map("activation_token")
   activationExpires DateTime? @map("activation_expires")
+  passwordResetToken   String?   @unique @map("password_reset_token")
+  passwordResetExpires DateTime? @map("password_reset_expires")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
