@@ -367,6 +367,8 @@ pnpm prisma studio                               # Abrir Prisma Studio
 | POST | `/auth/login` | ❌ | Iniciar sesión |
 | POST | `/auth/activate` | ❌ | Activar cuenta con token |
 | POST | `/auth/resend-activation` | ❌ | Reenviar email de activación |
+| POST | `/auth/forgot-password` | ❌ | Solicitar restablecimiento de contraseña |
+| POST | `/auth/password-reset` | ❌ | Restablecer contraseña con token |
 | POST | `/auth/validate` | ❌ | Validar token JWT |
 
 ### Flujo de Registro y Activación
@@ -377,6 +379,13 @@ pnpm prisma studio                               # Abrir Prisma Studio
 4. El usuario hace clic en el enlace que llama a `/auth/activate`
 5. La cuenta se activa (`isActive: true`, `emailVerified: true`)
 6. El usuario puede iniciar sesión con `/auth/login`
+
+### Flujo de Restablecimiento de Contraseña
+
+1. El usuario solicita restablecer con `/auth/forgot-password`
+2. Se envía un email con un enlace de restablecimiento (válido por 1 hora)
+3. El usuario hace clic en el enlace y envía la nueva contraseña a `/auth/password-reset`
+4. La contraseña se actualiza y el usuario puede iniciar sesión
 
 ### Registrar Usuario
 
@@ -465,6 +474,57 @@ Content-Type: application/json
 ```
 
 > **Rate limit:** 3 intentos por minuto para evitar spam.
+
+### Solicitar Restablecimiento de Contraseña
+
+```bash
+POST /auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "usuario@ejemplo.com"
+}
+```
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "message": "Password reset email sent. Please check your inbox."
+  }
+}
+```
+
+> **Nota:** El enlace de restablecimiento es válido por 1 hora.
+
+### Restablecer Contraseña
+
+```bash
+POST /auth/password-reset
+Content-Type: application/json
+
+{
+  "token": "abc123...",        # Token recibido en el email
+  "password": "newPassword123" # Nueva contraseña, mínimo 8 caracteres
+}
+```
+
+**Response (200):**
+```json
+{
+  "statusCode": 200,
+  "data": {
+    "message": "Password has been reset successfully. You can now log in with your new password."
+  }
+}
+```
+
+**Errores posibles:**
+| Código | HTTP | Descripción |
+|--------|------|-------------|
+| AUTH_007 | 400 | Token de restablecimiento inválido |
+| AUTH_008 | 400 | Token de restablecimiento expirado |
 
 ### Iniciar Sesión
 
