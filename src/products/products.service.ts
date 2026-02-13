@@ -40,7 +40,7 @@ export class ProductsService {
 
   async findAll() {
     return this.prisma.product.findMany({
-      include: { category: true },
+      include: { category: true, images: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -48,7 +48,7 @@ export class ProductsService {
   async findOne(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
-      include: { category: true },
+      include: { category: true, images: true, variants: true },
     });
 
     if (!product) {
@@ -82,7 +82,7 @@ export class ProductsService {
     return this.prisma.product.update({
       where: { id },
       data: updateProductDto,
-      include: { category: true },
+      include: { category: true, images: true },
     });
   }
 

@@ -28,23 +28,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * @throws UnauthorizedException si el usuario no existe
    */
   async validate(payload: JwtPayload) {
-    try {
+    // try {
       const user = await this.authService.validateUser(payload.id);
-
       if (!user) {
         this.logger.warn(
-          `Intento de acceso con usuario inexistente: ${payload.id}`,
+          `Attempted access with non-existent user: ${payload.id}`,
         );
-        throw new UnauthorizedException('Usuario no encontrado');
+        throw new UnauthorizedException('User not authenticated');
       }
 
+      if(!user.emailVerified) {
+        this.logger.warn(
+          `Attempted access with inactive user: ${payload.id}`,
+        );
+        throw new UnauthorizedException('User account is inactive');
+      }
+      // Log to see what validate returns
       return user;
-    } catch (error) {
-      this.logger.error(
-        `Error validando JWT payload para usuario ${payload.id}:`,
-        error,
-      );
-      throw new UnauthorizedException('Token inválido o usuario no encontrado');
-    }
+    // } catch (error) {
+    //   this.logger.error(
+    //     `Error validating JWT payload for user ${payload.id}:`,
+    //     error,
+    //   );
+    //   throw new UnauthorizedException('TInvalid token or user not found');
+    // }
   }
 }

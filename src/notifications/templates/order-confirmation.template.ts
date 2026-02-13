@@ -1,4 +1,4 @@
-import { wrapInHtmlTemplate, emailFooter } from './base.template';
+import { wrapInHtmlTemplate, emailFooter, inline, colors, brandName } from './base.template';
 
 export interface OrderConfirmationData {
   orderNumber: string;
@@ -23,23 +23,23 @@ export interface OrderConfirmationData {
 
 export function orderConfirmationEmailText(data: OrderConfirmationData): string {
   const itemsList = data.items
-    .map((item) => `- ${item.productName} x${item.quantity}: S/. ${item.subtotal}`)
+    .map((item) => `- ${item.productName} x${item.quantity}: S/. ${item.subtotal.toFixed(2)}`)
     .join('\n');
 
   const addr = data.shippingAddress;
 
   return `
-¡Gracias por tu compra!
+¡Gracias por tu compra en ${brandName}!
 
 Tu pedido #${data.orderNumber} ha sido recibido.
 
 Resumen del pedido:
 ${itemsList}
 
-Subtotal: S/. ${data.subtotal}
-Envío: S/. ${data.shippingCost}
-${data.discount > 0 ? `Descuento: -S/. ${data.discount}` : ''}
-Total: S/. ${data.total}
+Subtotal: S/. ${data.subtotal.toFixed(2)}
+Envío: S/. ${data.shippingCost.toFixed(2)}
+${data.discount > 0 ? `Descuento: -S/. ${data.discount.toFixed(2)}` : ''}
+Total: S/. ${data.total.toFixed(2)}
 
 Dirección de envío:
 ${addr.recipientName || ''}
@@ -49,7 +49,7 @@ ${addr.department || ''}
 
 Te notificaremos cuando tu pedido sea enviado.
 
-¡Gracias por comprar con nosotros!
+- El equipo de ${brandName}
   `.trim();
 }
 
@@ -58,9 +58,9 @@ export function orderConfirmationEmailHtml(data: OrderConfirmationData): string 
     .map(
       (item) => `
       <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.productName}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">S/. ${item.subtotal}</td>
+        <td style="${inline.tableCell}">${item.productName}</td>
+        <td style="${inline.tableCell} text-align: center;">${item.quantity}</td>
+        <td style="${inline.tableCell} text-align: right;">S/. ${item.subtotal.toFixed(2)}</td>
       </tr>
     `,
     )
@@ -69,16 +69,16 @@ export function orderConfirmationEmailHtml(data: OrderConfirmationData): string 
   const addr = data.shippingAddress;
 
   const content = `
-    <h1>¡Gracias por tu compra!</h1>
-    <p>Tu pedido <strong>#${data.orderNumber}</strong> ha sido recibido.</p>
+    <h1 style="${inline.heading1}">¡Gracias por tu compra! 🛍️</h1>
+    <p style="${inline.paragraph}">Tu pedido <strong>#${data.orderNumber}</strong> ha sido recibido y está siendo procesado.</p>
     
-    <h2 style="margin-top: 30px;">Resumen del pedido</h2>
-    <table style="width: 100%; border-collapse: collapse;">
+    <h2 style="${inline.heading2}">Resumen del pedido</h2>
+    <table style="${inline.table}">
       <thead>
-        <tr style="background-color: #f5f5f5;">
-          <th style="padding: 8px; text-align: left;">Producto</th>
-          <th style="padding: 8px; text-align: center;">Cantidad</th>
-          <th style="padding: 8px; text-align: right;">Subtotal</th>
+        <tr>
+          <th style="${inline.tableHeader}">Producto</th>
+          <th style="${inline.tableHeader} text-align: center;">Cantidad</th>
+          <th style="${inline.tableHeader} text-align: right;">Subtotal</th>
         </tr>
       </thead>
       <tbody>
@@ -86,27 +86,44 @@ export function orderConfirmationEmailHtml(data: OrderConfirmationData): string 
       </tbody>
     </table>
     
-    <div style="margin-top: 20px; text-align: right;">
-      <p>Subtotal: <strong>S/. ${data.subtotal}</strong></p>
-      <p>Envío: <strong>S/. ${data.shippingCost}</strong></p>
-      ${data.discount > 0 ? `<p>Descuento: <strong>-S/. ${data.discount}</strong></p>` : ''}
-      <p style="font-size: 18px;">Total: <strong>S/. ${data.total}</strong></p>
+    <div style="background-color: ${colors.background}; padding: 20px; border-radius: 12px; margin: 24px 0;">
+      <table style="width: 100%;">
+        <tr>
+          <td style="padding: 4px 0; color: ${colors.textSecondary};">Subtotal:</td>
+          <td style="padding: 4px 0; text-align: right; font-weight: 600;">S/. ${data.subtotal.toFixed(2)}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: ${colors.textSecondary};">Envío:</td>
+          <td style="padding: 4px 0; text-align: right; font-weight: 600;">S/. ${data.shippingCost.toFixed(2)}</td>
+        </tr>
+        ${data.discount > 0 ? `
+        <tr>
+          <td style="padding: 4px 0; color: ${colors.success};">Descuento:</td>
+          <td style="padding: 4px 0; text-align: right; font-weight: 600; color: ${colors.success};">-S/. ${data.discount.toFixed(2)}</td>
+        </tr>` : ''}
+        <tr>
+          <td style="padding: 12px 0 0 0; font-size: 18px; font-weight: 700; color: ${colors.text}; border-top: 2px solid ${colors.border};">Total:</td>
+          <td style="padding: 12px 0 0 0; text-align: right; font-size: 18px; font-weight: 700; color: ${colors.primary}; border-top: 2px solid ${colors.border};">S/. ${data.total.toFixed(2)}</td>
+        </tr>
+      </table>
     </div>
     
-    <h2 style="margin-top: 30px;">Dirección de envío</h2>
-    <p>
-      ${addr.recipientName || ''}<br>
-      ${addr.street || ''} ${addr.number || ''}<br>
-      ${addr.district || ''}, ${addr.city || ''}<br>
-      ${addr.department || ''}
-    </p>
+    <h2 style="${inline.heading2}">Dirección de envío</h2>
+    <div style="background-color: ${colors.background}; padding: 16px; border-radius: 8px;">
+      <p style="margin: 0; color: ${colors.text};">
+        <strong>${addr.recipientName || ''}</strong><br>
+        ${addr.street || ''} ${addr.number || ''}<br>
+        ${addr.district || ''}, ${addr.city || ''}<br>
+        ${addr.department || ''}
+      </p>
+    </div>
     
-    <p style="margin-top: 20px;">Te notificaremos cuando tu pedido sea enviado.</p>
+    <p style="${inline.paragraph}; margin-top: 24px;">📦 Te notificaremos cuando tu pedido sea enviado.</p>
     ${emailFooter()}
   `;
   return wrapInHtmlTemplate(content);
 }
 
 export function orderConfirmationEmailSubject(orderNumber: string): string {
-  return `Pedido confirmado #${orderNumber}`;
+  return `✓ Pedido #${orderNumber} confirmado - ${brandName}`;
 }

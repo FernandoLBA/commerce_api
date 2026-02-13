@@ -36,7 +36,9 @@ interface RequestWithUser extends ExpressRequest {
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) {
+    console.log('[UsersController] Instanciado');
+  }
 
   // Profile endpoints
   @Get('profile')
@@ -115,6 +117,12 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   getAllUsers() {
+    console.log(
+      '[ADMIN ALL] req.user:',
+      typeof arguments[0] === 'object' && arguments[0].user
+        ? arguments[0].user
+        : undefined,
+    );
     return this.usersService.getAllUsers();
   }
 }

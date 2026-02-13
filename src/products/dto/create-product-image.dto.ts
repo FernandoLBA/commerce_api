@@ -12,7 +12,7 @@ import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages'
 export class CreateProductImageDto {
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('URL') })
   @IsUrl({}, { message: VALIDATION_MESSAGES.INVALID_URL('URL') })
-  url: string;
+  url!: string;
 
   @IsOptional()
   @IsString()

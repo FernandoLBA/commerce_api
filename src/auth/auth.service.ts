@@ -62,6 +62,13 @@ export class AuthService {
     const activationToken = this.generateActivationToken();
     const activationExpires = this.getActivationExpiration(24);
 
+    // Enviar email de activación
+    await this.notificationsService.sendActivationEmail(
+      email,
+      activationToken,
+      firstName || 'Usuario',
+    );
+
     // Crear nuevo usuario (isActive = false por defecto)
     const user = await this.prisma.user.create({
       data: {
@@ -75,13 +82,6 @@ export class AuthService {
         activationExpires,
       },
     });
-
-    // Enviar email de activación
-    await this.notificationsService.sendActivationEmail(
-      email,
-      activationToken,
-      firstName || 'Usuario',
-    );
 
     return {
       id: user.id,
@@ -157,6 +157,7 @@ export class AuthService {
         lastName: true,
         role: true,
         isActive: true,
+        emailVerified: true,
       },
     });
   }

@@ -177,11 +177,7 @@ export class NotificationsService {
     text: string,
     html?: string,
   ): Promise<void> {
-    try {
       await this.mailerService.sendMail({ to, subject, text, html });
-    } catch (error: any) {
-      console.error(`Failed to send email to ${to}:`, error.message);
-    }
   }
 
   private getCarrierName(carrier: string): string {

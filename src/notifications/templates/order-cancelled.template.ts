@@ -1,4 +1,4 @@
-import { wrapInHtmlTemplate, emailFooter } from './base.template';
+import { wrapInHtmlTemplate, emailFooter, inline, colors, brandName } from './base.template';
 
 export interface OrderCancelledData {
   orderNumber: string;
@@ -6,26 +6,28 @@ export interface OrderCancelledData {
 
 export function orderCancelledEmailText(data: OrderCancelledData): string {
   return `
-Tu pedido ha sido cancelado
+Pedido cancelado
 
 El pedido #${data.orderNumber} ha sido cancelado.
 
 Si realizaste un pago, el reembolso será procesado en los próximos días hábiles.
 
 Si tienes alguna pregunta, no dudes en contactarnos.
+
+- El equipo de ${brandName}
   `.trim();
 }
 
 export function orderCancelledEmailHtml(data: OrderCancelledData): string {
   const content = `
-    <h1>Tu pedido ha sido cancelado</h1>
-    <p>El pedido <strong>#${data.orderNumber}</strong> ha sido cancelado.</p>
+    <h1 style="${inline.heading1}">Pedido cancelado</h1>
+    <p style="${inline.paragraph}">El pedido <strong>#${data.orderNumber}</strong> ha sido cancelado.</p>
     
-    <div style="background-color: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <p style="color: #721c24;">Si realizaste un pago, el reembolso será procesado en los próximos días hábiles.</p>
+    <div style="background-color: ${colors.errorLight}; padding: 20px; border-radius: 12px; margin: 24px 0;">
+      <p style="margin: 0; color: ${colors.errorText};">💰 Si realizaste un pago, el reembolso será procesado en los próximos días hábiles.</p>
     </div>
     
-    <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+    <p style="${inline.paragraph}">Si tienes alguna pregunta, no dudes en contactarnos.</p>
     
     ${emailFooter()}
   `;
@@ -33,5 +35,5 @@ export function orderCancelledEmailHtml(data: OrderCancelledData): string {
 }
 
 export function orderCancelledEmailSubject(orderNumber: string): string {
-  return `Pedido cancelado #${orderNumber}`;
+  return `Pedido #${orderNumber} cancelado`;
 }
