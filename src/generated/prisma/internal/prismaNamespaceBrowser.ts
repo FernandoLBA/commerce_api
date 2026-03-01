@@ -117,7 +117,7 @@ export const AddressScalarFieldEnum = {
   userId: 'userId',
   label: 'label',
   recipientName: 'recipientName',
-  phone: 'phone',
+  recipientPhone: 'recipientPhone',
   street: 'street',
   number: 'number',
   apartment: 'apartment',

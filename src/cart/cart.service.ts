@@ -18,7 +18,11 @@ export class CartService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                images: { take: 1, orderBy: { displayOrder: 'asc' } },
+              },
+            },
             variant: {
               include: {
                 attributeValues: {
@@ -43,7 +47,11 @@ export class CartService {
         include: {
           items: {
             include: {
-              product: true,
+              product: {
+                include: {
+                  images: { take: 1, orderBy: { displayOrder: 'asc' } },
+                },
+              },
               variant: {
                 include: {
                   attributeValues: {
@@ -76,12 +84,12 @@ export class CartService {
 
   async addToCart(userId: string, addToCartDto: AddToCartDto) {
     const { productId, variantId, quantity } = addToCartDto;
-
+    
     // Verify product exists and is active
     const product = await this.prisma.product.findFirst({
       where: { id: productId, isActive: true },
     });
-
+    
     if (!product) {
       throw new ProductNotFoundException(`Product with ID "${productId}" not found or inactive`);
     }

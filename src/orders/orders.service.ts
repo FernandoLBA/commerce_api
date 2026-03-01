@@ -59,7 +59,7 @@ export class OrdersService {
             status: OrderStatus.PENDING,
             shippingAddress: {
               recipientName: address.recipientName,
-              recipientPhone: address.phone,
+              recipientPhone: address.recipientPhone,
               street: address.street,
               number: address.number,
               apartment: address.apartment,

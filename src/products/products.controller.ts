@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -24,8 +25,8 @@ export class ProductsController {
   }
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query('categoryId') categoryId?: string) {
+    return this.productsService.findAll(categoryId);
   }
 
   @Get(':id')

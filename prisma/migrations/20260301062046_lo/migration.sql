@@ -1,11 +1,5 @@
-/*
-  Warnings:
-
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-
-*/
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
+CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN', 'VENDOR');
 
 -- CreateEnum
 CREATE TYPE "OrderStatus" AS ENUM ('PENDING', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED');
@@ -28,9 +22,6 @@ CREATE TYPE "MovementType" AS ENUM ('PURCHASE', 'RETURN', 'ADJUSTMENT_IN', 'TRAN
 -- CreateEnum
 CREATE TYPE "DiscountType" AS ENUM ('PERCENTAGE', 'FIXED_AMOUNT', 'FREE_SHIPPING');
 
--- DropTable
-DROP TABLE "User";
-
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
@@ -40,7 +31,12 @@ CREATE TABLE "users" (
     "last_name" TEXT,
     "phone" TEXT,
     "role" "Role" NOT NULL DEFAULT 'USER',
-    "is_active" BOOLEAN NOT NULL DEFAULT true,
+    "is_active" BOOLEAN NOT NULL DEFAULT false,
+    "email_verified" BOOLEAN NOT NULL DEFAULT false,
+    "activation_token" TEXT,
+    "activation_expires" TIMESTAMP(3),
+    "password_reset_token" TEXT,
+    "password_reset_expires" TIMESTAMP(3),
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -51,8 +47,9 @@ CREATE TABLE "users" (
 CREATE TABLE "addresses" (
     "id" TEXT NOT NULL,
     "user_id" TEXT NOT NULL,
+    "label" TEXT NOT NULL,
     "recipient_name" TEXT NOT NULL,
-    "phone" TEXT NOT NULL,
+    "recipient_phone" TEXT NOT NULL,
     "street" TEXT NOT NULL,
     "number" TEXT,
     "apartment" TEXT,
@@ -401,6 +398,12 @@ CREATE TABLE "wishlist_items" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_activation_token_key" ON "users"("activation_token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_password_reset_token_key" ON "users"("password_reset_token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "categories_slug_key" ON "categories"("slug");

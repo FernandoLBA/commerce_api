@@ -87,7 +87,7 @@ export class UsersService {
     return this.prisma.address.create({
       data: {
         ...addressData,
-        phone: recipientPhone,
+        recipientPhone: recipientPhone,
         userId,
         isDefault: createAddressDto.isDefault || isFirstAddress,
       },

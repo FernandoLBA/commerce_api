@@ -31,18 +31,18 @@ import { WishlistModule } from './wishlist/wishlist.module';
     // Prisma - Database ORM
     PrismaModule,
     // Rate Limiting - Global configuration
-    ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: securityConfig.throttle.global.ttl,
-        limit: securityConfig.throttle.global.limit,
-      },
-      {
-        name: 'auth',
-        ttl: securityConfig.throttle.auth.ttl,
-        limit: securityConfig.throttle.auth.limit,
-      },
-    ]),
+    // ThrottlerModule.forRoot([
+    //   {
+    //     name: 'short',
+    //     ttl: securityConfig.throttle.global.ttl,
+    //     limit: securityConfig.throttle.global.limit,
+    //   },
+    //   {
+    //     name: 'auth',
+    //     ttl: securityConfig.throttle.auth.ttl,
+    //     limit: securityConfig.throttle.auth.limit,
+    //   },
+    // ]),
     AuthModule,
     ProductsModule,
     CategoriesModule,
@@ -63,10 +63,10 @@ import { WishlistModule } from './wishlist/wishlist.module';
   providers: [
     AppService,
     // Global ThrottlerGuard - applies rate limiting to all routes
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+      // useClass: ThrottlerGuard,
+    // },
   ],
 })
 export class AppModule {}
