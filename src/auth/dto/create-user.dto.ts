@@ -9,12 +9,12 @@ import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages'
 
 export class CreateUserDto {
   @IsEmail({}, { message: VALIDATION_MESSAGES.INVALID_EMAIL })
-  email: string;
+  email!: string;
 
   @IsString()
   @MinLength(8, { message: VALIDATION_MESSAGES.PASSWORD_MIN_LENGTH })
   @MaxLength(50, { message: VALIDATION_MESSAGES.PASSWORD_MAX_LENGTH })
-  password: string;
+  password!: string;
 
   @IsOptional()
   @IsString()
