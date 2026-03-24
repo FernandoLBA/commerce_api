@@ -1,19 +1,24 @@
 import { Injectable } from '@nestjs/common';
+
+import { FilesService } from 'src/files/files.service';
+import {
+  CategoryAlreadyExistsException,
+  CategoryHasProductsException,
+  CategoryNotFoundException,
+} from '../common';
+import { SlugService } from '../common/services/slug.service';
 import { PrismaService } from '../prisma';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import {
-  CategoryNotFoundException,
-  CategoryAlreadyExistsException,
-  CategoryHasProductsException,
-} from '../common';
-import { SlugService } from '../common/services/slug.service';
 
 @Injectable()
 export class CategoriesService {
+  private readonly FOLDER_PATH = '/categories';
+
   constructor(
     private prisma: PrismaService,
     private slugService: SlugService,
+    private readonly filesService: FilesService,
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
@@ -83,6 +88,31 @@ export class CategoriesService {
               this.prisma.category,
             )
           : undefined,
+      },
+    });
+  }
+
+  async uploadFile(categoryId: string, file: Express.Multer.File) {
+    const category = await this.prisma.category.findUnique({
+      where: { id: categoryId },
+    });
+
+    if (!category) {
+      throw new CategoryNotFoundException(
+        `Category with ID "${categoryId}" not found`,
+      );
+    }
+
+    const { urls } = await this.filesService.uploadFileToCloudinary(
+      file,
+      `${this.FOLDER_PATH}/${categoryId}`,
+    );
+
+    return this.prisma.category.update({
+      where: { id: categoryId },
+      data: {
+        ...category,
+        image: urls.large,
       },
     });
   }

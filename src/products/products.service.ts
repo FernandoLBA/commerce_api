@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+
+import { CategoryNotFoundException, ProductNotFoundException } from '../common';
+import { SlugService } from '../common/services/slug.service';
 import { PrismaService } from '../prisma';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductNotFoundException, CategoryNotFoundException } from '../common';
-import { SlugService } from '../common/services/slug.service';
 
 @Injectable()
 export class ProductsService {

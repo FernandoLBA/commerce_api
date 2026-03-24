@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import { OrderStatus, Prisma } from '@prisma/client';
+
+import {
+  ForbiddenException,
+  NotFoundException,
+  ValidationException,
+} from '../common';
 import { PrismaService } from '../prisma';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import {
-  NotFoundException,
-  ValidationException,
-  ForbiddenException,
-} from '../common';
-import { Prisma, OrderStatus } from '../generated/prisma/client';
 
 export interface ProductRating {
   averageRating: number;
@@ -60,11 +61,11 @@ export class ReviewsService {
     onlyVerified = false,
   ) {
     const where: Prisma.ReviewWhereInput = { isApproved: true };
-    
+
     if (productId) {
       where.productId = productId;
     }
-    
+
     if (onlyVerified) {
       where.isVerifiedPurchase = true;
     }
@@ -128,10 +129,14 @@ export class ReviewsService {
 
     // Users can only update rating, title, comment, images
     if (!isAdmin) {
-      if (updateReviewDto.rating !== undefined) updateData.rating = updateReviewDto.rating;
-      if (updateReviewDto.title !== undefined) updateData.title = updateReviewDto.title;
-      if (updateReviewDto.comment !== undefined) updateData.comment = updateReviewDto.comment;
-      if (updateReviewDto.images !== undefined) updateData.images = updateReviewDto.images;
+      if (updateReviewDto.rating !== undefined)
+        updateData.rating = updateReviewDto.rating;
+      if (updateReviewDto.title !== undefined)
+        updateData.title = updateReviewDto.title;
+      if (updateReviewDto.comment !== undefined)
+        updateData.comment = updateReviewDto.comment;
+      if (updateReviewDto.images !== undefined)
+        updateData.images = updateReviewDto.images;
     } else {
       // Admins can update approval and response
       if (updateReviewDto.isApproved !== undefined) {
@@ -163,7 +168,9 @@ export class ReviewsService {
     const review = await this.findOne(id);
 
     if (review.userId === userId) {
-      throw new ValidationException('You cannot mark your own review as helpful');
+      throw new ValidationException(
+        'You cannot mark your own review as helpful',
+      );
     }
 
     return this.prisma.review.update({

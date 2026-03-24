@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma';
-import { CreateAttributeDto } from './dto/create-attribute.dto';
-import { UpdateAttributeDto } from './dto/update-attribute.dto';
-import { CreateAttributeValueDto } from './dto/create-attribute-value.dto';
-import { UpdateAttributeValueDto } from './dto/update-attribute-value.dto';
+
 import {
-  AttributeNotFoundException,
   AttributeAlreadyExistsException,
+  AttributeNotFoundException,
 } from '../common';
+import { PrismaService } from '../prisma';
+import { CreateAttributeValueDto } from './dto/create-attribute-value.dto';
+import { CreateAttributeDto } from './dto/create-attribute.dto';
+import { UpdateAttributeValueDto } from './dto/update-attribute-value.dto';
+import { UpdateAttributeDto } from './dto/update-attribute.dto';
 
 @Injectable()
 export class AttributesService {
@@ -15,9 +16,7 @@ export class AttributesService {
 
   // =============== ATTRIBUTES ===============
 
-  async createAttribute(
-    createAttributeDto: CreateAttributeDto,
-  ) {
+  async createAttribute(createAttributeDto: CreateAttributeDto) {
     const existing = await this.prisma.productAttribute.findFirst({
       where: { name: createAttributeDto.name },
     });
@@ -55,10 +54,7 @@ export class AttributesService {
     return attribute;
   }
 
-  async updateAttribute(
-    id: string,
-    updateAttributeDto: UpdateAttributeDto,
-  ) {
+  async updateAttribute(id: string, updateAttributeDto: UpdateAttributeDto) {
     const attribute = await this.findAttributeById(id);
 
     if (updateAttributeDto.name && updateAttributeDto.name !== attribute.name) {
@@ -86,9 +82,7 @@ export class AttributesService {
 
   // =============== ATTRIBUTE VALUES ===============
 
-  async createAttributeValue(
-    createAttributeValueDto: CreateAttributeValueDto,
-  ) {
+  async createAttributeValue(createAttributeValueDto: CreateAttributeValueDto) {
     await this.findAttributeById(createAttributeValueDto.attributeId);
 
     return this.prisma.productAttributeValue.create({
@@ -114,9 +108,7 @@ export class AttributesService {
     return value;
   }
 
-  async findAttributeValuesByIds(
-    ids: string[],
-  ) {
+  async findAttributeValuesByIds(ids: string[]) {
     return this.prisma.productAttributeValue.findMany({
       where: { id: { in: ids } },
     });

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import MercadoPagoConfig, { Payment as MPPayment, Preference } from 'mercadopago';
-import { PrismaService } from '../prisma';
-import { NotificationsService } from '../notifications';
+import { OrderStatus, Payment, PaymentStatus } from '@prisma/client';
+import MercadoPagoConfig, {
+  Payment as MPPayment,
+  Preference,
+} from 'mercadopago';
+
 import { ValidationException } from '../common';
-import {
-  Payment,
-  PaymentStatus,
-  OrderStatus,
-} from '../generated/prisma/client';
+import { NotificationsService } from '../notifications';
+import { PrismaService } from '../prisma';
 
 @Injectable()
 export class MercadoPagoService {
@@ -28,7 +28,11 @@ export class MercadoPagoService {
 
   async createPreference(
     orderId: string,
-  ): Promise<{ preferenceId: string; initPoint: string; sandboxInitPoint: string }> {
+  ): Promise<{
+    preferenceId: string;
+    initPoint: string;
+    sandboxInitPoint: string;
+  }> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -59,7 +63,9 @@ export class MercadoPagoService {
           id: item.productId,
           title: item.productName,
           description: item.variantAttributes
-            ? (item.variantAttributes as any[]).map((a) => `${a.name}: ${a.value}`).join(', ')
+            ? (item.variantAttributes as any[])
+                .map((a) => `${a.name}: ${a.value}`)
+                .join(', ')
             : undefined,
           quantity: item.quantity,
           unit_price: Number(item.unitPrice),
@@ -142,7 +148,9 @@ export class MercadoPagoService {
       }
 
       const payment = order.payments.find(
-        (p) => p.status === PaymentStatus.PROCESSING || p.status === PaymentStatus.PENDING,
+        (p) =>
+          p.status === PaymentStatus.PROCESSING ||
+          p.status === PaymentStatus.PENDING,
       );
 
       if (!payment) {
@@ -161,7 +169,7 @@ export class MercadoPagoService {
         case 'approved':
           updateData.status = PaymentStatus.COMPLETED;
           updateData.completedAt = new Date();
-          
+
           // Update order status
           if (order.status === OrderStatus.PENDING) {
             await this.prisma.order.update({
@@ -182,7 +190,10 @@ export class MercadoPagoService {
                 );
               }
             } catch (emailError) {
-              console.error('Failed to send payment confirmation email:', emailError);
+              console.error(
+                'Failed to send payment confirmation email:',
+                emailError,
+              );
             }
           }
           break;
@@ -196,8 +207,10 @@ export class MercadoPagoService {
         case 'cancelled':
           updateData.status = PaymentStatus.FAILED;
           updateData.errorCode = mpPaymentData.status_detail || 'rejected';
-          updateData.errorMessage = this.getStatusDetailMessage(mpPaymentData.status_detail);
-          
+          updateData.errorMessage = this.getStatusDetailMessage(
+            mpPaymentData.status_detail,
+          );
+
           // Send payment failed email
           try {
             if (order.user?.email) {
@@ -252,11 +265,11 @@ export class MercadoPagoService {
 
     // MercadoPago refund
     const refundAmount = amount || Number(payment.amount);
-    
+
     // Note: MercadoPago SDK refund implementation
     // In production, you would call the refund API
     // For now, we'll update the local record
-    
+
     const updatedPayment = await this.prisma.payment.update({
       where: { id: paymentId },
       data: {

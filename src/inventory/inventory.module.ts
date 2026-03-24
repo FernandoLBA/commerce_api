@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+
+import { NotificationsModule } from '../notifications/notifications.module';
 import { InventoryController } from './inventory.controller';
 import { InventoryService } from './inventory.service';
-import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [NotificationsModule],

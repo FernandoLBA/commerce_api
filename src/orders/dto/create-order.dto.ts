@@ -1,12 +1,13 @@
+import { PaymentMethod } from '@prisma/client';
 import {
-  IsNotEmpty,
-  IsString,
-  IsOptional,
-  IsUUID,
   IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
   MaxLength,
 } from 'class-validator';
-import { PaymentMethod } from '../../generated/prisma/client';
+
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateOrderDto {
@@ -14,7 +15,7 @@ export class CreateOrderDto {
   @IsUUID('4', {
     message: VALIDATION_MESSAGES.INVALID_UUID('Shipping address ID'),
   })
-  shippingAddressId: string;
+  shippingAddressId!: string;
 
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Payment method') })
   @IsEnum(PaymentMethod, {
@@ -23,7 +24,7 @@ export class CreateOrderDto {
       'STRIPE, MERCADOPAGO, CASH_ON_DELIVERY',
     ),
   })
-  paymentMethod: PaymentMethod;
+  paymentMethod!: PaymentMethod;
 
   @IsOptional()
   @IsString()

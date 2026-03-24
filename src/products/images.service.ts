@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
+
+import {
+  CloudinaryService,
+  ProductImageNotFoundException,
+  ProductNotFoundException,
+} from '../common';
 import { PrismaService } from '../prisma';
 import { CreateProductImageDto } from './dto/create-product-image.dto';
 import { UpdateProductImageDto } from './dto/update-product-image.dto';
-import {
-  ProductNotFoundException,
-  ProductImageNotFoundException,
-  CloudinaryService,
-} from '../common';
 
 @Injectable()
 export class ImagesService {
@@ -33,7 +34,8 @@ export class ImagesService {
     });
 
     const displayOrder =
-      createImageDto.displayOrder ?? (maxOrderResult._max.displayOrder ?? -1) + 1;
+      createImageDto.displayOrder ??
+      (maxOrderResult._max.displayOrder ?? -1) + 1;
 
     return this.prisma.productImage.create({
       data: {

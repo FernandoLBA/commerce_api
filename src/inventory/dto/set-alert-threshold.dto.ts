@@ -1,4 +1,5 @@
 import { IsBoolean, IsInt, IsOptional, IsUUID, Min } from 'class-validator';
+
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class SetAlertThresholdDto {
@@ -10,12 +11,22 @@ export class SetAlertThresholdDto {
   @IsOptional()
   variantId?: string;
 
-  @IsInt({ message: VALIDATION_MESSAGES.MUST_BE_INTEGER('Low stock threshold') })
-  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Low stock threshold') })
-  lowStockThreshold: number;
+  @IsInt({
+    message: VALIDATION_MESSAGES.MUST_BE_INTEGER('Low stock threshold'),
+  })
+  @Min(0, {
+    message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Low stock threshold'),
+  })
+  lowStockThreshold!: number;
 
-  @IsInt({ message: VALIDATION_MESSAGES.MUST_BE_INTEGER('Critical stock threshold') })
-  @Min(0, { message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Critical stock threshold') })
+  @IsInt({
+    message: VALIDATION_MESSAGES.MUST_BE_INTEGER('Critical stock threshold'),
+  })
+  @Min(0, {
+    message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER(
+      'Critical stock threshold',
+    ),
+  })
   @IsOptional()
   criticalStockThreshold?: number;
 

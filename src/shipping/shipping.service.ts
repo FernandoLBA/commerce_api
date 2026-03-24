@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma, ShippingCarrier, ShippingStatus } from '@prisma/client';
+
+import { ValidationException } from '../common';
 import { PrismaService } from '../prisma';
 import { CreateShipmentDto } from './dto/create-shipment.dto';
 import { UpdateShipmentDto } from './dto/update-shipment.dto';
-import {
-  ShippingCarrier,
-  ShippingStatus,
-  Prisma,
-} from '../generated/prisma/client';
-import { ValidationException } from '../common';
 
 // Peru shipping rates by department
-const SHIPPING_RATES: Record<string, { base: number; perKg: number; estimatedDays: number }> = {
+const SHIPPING_RATES: Record<
+  string,
+  { base: number; perKg: number; estimatedDays: number }
+> = {
   // Lima Metro
   Lima: { base: 10, perKg: 2, estimatedDays: 1 },
   Callao: { base: 10, perKg: 2, estimatedDays: 1 },
@@ -50,8 +50,15 @@ export class ShippingService {
   /**
    * Calculate shipping cost based on department and weight
    */
-  calculateShippingCost(department: string, weightKg = 1): { cost: number; estimatedDays: number } {
-    const rate = SHIPPING_RATES[department] || { base: 30, perKg: 4, estimatedDays: 5 };
+  calculateShippingCost(
+    department: string,
+    weightKg = 1,
+  ): { cost: number; estimatedDays: number } {
+    const rate = SHIPPING_RATES[department] || {
+      base: 30,
+      perKg: 4,
+      estimatedDays: 5,
+    };
     const cost = rate.base + rate.perKg * Math.max(0, weightKg - 1);
     return {
       cost: Math.round(cost * 100) / 100,
@@ -64,7 +71,14 @@ export class ShippingService {
    */
   getAvailableCarriers(department: string): ShippingCarrier[] {
     const limaMetro = ['Lima', 'Callao'];
-    const majorCities = ['Arequipa', 'Cusco', 'Piura', 'La Libertad', 'Lambayeque', 'Junín'];
+    const majorCities = [
+      'Arequipa',
+      'Cusco',
+      'Piura',
+      'La Libertad',
+      'Lambayeque',
+      'Junín',
+    ];
 
     if (limaMetro.includes(department)) {
       return [
@@ -76,7 +90,11 @@ export class ShippingService {
     }
 
     if (majorCities.includes(department)) {
-      return [ShippingCarrier.OLVA, ShippingCarrier.SHALOM, ShippingCarrier.CRUZ_DEL_SUR];
+      return [
+        ShippingCarrier.OLVA,
+        ShippingCarrier.SHALOM,
+        ShippingCarrier.CRUZ_DEL_SUR,
+      ];
     }
 
     return [ShippingCarrier.OLVA, ShippingCarrier.CRUZ_DEL_SUR];
@@ -91,7 +109,9 @@ export class ShippingService {
     });
 
     if (!order) {
-      throw new ValidationException(`Order with ID "${createShipmentDto.orderId}" not found`);
+      throw new ValidationException(
+        `Order with ID "${createShipmentDto.orderId}" not found`,
+      );
     }
 
     // Check if shipment already exists for this order
@@ -135,7 +155,11 @@ export class ShippingService {
     });
 
     // Create initial event
-    await this.createEvent(savedShipment.id, ShippingStatus.PENDING, 'Shipment created');
+    await this.createEvent(
+      savedShipment.id,
+      ShippingStatus.PENDING,
+      'Shipment created',
+    );
 
     return savedShipment;
   }
@@ -174,7 +198,9 @@ export class ShippingService {
     });
 
     if (!shipment) {
-      throw new ValidationException(`Shipment with tracking "${trackingNumber}" not found`);
+      throw new ValidationException(
+        `Shipment with tracking "${trackingNumber}" not found`,
+      );
     }
 
     return shipment;
@@ -192,7 +218,10 @@ export class ShippingService {
 
     // Handle status change
     if (updateData.status && updateData.status !== shipment.status) {
-      this.validateStatusTransition(shipment.status as ShippingStatus, updateData.status);
+      this.validateStatusTransition(
+        shipment.status as ShippingStatus,
+        updateData.status,
+      );
 
       // Set timestamps
       if (updateData.status === ShippingStatus.SHIPPED) {
@@ -263,17 +292,35 @@ export class ShippingService {
     });
   }
 
-  private validateStatusTransition(current: ShippingStatus, next: ShippingStatus): void {
+  private validateStatusTransition(
+    current: ShippingStatus,
+    next: ShippingStatus,
+  ): void {
     const validTransitions: Record<ShippingStatus, ShippingStatus[]> = {
-      [ShippingStatus.PENDING]: [ShippingStatus.PROCESSING, ShippingStatus.CANCELLED],
-      [ShippingStatus.PROCESSING]: [ShippingStatus.SHIPPED, ShippingStatus.CANCELLED],
-      [ShippingStatus.SHIPPED]: [ShippingStatus.IN_TRANSIT, ShippingStatus.CANCELLED],
-      [ShippingStatus.IN_TRANSIT]: [ShippingStatus.OUT_FOR_DELIVERY, ShippingStatus.FAILED],
+      [ShippingStatus.PENDING]: [
+        ShippingStatus.PROCESSING,
+        ShippingStatus.CANCELLED,
+      ],
+      [ShippingStatus.PROCESSING]: [
+        ShippingStatus.SHIPPED,
+        ShippingStatus.CANCELLED,
+      ],
+      [ShippingStatus.SHIPPED]: [
+        ShippingStatus.IN_TRANSIT,
+        ShippingStatus.CANCELLED,
+      ],
+      [ShippingStatus.IN_TRANSIT]: [
+        ShippingStatus.OUT_FOR_DELIVERY,
+        ShippingStatus.FAILED,
+      ],
       [ShippingStatus.OUT_FOR_DELIVERY]: [
         ShippingStatus.DELIVERED,
         ShippingStatus.FAILED,
       ],
-      [ShippingStatus.FAILED]: [ShippingStatus.IN_TRANSIT, ShippingStatus.RETURNED],
+      [ShippingStatus.FAILED]: [
+        ShippingStatus.IN_TRANSIT,
+        ShippingStatus.RETURNED,
+      ],
       [ShippingStatus.DELIVERED]: [],
       [ShippingStatus.RETURNED]: [],
       [ShippingStatus.CANCELLED]: [],

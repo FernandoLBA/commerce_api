@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString, IsDateString } from 'class-validator';
-import { ShippingStatus } from '../../generated/prisma/client';
+import { ShippingStatus } from '@prisma/client';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class UpdateShipmentDto {

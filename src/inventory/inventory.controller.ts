@@ -1,23 +1,24 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
+  Controller,
+  DefaultValuePipe,
+  Get,
   Param,
+  ParseIntPipe,
+  ParseUUIDPipe,
+  Post,
   Query,
   UseGuards,
-  ParseUUIDPipe,
-  ParseIntPipe,
-  DefaultValuePipe,
 } from '@nestjs/common';
-import { InventoryService } from './inventory.service';
-import { AdjustStockDto } from './dto/adjust-stock.dto';
-import { SetAlertThresholdDto } from './dto/set-alert-threshold.dto';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { AdjustStockDto } from './dto/adjust-stock.dto';
+import { SetAlertThresholdDto } from './dto/set-alert-threshold.dto';
+import { InventoryService } from './inventory.service';
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)

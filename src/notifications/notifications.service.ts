@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
-import { Order, Shipment } from '../generated/prisma/client';
+import { Injectable } from '@nestjs/common';
+import { Order, Shipment } from '@prisma/client';
+
 import * as templates from './templates';
 
 @Injectable()
@@ -177,7 +178,7 @@ export class NotificationsService {
     text: string,
     html?: string,
   ): Promise<void> {
-      await this.mailerService.sendMail({ to, subject, text, html });
+    await this.mailerService.sendMail({ to, subject, text, html });
   }
 
   private getCarrierName(carrier: string): string {

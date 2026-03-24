@@ -1,7 +1,9 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import 'dotenv/config';
+import { json, urlencoded } from 'express';
 import helmet from 'helmet';
+
 import { AppModule } from './app.module';
 import {
   GlobalExceptionFilter,
@@ -10,10 +12,11 @@ import {
 } from './common';
 
 const PORT = process.env.PORT || 3001;
+const NODE_ENV = process.env.NODE_ENV || 'development';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log'],
+    logger: NODE_ENV === 'production' ? ['error'] : ['error', 'warn', 'log'],
   });
 
   app.setGlobalPrefix('api');
@@ -33,9 +36,12 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-      disableErrorMessages: process.env.NODE_ENV === 'production', // Oculta detalles en producción
+      disableErrorMessages: NODE_ENV === 'production', // Oculta detalles en producción
     }),
   );
+
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
 
   // Global exception filter
   app.useGlobalFilters(new GlobalExceptionFilter());
@@ -51,7 +57,7 @@ async function bootstrap() {
     console.log(`🚀 Application is running on: http://localhost:${PORT}`);
     console.log(`📚 API prefix: /api`);
     console.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌍 Environment: ${NODE_ENV}`);
   });
 }
 

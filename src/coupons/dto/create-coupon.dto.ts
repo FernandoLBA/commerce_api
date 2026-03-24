@@ -1,25 +1,26 @@
+import { DiscountType } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
-  IsString,
+  IsArray,
+  IsBoolean,
+  IsDate,
   IsEnum,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsDate,
-  IsBoolean,
-  IsArray,
+  IsString,
   IsUUID,
-  Min,
   MaxLength,
-  IsNotEmpty,
+  Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { DiscountType } from '../../generated/prisma/client';
+
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateCouponDto {
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Code') })
   @MaxLength(50, { message: VALIDATION_MESSAGES.MAX_LENGTH('Code', 50) })
-  code: string;
+  code!: string;
 
   @IsString()
   @IsOptional()
@@ -34,7 +35,7 @@ export class CreateCouponDto {
       'PERCENTAGE, FIXED_AMOUNT, FREE_SHIPPING',
     ),
   })
-  discountType: DiscountType;
+  discountType!: DiscountType;
 
   @IsNumber(
     {},
@@ -43,7 +44,7 @@ export class CreateCouponDto {
   @Min(0, {
     message: VALIDATION_MESSAGES.NON_NEGATIVE_NUMBER('Discount value'),
   })
-  discountValue: number;
+  discountValue!: number;
 
   @IsNumber(
     {},
@@ -80,11 +81,11 @@ export class CreateCouponDto {
 
   @Type(() => Date)
   @IsDate({ message: VALIDATION_MESSAGES.INVALID_DATE('Start date') })
-  startDate: Date;
+  startDate!: Date;
 
   @Type(() => Date)
   @IsDate({ message: VALIDATION_MESSAGES.INVALID_DATE('End date') })
-  endDate: Date;
+  endDate!: Date;
 
   @IsBoolean({ message: VALIDATION_MESSAGES.MUST_BE_BOOLEAN('isActive') })
   @IsOptional()

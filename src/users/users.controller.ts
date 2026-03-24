@@ -36,9 +36,7 @@ interface RequestWithUser extends ExpressRequest {
 @Controller('users')
 @UseGuards(JwtAuthGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {
-    console.log('[UsersController] Instanciado');
-  }
+  constructor(private readonly usersService: UsersService) {}
 
   // Profile endpoints
   @Get('profile')

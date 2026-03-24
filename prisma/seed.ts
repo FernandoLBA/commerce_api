@@ -9,7 +9,8 @@ const {
   ShippingCarrier,
   ShippingStatus,
   MovementType,
-} = require('../src/generated/prisma/client');
+} = require('@prisma/client');
+// } = require('../src/generated/prisma/client');
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
 import 'dotenv/config';

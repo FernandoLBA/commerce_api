@@ -1,5 +1,6 @@
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Global, Module } from '@nestjs/common';
+
 import { NotificationsService } from './notifications.service';
 
 @Global()

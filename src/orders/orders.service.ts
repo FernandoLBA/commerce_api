@@ -1,17 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma';
+import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+
 import { CartService } from '../cart/cart.service';
+import { AddressNotFoundException, ValidationException } from '../common';
+import { PrismaService } from '../prisma';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import {
-  OrderStatus,
-  PaymentStatus,
-  Prisma,
-} from '../generated/prisma/client';
-import {
-  ValidationException,
-  AddressNotFoundException,
-} from '../common';
 
 @Injectable()
 export class OrdersService {
@@ -81,18 +75,22 @@ export class OrdersService {
         // Create order items from cart
         for (const cartItem of cart.items) {
           // Get price from variant if exists, otherwise from product
-          const unitPrice = cartItem.variant ? Number(cartItem.variant.price) : Number(cartItem.product.price);
-          
+          const unitPrice = cartItem.variant
+            ? Number(cartItem.variant.price)
+            : Number(cartItem.product.price);
+
           await tx.orderItem.create({
             data: {
               orderId: savedOrder.id,
               productId: cartItem.productId,
               productName: cartItem.product.name,
               variantId: cartItem.variantId,
-              variantAttributes: cartItem.variant?.attributeValues?.map((av: any) => ({
-                name: av.attribute?.name || '',
-                value: av.value,
-              })),
+              variantAttributes: cartItem.variant?.attributeValues?.map(
+                (av: any) => ({
+                  name: av.attribute?.name || '',
+                  value: av.value,
+                }),
+              ),
               unitPrice,
               quantity: cartItem.quantity,
               subtotal: cartItem.quantity * unitPrice,
@@ -187,7 +185,10 @@ export class OrdersService {
 
     // Handle status changes
     if (updateOrderDto.status && updateOrderDto.status !== order.status) {
-      this.validateStatusTransition(order.status as OrderStatus, updateOrderDto.status);
+      this.validateStatusTransition(
+        order.status as OrderStatus,
+        updateOrderDto.status,
+      );
     }
 
     const updateData: Prisma.OrderUpdateInput = { ...updateOrderDto };
@@ -211,7 +212,10 @@ export class OrdersService {
   async cancel(id: string, userId?: string) {
     const order = await this.findOne(id, userId);
 
-    const cancelableStatuses: OrderStatus[] = [OrderStatus.PENDING, OrderStatus.CONFIRMED];
+    const cancelableStatuses: OrderStatus[] = [
+      OrderStatus.PENDING,
+      OrderStatus.CONFIRMED,
+    ];
     if (!cancelableStatuses.includes(order.status)) {
       throw new ValidationException('Order cannot be cancelled at this stage');
     }
@@ -275,7 +279,10 @@ export class OrdersService {
     return 20.0; // S/. 20 for other departments
   }
 
-  private validateStatusTransition(current: OrderStatus, next: OrderStatus): void {
+  private validateStatusTransition(
+    current: OrderStatus,
+    next: OrderStatus,
+  ): void {
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
       [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
       [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
@@ -293,7 +300,9 @@ export class OrdersService {
     }
   }
 
-  private getStatusTimestamp(status: OrderStatus): Partial<Prisma.OrderUpdateInput> | null {
+  private getStatusTimestamp(
+    status: OrderStatus,
+  ): Partial<Prisma.OrderUpdateInput> | null {
     const now = new Date();
     switch (status) {
       case OrderStatus.CONFIRMED:
