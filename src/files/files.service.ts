@@ -45,7 +45,7 @@ export class FilesService {
     return `This action updates a #${id} file`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} file`;
+  async remove(publicId: string) {
+    return await this.cloudinaryService.delete(publicId);
   }
 }

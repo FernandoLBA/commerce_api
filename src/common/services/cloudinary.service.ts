@@ -129,6 +129,7 @@ export class CloudinaryService implements OnModuleInit {
       const result = (await cloudinary.uploader.destroy(publicId)) as {
         result: string;
       };
+
       return result.result === 'ok';
     } catch (error: unknown) {
       throw new ValidationException(

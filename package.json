@@ -23,8 +23,8 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:reset": "rm -rf prisma/migrations && pnpm prisma migrate reset --force",
-    "db:setup": "pnpm prisma:reset && pnpm prisma:generate && pnpm prisma:migrate --name init && pnpm prisma:seed",
-    "server:reinstall": "rm -rf dist node_modules pnpm-lock.yaml && pnpm install"
+    "server:setup": "pnpm prisma:reset && pnpm prisma:generate && pnpm prisma:migrate --name init && pnpm prisma:seed",
+    "server:uninstall": "rm -rf dist node_modules pnpm-lock.yaml && pnpm install"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

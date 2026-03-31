@@ -14,11 +14,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+import { AllowedFileSizes } from 'src/common/enums';
 import { FilesValidationPipe } from 'src/common/pipes';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { AllowedFileSizes } from 'src/common/enums';
+import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @Controller('categories')
 export class CategoriesController {
@@ -34,29 +33,31 @@ export class CategoriesController {
     return this.categoriesService.findAll();
   }
 
-  @Patch(':id/files/upload')
-  @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: AllowedFileSizes.IMAGE }
-  }))
+  @Patch(':slug/files/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: AllowedFileSizes.IMAGE },
+    }),
+  )
   async uploadFile(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('slug') slug: string,
     @UploadedFile(new FilesValidationPipe())
     file: Express.Multer.File,
   ) {
-    return await this.categoriesService.uploadFile(id, file);
+    return await this.categoriesService.uploadFile(slug, file);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.categoriesService.findOne(id);
+  @Get(':search')
+  findOne(@Param('search') search: string) {
+    return this.categoriesService.findOne(search);
   }
 
-  @Patch(':id')
+  @Patch(':slug')
   update(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('slug') slug: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
-    return this.categoriesService.update(id, updateCategoryDto);
+    return this.categoriesService.update(slug, updateCategoryDto);
   }
 
   @Delete(':id')

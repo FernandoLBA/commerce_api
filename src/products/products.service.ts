@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 
 import { CategoryNotFoundException, ProductNotFoundException } from '../common';
 import { SlugService } from '../common/services/slug.service';
 import { PrismaService } from '../prisma';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { CreateProductDto, UpdateProductDto } from './dto';
 
 @Injectable()
 export class ProductsService {
@@ -47,9 +47,11 @@ export class ProductsService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(search: string) {
+    const isValidUUID = isUUID(search);
+
     const product = await this.prisma.product.findUnique({
-      where: { id },
+      where: isValidUUID ? { id: search } : { slug: search },
       include: { category: true, images: true, variants: true },
     });
 
@@ -60,8 +62,8 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto) {
-    await this.findOne(id); // Verifica que existe
+  async update(slug: string, updateProductDto: UpdateProductDto) {
+    await this.findOne(slug); // Verifica que existe
 
     if (updateProductDto.categoryId) {
       const category = await this.prisma.category.findUnique({
@@ -76,20 +78,20 @@ export class ProductsService {
     if (updateProductDto.name) {
       updateProductDto.slug = await this.slugService.generateSlug(
         updateProductDto.name,
-        id,
+        slug,
         this.prisma.product,
       );
     }
 
     return this.prisma.product.update({
-      where: { id },
+      where: { slug },
       data: updateProductDto,
       include: { category: true, images: true },
     });
   }
 
-  async remove(id: string): Promise<void> {
-    await this.findOne(id); // Verifica que existe
-    await this.prisma.product.delete({ where: { id } });
+  async remove(slug: string): Promise<void> {
+    await this.findOne(slug); // Verifica que existe
+    await this.prisma.product.delete({ where: { slug } });
   }
 }
