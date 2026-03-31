@@ -33,6 +33,10 @@ export class CreateCategoryDto {
   @IsOptional()
   displayOrder?: number;
 
+  @IsString()
+  @IsOptional()
+  image?: string;
+
   @IsOptional()
   @IsBoolean({ message: VALIDATION_MESSAGES.MUST_BE_BOOLEAN('isActive') })
   isActive?: boolean;
