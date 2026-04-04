@@ -11,12 +11,12 @@ export class CreateAddressDto {
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Label') })
   @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Label', 100) })
-  label: string;
+  label!: string;
 
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Street') })
   @MaxLength(200, { message: VALIDATION_MESSAGES.MAX_LENGTH('Street', 200) })
-  street: string;
+  street!: string;
 
   @IsOptional()
   @IsString()
@@ -31,19 +31,19 @@ export class CreateAddressDto {
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('District') })
   @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('District', 100) })
-  district: string;
+  district!: string;
 
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('City') })
   @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('City', 100) })
-  city: string;
+  city!: string;
 
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Department') })
   @MaxLength(100, {
     message: VALIDATION_MESSAGES.MAX_LENGTH('Department', 100),
   })
-  department: string;
+  department!: string;
 
   @IsOptional()
   @IsString()
@@ -55,14 +55,14 @@ export class CreateAddressDto {
   @MaxLength(100, {
     message: VALIDATION_MESSAGES.MAX_LENGTH('Recipient name', 100),
   })
-  recipientName: string;
+  recipientName!: string;
 
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Recipient phone') })
   @MaxLength(20, {
     message: VALIDATION_MESSAGES.MAX_LENGTH('Recipient phone', 20),
   })
-  recipientPhone: string;
+  recipientPhone!: string;
 
   @IsOptional()
   @IsString()

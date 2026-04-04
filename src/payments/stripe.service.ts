@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { OrderStatus, PaymentStatus } from '@prisma/client';
 import Stripe from 'stripe';
-import { PrismaService } from '../prisma';
-import { PaymentStatus, OrderStatus } from '../generated/prisma/client';
+
 import { ValidationException } from '../common';
 import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../prisma';
 
 @Injectable()
 export class StripeService {
@@ -91,11 +92,15 @@ export class StripeService {
     // Handle the event
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.handlePaymentSuccess(event.data.object as Stripe.PaymentIntent);
+        await this.handlePaymentSuccess(
+          event.data.object as Stripe.PaymentIntent,
+        );
         break;
 
       case 'payment_intent.payment_failed':
-        await this.handlePaymentFailure(event.data.object as Stripe.PaymentIntent);
+        await this.handlePaymentFailure(
+          event.data.object as Stripe.PaymentIntent,
+        );
         break;
 
       case 'charge.refunded':
@@ -109,7 +114,9 @@ export class StripeService {
     return { received: true };
   }
 
-  private async handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  private async handlePaymentSuccess(
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<void> {
     const payment = await this.prisma.payment.findFirst({
       where: { externalId: paymentIntent.id },
       include: { order: true },
@@ -159,7 +166,9 @@ export class StripeService {
     }
   }
 
-  private async handlePaymentFailure(paymentIntent: Stripe.PaymentIntent): Promise<void> {
+  private async handlePaymentFailure(
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<void> {
     const payment = await this.prisma.payment.findFirst({
       where: { externalId: paymentIntent.id },
     });
@@ -175,7 +184,8 @@ export class StripeService {
         status: PaymentStatus.FAILED,
         externalStatus: paymentIntent.status,
         errorCode: paymentIntent.last_payment_error?.code || 'unknown',
-        errorMessage: paymentIntent.last_payment_error?.message || 'Payment failed',
+        errorMessage:
+          paymentIntent.last_payment_error?.message || 'Payment failed',
         externalData: paymentIntent as any,
       },
     });

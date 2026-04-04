@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+
 import {
   ProductNotFoundException,
   ProductSkuExistsException,
   ProductVariantNotFoundException,
 } from '../common';
-import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma';
 import { AttributesService } from './attributes.service';
 import { CreateVariantDto } from './dto/create-variant.dto';

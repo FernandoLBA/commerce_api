@@ -100,6 +100,11 @@ export const UserScalarFieldEnum = {
   phone: 'phone',
   role: 'role',
   isActive: 'isActive',
+  emailVerified: 'emailVerified',
+  activationToken: 'activationToken',
+  activationExpires: 'activationExpires',
+  passwordResetToken: 'passwordResetToken',
+  passwordResetExpires: 'passwordResetExpires',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -112,7 +117,7 @@ export const AddressScalarFieldEnum = {
   userId: 'userId',
   label: 'label',
   recipientName: 'recipientName',
-  phone: 'phone',
+  recipientPhone: 'recipientPhone',
   street: 'street',
   number: 'number',
   apartment: 'apartment',

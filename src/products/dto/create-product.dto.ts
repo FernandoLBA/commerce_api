@@ -16,7 +16,7 @@ export class CreateProductDto {
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Name') })
   @MaxLength(200, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 200) })
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -31,7 +31,7 @@ export class CreateProductDto {
   @MaxLength(2000, {
     message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 2000),
   })
-  description: string;
+  description!: string;
 
   @IsOptional()
   @IsString()
@@ -42,7 +42,7 @@ export class CreateProductDto {
 
   @IsNumber()
   @IsPositive({ message: VALIDATION_MESSAGES.POSITIVE_NUMBER('Price') })
-  price: number;
+  price!: number;
 
   @IsOptional()
   @IsNumber()

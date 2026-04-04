@@ -9,12 +9,12 @@ import {
   Min,
 } from 'class-validator';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
-import { ShippingCarrier } from '../../generated/prisma/client';
+import { ShippingCarrier } from '@prisma/client';
 
 export class CreateShipmentDto {
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Order ID') })
   @IsString()
-  orderId: string;
+  orderId!: string;
 
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Carrier') })
   @IsEnum(ShippingCarrier, {
@@ -23,7 +23,7 @@ export class CreateShipmentDto {
       'OLVA, SHALOM, CRUZ_DEL_SUR, SERVIENTREGA, PICKUP',
     ),
   })
-  carrier: ShippingCarrier;
+  carrier!: ShippingCarrier;
 
   @IsOptional()
   @IsString()

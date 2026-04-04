@@ -2,9 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider     = "prisma-client-js"
+  // output       = "../src/generated/prisma"
+  // moduleFormat = "cjs"
 }
 
 datasource db {
@@ -16,6 +16,7 @@ datasource db {
 enum Role {
   USER
   ADMIN
+  VENDOR
 }
 
 enum OrderStatus {
@@ -86,16 +87,21 @@ enum DiscountType {
 // ==================== AUTH & USERS ====================
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  firstName String?  @map("first_name")
-  lastName  String?  @map("last_name")
-  phone     String?
-  role      Role     @default(USER)
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(uuid())
+  email             String    @unique
+  password          String
+  firstName         String?   @map("first_name")
+  lastName          String?   @map("last_name")
+  phone             String?
+  role              Role      @default(USER)
+  isActive          Boolean   @default(false) @map("is_active")
+  emailVerified     Boolean   @default(false) @map("email_verified")
+  activationToken   String?   @unique @map("activation_token")
+  activationExpires DateTime? @map("activation_expires")
+  passwordResetToken   String?   @unique @map("password_reset_token")
+  passwordResetExpires DateTime? @map("password_reset_expires")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
 
   addresses     Address[]
   orders        Order[]
@@ -112,7 +118,7 @@ model Address {
   userId        String   @map("user_id")
   label         String
   recipientName String   @map("recipient_name")
-  phone         String
+  recipientPhone String   @map("recipient_phone")
   street        String
   number        String?
   apartment     String?

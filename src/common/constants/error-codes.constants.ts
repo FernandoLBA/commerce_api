@@ -6,6 +6,9 @@ export const ErrorCodes = {
   AUTH_INVALID_TOKEN: 'AUTH_004',
   AUTH_TOKEN_EXPIRED: 'AUTH_005',
   AUTH_UNAUTHORIZED: 'AUTH_006',
+  AUTH_ACTIVATION_TOKEN_INVALID: 'AUTH_007',
+  AUTH_ACTIVATION_TOKEN_EXPIRED: 'AUTH_008',
+  AUTH_ACCOUNT_ALREADY_ACTIVE: 'AUTH_009',
 
   // Validation errors (VAL_XXX)
   VALIDATION_ERROR: 'VAL_001',
@@ -52,6 +55,9 @@ export const ErrorMessages: Record<ErrorCode, string> = {
   [ErrorCodes.AUTH_INVALID_TOKEN]: 'Invalid token',
   [ErrorCodes.AUTH_TOKEN_EXPIRED]: 'Token has expired',
   [ErrorCodes.AUTH_UNAUTHORIZED]: 'Unauthorized access',
+  [ErrorCodes.AUTH_ACTIVATION_TOKEN_INVALID]: 'Invalid activation token',
+  [ErrorCodes.AUTH_ACTIVATION_TOKEN_EXPIRED]: 'Activation token has expired',
+  [ErrorCodes.AUTH_ACCOUNT_ALREADY_ACTIVE]: 'Account is already activated',
   [ErrorCodes.VALIDATION_ERROR]: 'Validation failed',
   [ErrorCodes.PRODUCT_NOT_FOUND]: 'Product not found',
   [ErrorCodes.PRODUCT_ALREADY_EXISTS]: 'Product already exists',

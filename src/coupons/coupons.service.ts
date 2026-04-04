@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import { Coupon, DiscountType, Prisma } from '@prisma/client';
+
+import { NotFoundException, ValidationException } from '../common';
 import { PrismaService } from '../prisma';
 import { CreateCouponDto } from './dto/create-coupon.dto';
 import { UpdateCouponDto } from './dto/update-coupon.dto';
-import { DiscountType, Coupon, Prisma } from '../generated/prisma/client';
-import { NotFoundException, ValidationException } from '../common';
 
 export interface CouponValidation {
   isValid: boolean;
@@ -30,7 +31,9 @@ export class CouponsService {
     });
 
     if (existing) {
-      throw new ValidationException(`Coupon code ${createCouponDto.code} already exists`);
+      throw new ValidationException(
+        `Coupon code ${createCouponDto.code} already exists`,
+      );
     }
 
     // Validate percentage discount
@@ -109,21 +112,37 @@ export class CouponsService {
 
       // Check if active
       if (!coupon.isActive) {
-        return { isValid: false, discountAmount: 0, errorMessage: 'Cupón inactivo' };
+        return {
+          isValid: false,
+          discountAmount: 0,
+          errorMessage: 'Cupón inactivo',
+        };
       }
 
       // Check dates
       if (now < coupon.startDate) {
-        return { isValid: false, discountAmount: 0, errorMessage: 'El cupón aún no está vigente' };
+        return {
+          isValid: false,
+          discountAmount: 0,
+          errorMessage: 'El cupón aún no está vigente',
+        };
       }
 
       if (now > coupon.endDate) {
-        return { isValid: false, discountAmount: 0, errorMessage: 'El cupón ha expirado' };
+        return {
+          isValid: false,
+          discountAmount: 0,
+          errorMessage: 'El cupón ha expirado',
+        };
       }
 
       // Check usage limit
       if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
-        return { isValid: false, discountAmount: 0, errorMessage: 'El cupón ha alcanzado su límite de uso' };
+        return {
+          isValid: false,
+          discountAmount: 0,
+          errorMessage: 'El cupón ha alcanzado su límite de uso',
+        };
       }
 
       // Check user usage limit
@@ -133,7 +152,11 @@ export class CouponsService {
         });
 
         if (userUsageCount >= coupon.usageLimitPerUser) {
-          return { isValid: false, discountAmount: 0, errorMessage: 'Ya has usado este cupón el máximo número de veces' };
+          return {
+            isValid: false,
+            discountAmount: 0,
+            errorMessage: 'Ya has usado este cupón el máximo número de veces',
+          };
         }
       }
 
@@ -144,12 +167,19 @@ export class CouponsService {
         });
 
         if (previousOrders > 0) {
-          return { isValid: false, discountAmount: 0, errorMessage: 'Este cupón es solo para primera compra' };
+          return {
+            isValid: false,
+            discountAmount: 0,
+            errorMessage: 'Este cupón es solo para primera compra',
+          };
         }
       }
 
       // Check minimum purchase
-      if (coupon.minPurchaseAmount && cartTotal < Number(coupon.minPurchaseAmount)) {
+      if (
+        coupon.minPurchaseAmount &&
+        cartTotal < Number(coupon.minPurchaseAmount)
+      ) {
         return {
           isValid: false,
           discountAmount: 0,
@@ -158,17 +188,27 @@ export class CouponsService {
       }
 
       // Calculate applicable amount (for category/product restrictions)
-      const applicableAmount = this.calculateApplicableAmount(coupon, cartItems);
+      const applicableAmount = this.calculateApplicableAmount(
+        coupon,
+        cartItems,
+      );
 
       if (applicableAmount === 0) {
-        return { isValid: false, discountAmount: 0, errorMessage: 'El cupón no aplica a los productos del carrito' };
+        return {
+          isValid: false,
+          discountAmount: 0,
+          errorMessage: 'El cupón no aplica a los productos del carrito',
+        };
       }
 
       // Calculate discount
       let discountAmount = this.calculateDiscount(coupon, applicableAmount);
 
       // Apply max discount cap
-      if (coupon.maxDiscountAmount && discountAmount > Number(coupon.maxDiscountAmount)) {
+      if (
+        coupon.maxDiscountAmount &&
+        discountAmount > Number(coupon.maxDiscountAmount)
+      ) {
         discountAmount = Number(coupon.maxDiscountAmount);
       }
 
@@ -179,7 +219,11 @@ export class CouponsService {
       };
     } catch (error) {
       if (error instanceof NotFoundException) {
-        return { isValid: false, discountAmount: 0, errorMessage: 'Cupón no encontrado' };
+        return {
+          isValid: false,
+          discountAmount: 0,
+          errorMessage: 'Cupón no encontrado',
+        };
       }
       throw error;
     }
@@ -220,18 +264,25 @@ export class CouponsService {
     });
   }
 
-  private calculateApplicableAmount(coupon: any, cartItems: CartItem[]): number {
+  private calculateApplicableAmount(
+    coupon: any,
+    cartItems: CartItem[],
+  ): number {
     // If no restrictions, all items apply
     if (
       !(coupon.applicableCategories as string[])?.length &&
       !(coupon.applicableProducts as string[])?.length &&
       !(coupon.excludedProducts as string[])?.length
     ) {
-      return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      return cartItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+      );
     }
 
     let applicableAmount = 0;
-    const applicableCategories = (coupon.applicableCategories as string[]) || [];
+    const applicableCategories =
+      (coupon.applicableCategories as string[]) || [];
     const applicableProducts = (coupon.applicableProducts as string[]) || [];
     const excludedProducts = (coupon.excludedProducts as string[]) || [];
 

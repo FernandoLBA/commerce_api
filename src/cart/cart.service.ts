@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma';
-import { AddToCartDto } from './dto/add-to-cart.dto';
-import { UpdateCartItemDto } from './dto/update-cart-item.dto';
+
 import {
   ProductNotFoundException,
   ProductVariantNotFoundException,
   ValidationException,
 } from '../common';
+import { PrismaService } from '../prisma';
+import { AddToCartDto } from './dto/add-to-cart.dto';
+import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 
 @Injectable()
 export class CartService {
@@ -18,7 +19,11 @@ export class CartService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                images: { take: 1, orderBy: { displayOrder: 'asc' } },
+              },
+            },
             variant: {
               include: {
                 attributeValues: {
@@ -43,7 +48,11 @@ export class CartService {
         include: {
           items: {
             include: {
-              product: true,
+              product: {
+                include: {
+                  images: { take: 1, orderBy: { displayOrder: 'asc' } },
+                },
+              },
               variant: {
                 include: {
                   attributeValues: {
@@ -83,7 +92,9 @@ export class CartService {
     });
 
     if (!product) {
-      throw new ProductNotFoundException(`Product with ID "${productId}" not found or inactive`);
+      throw new ProductNotFoundException(
+        `Product with ID "${productId}" not found or inactive`,
+      );
     }
 
     // If product has variants, variant is required
@@ -91,7 +102,12 @@ export class CartService {
       throw new ValidationException('Variant is required for this product');
     }
 
-    let variant: { id: string; stock: number; productId: string; price: any } | null = null;
+    let variant: {
+      id: string;
+      stock: number;
+      productId: string;
+      price: any;
+    } | null = null;
 
     // Verify variant if provided
     if (variantId) {
@@ -100,17 +116,23 @@ export class CartService {
       });
 
       if (!variant) {
-        throw new ProductVariantNotFoundException(`Variant with ID "${variantId}" not found`);
+        throw new ProductVariantNotFoundException(
+          `Variant with ID "${variantId}" not found`,
+        );
       }
 
       // Check stock
       if (variant.stock < quantity) {
-        throw new ValidationException(`Insufficient stock. Available: ${variant.stock}`);
+        throw new ValidationException(
+          `Insufficient stock. Available: ${variant.stock}`,
+        );
       }
     } else {
       // Check product stock for non-variant products
       if (product.stock < quantity) {
-        throw new ValidationException(`Insufficient stock. Available: ${product.stock}`);
+        throw new ValidationException(
+          `Insufficient stock. Available: ${product.stock}`,
+        );
       }
     }
 
@@ -127,7 +149,9 @@ export class CartService {
       const availableStock = variant ? variant.stock : product.stock;
 
       if (newQuantity > availableStock) {
-        throw new ValidationException(`Cannot add more. Available: ${availableStock}`);
+        throw new ValidationException(
+          `Cannot add more. Available: ${availableStock}`,
+        );
       }
 
       await this.prisma.cartItem.update({
@@ -164,14 +188,18 @@ export class CartService {
     // Check stock availability
     if (item.variant) {
       if (item.variant.stock < updateDto.quantity) {
-        throw new ValidationException(`Insufficient stock. Available: ${item.variant.stock}`);
+        throw new ValidationException(
+          `Insufficient stock. Available: ${item.variant.stock}`,
+        );
       }
     } else {
       const product = await this.prisma.product.findUnique({
         where: { id: item.productId },
       });
       if (product && product.stock < updateDto.quantity) {
-        throw new ValidationException(`Insufficient stock. Available: ${product.stock}`);
+        throw new ValidationException(
+          `Insufficient stock. Available: ${product.stock}`,
+        );
       }
     }
 
@@ -201,7 +229,9 @@ export class CartService {
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
   }
 
-  async validateCartForCheckout(userId: string): Promise<{ valid: boolean; errors: string[] }> {
+  async validateCartForCheckout(
+    userId: string,
+  ): Promise<{ valid: boolean; errors: string[] }> {
     const cart = await this.getOrCreateCart(userId);
     const errors: string[] = [];
 
@@ -217,7 +247,9 @@ export class CartService {
       });
 
       if (!product) {
-        errors.push(`Product "${item.product?.name || item.productId}" is no longer available`);
+        errors.push(
+          `Product "${item.product?.name || item.productId}" is no longer available`,
+        );
         continue;
       }
 
@@ -247,7 +279,9 @@ export class CartService {
   private calculateTotal(items: any[]): number {
     return items.reduce((total, item) => {
       // Get price from variant if exists, otherwise from product
-      const price = item.variant ? Number(item.variant.price) : Number(item.product?.price || 0);
+      const price = item.variant
+        ? Number(item.variant.price)
+        : Number(item.product?.price || 0);
       return total + item.quantity * price;
     }, 0);
   }

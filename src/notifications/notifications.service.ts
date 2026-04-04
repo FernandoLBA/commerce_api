@@ -1,194 +1,146 @@
-import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
-import { Order, Shipment } from '../generated/prisma/client';
+import { Injectable } from '@nestjs/common';
+import { Order, Shipment } from '@prisma/client';
 
-export interface EmailContext {
-  [key: string]: any;
-}
+import * as templates from './templates';
 
 @Injectable()
 export class NotificationsService {
+  private readonly frontendUrl =
+    process.env.FRONTEND_URL || 'http://localhost:3000';
+
   constructor(private readonly mailerService: MailerService) {}
 
-  /**
-   * Send order confirmation email
-   */
-  async sendOrderConfirmation(order: Order, customerEmail: string): Promise<void> {
-    const itemsArray = (order as any).items || [];
-    const itemsList = itemsArray
-      .map((item: any) => `- ${item.productName} x${item.quantity}: S/. ${item.subtotal}`)
-      .join('\n');
-
-    const shippingAddress = order.shippingAddress as any;
-
-    const text = `
-¡Gracias por tu compra!
-
-Tu pedido #${order.orderNumber} ha sido recibido.
-
-Resumen del pedido:
-${itemsList}
-
-Subtotal: S/. ${order.subtotal}
-Envío: S/. ${order.shippingCost}
-${Number(order.discount) > 0 ? `Descuento: -S/. ${order.discount}` : ''}
-Total: S/. ${order.total}
-
-Dirección de envío:
-${shippingAddress?.recipientName || ''}
-${shippingAddress?.street || ''} ${shippingAddress?.number || ''}
-${shippingAddress?.district || ''}, ${shippingAddress?.city || ''}
-${shippingAddress?.department || ''}
-
-Te notificaremos cuando tu pedido sea enviado.
-
-¡Gracias por comprar con nosotros!
-    `.trim();
-
-    await this.sendEmail({
-      to: customerEmail,
-      subject: `Pedido confirmado #${order.orderNumber}`,
-      text,
-    });
+  async sendActivationEmail(
+    email: string,
+    activationToken: string,
+    firstName: string,
+  ): Promise<void> {
+    const data = {
+      firstName,
+      activationUrl: `${this.frontendUrl}/auth/activate-account/${activationToken}`,
+    };
+    await this.send(
+      email,
+      templates.activationEmailSubject,
+      templates.activationEmailText(data),
+      templates.activationEmailHtml(data),
+    );
   }
 
-  /**
-   * Send order shipped notification
-   */
+  async sendPasswordResetEmail(
+    email: string,
+    resetToken: string,
+    firstName: string,
+  ): Promise<void> {
+    const data = {
+      firstName,
+      resetUrl: `${this.frontendUrl}/auth/password-reset/${resetToken}`,
+    };
+    await this.send(
+      email,
+      templates.passwordResetEmailSubject,
+      templates.passwordResetEmailText(data),
+      templates.passwordResetEmailHtml(data),
+    );
+  }
+
+  async sendOrderConfirmation(
+    order: Order,
+    customerEmail: string,
+  ): Promise<void> {
+    const data = {
+      orderNumber: order.orderNumber,
+      items: ((order as any).items || []).map((item: any) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        subtotal: Number(item.subtotal),
+      })),
+      subtotal: Number(order.subtotal),
+      shippingCost: Number(order.shippingCost),
+      discount: Number(order.discount),
+      total: Number(order.total),
+      shippingAddress: this.extractShippingAddress(order),
+    };
+    await this.send(
+      customerEmail,
+      templates.orderConfirmationEmailSubject(order.orderNumber),
+      templates.orderConfirmationEmailText(data),
+      templates.orderConfirmationEmailHtml(data),
+    );
+  }
+
   async sendOrderShipped(
     order: Order,
     shipment: Shipment,
     customerEmail: string,
   ): Promise<void> {
-    const trackingInfo = shipment.trackingNumber
-      ? `\nNúmero de seguimiento: ${shipment.trackingNumber}${shipment.trackingUrl ? `\nRastrear envío: ${shipment.trackingUrl}` : ''}`
-      : '';
-
-    const shippingAddress = order.shippingAddress as any;
-    const estimatedDate = shipment.estimatedDeliveryDate ? this.formatDate(shipment.estimatedDeliveryDate) : 'Por confirmar';
-
-    const text = `
-¡Tu pedido está en camino!
-
-El pedido #${order.orderNumber} ha sido enviado.
-
-Carrier: ${this.getCarrierName(shipment.carrier)}
-${trackingInfo}
-
-Fecha estimada de entrega: ${estimatedDate}
-
-Dirección de entrega:
-${shippingAddress?.recipientName || ''}
-${shippingAddress?.street || ''} ${shippingAddress?.number || ''}
-${shippingAddress?.district || ''}, ${shippingAddress?.city || ''}
-${shippingAddress?.department || ''}
-
-¡Gracias por tu compra!
-    `.trim();
-
-    await this.sendEmail({
-      to: customerEmail,
-      subject: `Tu pedido #${order.orderNumber} ha sido enviado`,
-      text,
-    });
+    const data = {
+      orderNumber: order.orderNumber,
+      carrierName: this.getCarrierName(shipment.carrier),
+      trackingNumber: shipment.trackingNumber || undefined,
+      trackingUrl: shipment.trackingUrl || undefined,
+      estimatedDeliveryDate: shipment.estimatedDeliveryDate
+        ? this.formatDate(shipment.estimatedDeliveryDate)
+        : 'Por confirmar',
+      shippingAddress: this.extractShippingAddress(order),
+    };
+    await this.send(
+      customerEmail,
+      templates.orderShippedEmailSubject(order.orderNumber),
+      templates.orderShippedEmailText(data),
+      templates.orderShippedEmailHtml(data),
+    );
   }
 
-  /**
-   * Send order delivered notification
-   */
   async sendOrderDelivered(order: Order, customerEmail: string): Promise<void> {
-    const text = `
-¡Tu pedido ha sido entregado!
-
-El pedido #${order.orderNumber} ha sido entregado exitosamente.
-
-Esperamos que disfrutes tu compra. Si tienes algún problema o pregunta, no dudes en contactarnos.
-
-¡Gracias por comprar con nosotros!
-    `.trim();
-
-    await this.sendEmail({
-      to: customerEmail,
-      subject: `Tu pedido #${order.orderNumber} ha sido entregado`,
-      text,
-    });
+    const data = { orderNumber: order.orderNumber };
+    await this.send(
+      customerEmail,
+      templates.orderDeliveredEmailSubject(order.orderNumber),
+      templates.orderDeliveredEmailText(data),
+      templates.orderDeliveredEmailHtml(data),
+    );
   }
 
-  /**
-   * Send payment confirmation
-   */
+  async sendOrderCancelled(order: Order, customerEmail: string): Promise<void> {
+    const data = { orderNumber: order.orderNumber };
+    await this.send(
+      customerEmail,
+      templates.orderCancelledEmailSubject(order.orderNumber),
+      templates.orderCancelledEmailText(data),
+      templates.orderCancelledEmailHtml(data),
+    );
+  }
+
   async sendPaymentConfirmation(
     order: Order,
     customerEmail: string,
     amount: number,
   ): Promise<void> {
-    const text = `
-¡Pago recibido!
-
-Hemos recibido tu pago de S/. ${amount} para el pedido #${order.orderNumber}.
-
-Tu pedido será procesado y enviado pronto.
-
-¡Gracias por tu compra!
-    `.trim();
-
-    await this.sendEmail({
-      to: customerEmail,
-      subject: `Pago confirmado - Pedido #${order.orderNumber}`,
-      text,
-    });
+    const data = { orderNumber: order.orderNumber, amount };
+    await this.send(
+      customerEmail,
+      templates.paymentConfirmationEmailSubject(order.orderNumber),
+      templates.paymentConfirmationEmailText(data),
+      templates.paymentConfirmationEmailHtml(data),
+    );
   }
 
-  /**
-   * Send payment failed notification
-   */
   async sendPaymentFailed(
     order: Order,
     customerEmail: string,
     reason?: string,
   ): Promise<void> {
-    const text = `
-Hubo un problema con tu pago
-
-No pudimos procesar el pago para el pedido #${order.orderNumber}.
-${reason ? `\nMotivo: ${reason}` : ''}
-
-Por favor, intenta nuevamente con otro método de pago o contacta con tu banco.
-
-Si necesitas ayuda, no dudes en contactarnos.
-    `.trim();
-
-    await this.sendEmail({
-      to: customerEmail,
-      subject: `Problema con el pago - Pedido #${order.orderNumber}`,
-      text,
-    });
+    const data = { orderNumber: order.orderNumber, reason };
+    await this.send(
+      customerEmail,
+      templates.paymentFailedEmailSubject(order.orderNumber),
+      templates.paymentFailedEmailText(data),
+      templates.paymentFailedEmailHtml(data),
+    );
   }
 
-  /**
-   * Send order cancelled notification
-   */
-  async sendOrderCancelled(order: Order, customerEmail: string): Promise<void> {
-    const text = `
-Tu pedido ha sido cancelado
-
-El pedido #${order.orderNumber} ha sido cancelado.
-
-Si realizaste un pago, el reembolso será procesado en los próximos días hábiles.
-
-Si tienes alguna pregunta, no dudes en contactarnos.
-    `.trim();
-
-    await this.sendEmail({
-      to: customerEmail,
-      subject: `Pedido cancelado #${order.orderNumber}`,
-      text,
-    });
-  }
-
-  /**
-   * Send low stock alert to admin
-   */
   async sendLowStockAlert(data: {
     productName: string;
     sku?: string;
@@ -201,61 +153,43 @@ Si tienes alguna pregunta, no dudes en contactarnos.
       console.warn('ADMIN_EMAIL not configured, skipping low stock alert');
       return;
     }
-
-    const urgency = data.isCritical ? '🚨 CRÍTICO' : '⚠️ Bajo Stock';
-    const skuInfo = data.sku ? ` (SKU: ${data.sku})` : '';
-
-    const text = `
-${urgency}: Alerta de Inventario
-
-Producto: ${data.productName}${skuInfo}
-Stock actual: ${data.currentStock} unidades
-Umbral configurado: ${data.threshold} unidades
-
-${data.isCritical ? 'ACCIÓN REQUERIDA: El stock ha llegado a nivel crítico.' : 'Se recomienda reabastecer pronto.'}
-
----
-Este es un mensaje automático del sistema de inventario.
-    `.trim();
-
-    await this.sendEmail({
-      to: adminEmail,
-      subject: `${urgency}: ${data.productName} - Stock: ${data.currentStock}`,
-      text,
-    });
+    await this.send(
+      adminEmail,
+      templates.lowStockAlertEmailSubject(data),
+      templates.lowStockAlertEmailText(data),
+    );
   }
 
-  /**
-   * Send generic email
-   */
-  private async sendEmail(options: {
-    to: string;
-    subject: string;
-    text: string;
-    html?: string;
-  }): Promise<void> {
-    try {
-      await this.mailerService.sendMail({
-        to: options.to,
-        subject: options.subject,
-        text: options.text,
-        html: options.html,
-      });
-    } catch (error: any) {
-      // Log error but don't throw - emails are not critical
-      console.error(`Failed to send email to ${options.to}:`, error.message);
-    }
+  private extractShippingAddress(order: Order) {
+    const addr = order.shippingAddress as any;
+    return {
+      recipientName: addr?.recipientName,
+      street: addr?.street,
+      number: addr?.number,
+      district: addr?.district,
+      city: addr?.city,
+      department: addr?.department,
+    };
+  }
+
+  private async send(
+    to: string,
+    subject: string,
+    text: string,
+    html?: string,
+  ): Promise<void> {
+    await this.mailerService.sendMail({ to, subject, text, html });
   }
 
   private getCarrierName(carrier: string): string {
-    const names: Record<string, string> = {
+    const carriers: Record<string, string> = {
       olva: 'Olva Courier',
       shalom: 'Shalom',
       cruz_del_sur: 'Cruz del Sur',
       servientrega: 'Servientrega',
       pickup: 'Recojo en tienda',
     };
-    return names[carrier] || carrier;
+    return carriers[carrier] || carrier;
   }
 
   private formatDate(date: Date): string {

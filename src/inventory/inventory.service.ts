@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { MovementType, Prisma } from '@prisma/client';
+
+import { NotFoundException, ValidationException } from '../common';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma';
-import { MovementType, Prisma } from '../generated/prisma/client';
 import { AdjustStockDto } from './dto/adjust-stock.dto';
 import { SetAlertThresholdDto } from './dto/set-alert-threshold.dto';
-import { ValidationException, NotFoundException } from '../common';
-import { NotificationsService } from '../notifications/notifications.service';
 
 export interface StockReservation {
   productId?: string;
@@ -34,7 +35,9 @@ export class InventoryService {
    */
   async adjustStock(dto: AdjustStockDto, performedBy?: string) {
     if (!dto.productId && !dto.variantId) {
-      throw new ValidationException('Either productId or variantId is required');
+      throw new ValidationException(
+        'Either productId or variantId is required',
+      );
     }
 
     const isOutgoing = this.isOutgoingMovement(dto.type);
@@ -49,7 +52,9 @@ export class InventoryService {
       });
 
       if (!variant) {
-        throw new NotFoundException(`Variant with ID ${dto.variantId} not found`);
+        throw new NotFoundException(
+          `Variant with ID ${dto.variantId} not found`,
+        );
       }
 
       previousStock = variant.stock;
@@ -74,7 +79,9 @@ export class InventoryService {
       });
 
       if (!product) {
-        throw new NotFoundException(`Product with ID ${dto.productId} not found`);
+        throw new NotFoundException(
+          `Product with ID ${dto.productId} not found`,
+        );
       }
 
       previousStock = product.stock;
@@ -263,7 +270,9 @@ export class InventoryService {
    */
   async setAlertThreshold(dto: SetAlertThresholdDto) {
     if (!dto.productId && !dto.variantId) {
-      throw new ValidationException('Either productId or variantId is required');
+      throw new ValidationException(
+        'Either productId or variantId is required',
+      );
     }
 
     const existingAlert = await this.prisma.stockAlert.findFirst({
@@ -277,7 +286,8 @@ export class InventoryService {
         where: { id: existingAlert.id },
         data: {
           lowStockThreshold: dto.lowStockThreshold,
-          criticalStockThreshold: dto.criticalStockThreshold ?? existingAlert.criticalStockThreshold,
+          criticalStockThreshold:
+            dto.criticalStockThreshold ?? existingAlert.criticalStockThreshold,
           alertEnabled: dto.alertEnabled ?? existingAlert.alertEnabled,
         },
       });
@@ -356,8 +366,11 @@ export class InventoryService {
     const unavailableItems: string[] = [];
 
     for (const item of items) {
-      const currentStock = await this.getStockLevel(item.productId, item.variantId);
-      
+      const currentStock = await this.getStockLevel(
+        item.productId,
+        item.variantId,
+      );
+
       if (currentStock < item.quantity) {
         unavailableItems.push(item.variantId || item.productId || 'unknown');
       }
@@ -379,9 +392,9 @@ export class InventoryService {
   ): Promise<void> {
     const alert = await this.prisma.stockAlert.findFirst({
       where: productId ? { productId } : { variantId },
-      include: { 
-        product: true, 
-        variant: { include: { product: true } } 
+      include: {
+        product: true,
+        variant: { include: { product: true } },
       },
     });
 
@@ -396,11 +409,12 @@ export class InventoryService {
       // Only send alert every 24 hours
       if (hoursSinceLastAlert >= 24) {
         const isCritical = currentStock <= alert.criticalStockThreshold;
-        
+
         // Send notification
         try {
           await this.notificationsService.sendLowStockAlert({
-            productName: alert.product?.name || alert.variant?.product?.name || 'Unknown',
+            productName:
+              alert.product?.name || alert.variant?.product?.name || 'Unknown',
             sku: alert.variant?.sku,
             currentStock,
             threshold: alert.lowStockThreshold,

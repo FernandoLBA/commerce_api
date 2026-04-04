@@ -1,17 +1,26 @@
 import {
-  IsString,
-  IsOptional,
   IsBoolean,
-  MaxLength,
   IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
 } from 'class-validator';
 import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages';
 
 export class CreateCategoryDto {
+  @IsOptional()
+  @IsString()
+  id?: string;
+
   @IsString()
   @IsNotEmpty({ message: VALIDATION_MESSAGES.REQUIRED('Name') })
   @MaxLength(100, { message: VALIDATION_MESSAGES.MAX_LENGTH('Name', 100) })
-  name: string;
+  name!: string;
+
+  @IsString()
+  @IsOptional()
+  slug?: string;
 
   @IsOptional()
   @IsString()
@@ -19,6 +28,14 @@ export class CreateCategoryDto {
     message: VALIDATION_MESSAGES.MAX_LENGTH('Description', 500),
   })
   description?: string;
+
+  @IsNumber()
+  @IsOptional()
+  displayOrder?: number;
+
+  @IsString()
+  @IsOptional()
+  image?: string;
 
   @IsOptional()
   @IsBoolean({ message: VALIDATION_MESSAGES.MUST_BE_BOOLEAN('isActive') })

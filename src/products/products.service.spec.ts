@@ -130,7 +130,7 @@ describe('ProductsService', () => {
       prisma.product.findUnique.mockResolvedValue(mockProduct);
       prisma.product.delete.mockResolvedValue(mockProduct);
 
-      await service.remove(mockProduct.id);
+      await service.removeOne(mockProduct.id);
 
       expect(prisma.product.delete).toHaveBeenCalledWith({
         where: { id: mockProduct.id },

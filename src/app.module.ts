@@ -1,42 +1,48 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PrismaModule } from './prisma';
 import { AuthModule } from './auth/auth.module';
-import { ProductsModule } from './products/products.module';
-import { CategoriesModule } from './categories/categories.module';
-import { UsersModule } from './users/users.module';
+import { BcryptModule } from './bcrypt/bcrypt.module';
 import { CartModule } from './cart/cart.module';
+import { CategoriesModule } from './categories/categories.module';
+import { CouponsModule } from './coupons/coupons.module';
+import { FilesModule } from './files/files.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
-import { ShippingModule } from './shipping/shipping.module';
-import { NotificationsModule } from './notifications/notifications.module';
-import { InventoryModule } from './inventory/inventory.module';
+import { PrismaModule } from './prisma';
+import { ProductsModule } from './products/products.module';
 import { ReviewsModule } from './reviews/reviews.module';
-import { CouponsModule } from './coupons/coupons.module';
-import { WishlistModule } from './wishlist/wishlist.module';
 import { SecurityModule } from './security/security.module';
-import { securityConfig } from './common';
+import { ShippingModule } from './shipping/shipping.module';
+import { UsersModule } from './users/users.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+      // envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+    }),
     // Prisma - Database ORM
     PrismaModule,
     // Rate Limiting - Global configuration
-    ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: securityConfig.throttle.global.ttl,
-        limit: securityConfig.throttle.global.limit,
-      },
-      {
-        name: 'auth',
-        ttl: securityConfig.throttle.auth.ttl,
-        limit: securityConfig.throttle.auth.limit,
-      },
-    ]),
+    // ThrottlerModule.forRoot([
+    //   {
+    //     name: 'short',
+    //     ttl: securityConfig.throttle.global.ttl,
+    //     limit: securityConfig.throttle.global.limit,
+    //   },
+    //   {
+    //     name: 'auth',
+    //     ttl: securityConfig.throttle.auth.ttl,
+    //     limit: securityConfig.throttle.auth.limit,
+    //   },
+    // ]),
     AuthModule,
     ProductsModule,
     CategoriesModule,
@@ -51,15 +57,17 @@ import { securityConfig } from './common';
     CouponsModule,
     WishlistModule,
     SecurityModule,
+    BcryptModule,
+    FilesModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     // Global ThrottlerGuard - applies rate limiting to all routes
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // {
+    //   provide: APP_GUARD,
+    // useClass: ThrottlerGuard,
+    // },
   ],
 })
 export class AppModule {}

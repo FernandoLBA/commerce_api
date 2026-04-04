@@ -1,19 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { isUUID } from 'class-validator';
+
+import { FilesService } from 'src/files/files.service';
 import {
-  CategoryNotFoundException,
   CategoryAlreadyExistsException,
   CategoryHasProductsException,
+  CategoryNotFoundException,
 } from '../common';
 import { SlugService } from '../common/services/slug.service';
+import { PrismaService } from '../prisma';
+import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 
 @Injectable()
 export class CategoriesService {
+  private readonly FOLDER_PATH = '/categories';
+
   constructor(
     private prisma: PrismaService,
     private slugService: SlugService,
+    private readonly filesService: FilesService,
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto) {
@@ -46,9 +51,11 @@ export class CategoriesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(search: string) {
+    const isValidUUID = isUUID(search);
+
     const category = await this.prisma.category.findUnique({
-      where: { id },
+      where: isValidUUID ? { id: search } : { slug: search },
       include: { products: true },
     });
 
@@ -59,8 +66,8 @@ export class CategoriesService {
     return category;
   }
 
-  async update(id: string, updateCategoryDto: UpdateCategoryDto) {
-    const category = await this.findOne(id);
+  async update(slug: string, updateCategoryDto: UpdateCategoryDto) {
+    const category = await this.findOne(slug);
 
     if (updateCategoryDto.name && updateCategoryDto.name !== category.name) {
       const existingCategory = await this.prisma.category.findFirst({
@@ -73,16 +80,48 @@ export class CategoriesService {
     }
 
     return this.prisma.category.update({
-      where: { id },
+      where: { slug },
       data: {
         ...updateCategoryDto,
-        slug: updateCategoryDto.name
-          ? await this.slugService.generateSlug(
-              updateCategoryDto.name,
-              id,
+        slug: updateCategoryDto.slug
+          ? updateCategoryDto.slug
+          : await this.slugService.generateSlug(
+              updateCategoryDto.name!,
+              category.id,
               this.prisma.category,
-            )
-          : undefined,
+            ),
+        displayOrder: updateCategoryDto.displayOrder ?? 1,
+      },
+    });
+  }
+
+  async uploadFile(slug: string, file: Express.Multer.File) {
+    const category = await this.prisma.category.findUnique({
+      where: { slug },
+    });
+
+    if (!category) {
+      throw new CategoryNotFoundException(
+        `Category with slug "${slug}" not found`,
+      );
+    }
+
+    // it removes the previous image
+    if (category.image) {
+      const publicId = this.filesService.getImagePublicId(category.image);
+      publicId && (await this.filesService.remove(publicId));
+    }
+
+    const { urls } = await this.filesService.uploadImageToCloudinary(
+      file,
+      `${this.FOLDER_PATH}/${slug}`,
+    );
+
+    return this.prisma.category.update({
+      where: { slug },
+      data: {
+        ...category,
+        image: urls.large,
       },
     });
   }
@@ -92,6 +131,11 @@ export class CategoriesService {
       where: { id },
       include: { products: true },
     });
+
+    if (category?.image) {
+      const publicId = this.filesService.getImagePublicId(category.image);
+      publicId && (await this.filesService.remove(publicId));
+    }
 
     if (!category) {
       throw new CategoryNotFoundException();
