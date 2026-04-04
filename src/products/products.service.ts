@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { isUUID } from 'class-validator';
 
+import { UploadFileDto } from 'src/files/dto';
+import { FilesService } from 'src/files/files.service';
 import { CategoryNotFoundException, ProductNotFoundException } from '../common';
 import { SlugService } from '../common/services/slug.service';
 import { PrismaService } from '../prisma';
@@ -8,9 +10,12 @@ import { CreateProductDto, UpdateProductDto } from './dto';
 
 @Injectable()
 export class ProductsService {
+  private readonly FOLDER_PATH = '/products';
+
   constructor(
     private prisma: PrismaService,
     private slugService: SlugService,
+    private filesService: FilesService,
   ) {}
 
   async create(createProductDto: CreateProductDto) {
@@ -63,7 +68,8 @@ export class ProductsService {
   }
 
   async update(slug: string, updateProductDto: UpdateProductDto) {
-    await this.findOne(slug); // Verifica que existe
+    const product = await this.findOne(slug); // Verifica que existe
+    console.log('🚀 ~ ProductsService ~ update ~ product:', product);
 
     if (updateProductDto.categoryId) {
       const category = await this.prisma.category.findUnique({
@@ -90,8 +96,54 @@ export class ProductsService {
     });
   }
 
-  async remove(slug: string): Promise<void> {
+  async uploadFiles(productId: string, files: Express.Multer.File[]) {
+    const product = await this.findOne(productId);
+
+    const uploadedImages = files.map(async (file) => {
+      return await this.filesService.uploadImageToCloudinary(
+        file,
+        `${this.FOLDER_PATH}/${product.slug}`,
+        { alt: file.filename, name: file.originalname },
+      );
+    });
+
+    const resolvedUploadedImages = await Promise.all(uploadedImages);
+    console.log(
+      '🚀 ~ ProductsService ~ uploadFiles ~ resolvedUploadedImages:',
+      resolvedUploadedImages,
+    );
+
+    await this.prisma.productImage.createMany({
+      data: this.imageDataNormalizer(productId, resolvedUploadedImages),
+      skipDuplicates: true,
+    });
+
+    return resolvedUploadedImages;
+  }
+
+  async removeOne(slug: string): Promise<void> {
     await this.findOne(slug); // Verifica que existe
     await this.prisma.product.delete({ where: { slug } });
+  }
+
+  imageDataNormalizer(
+    productId: string,
+    files: {
+      urls: Record<string, string>;
+      uploadFileDto: UploadFileDto | undefined;
+    }[],
+  ) {
+    return files.map((file, index) => ({
+      alt:
+        file.uploadFileDto?.alt ||
+        file.uploadFileDto?.name ||
+        `image-${Date.now()}`,
+      displayOrder: index,
+      height: 50,
+      width: 50,
+      productId,
+      url: file.urls.large,
+      publicId: this.filesService.getImagePublicId(file.urls.large),
+    }));
   }
 }

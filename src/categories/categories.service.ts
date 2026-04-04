@@ -108,15 +108,11 @@ export class CategoriesService {
 
     // it removes the previous image
     if (category.image) {
-      const publicId = category.image
-        .split('/')
-        .slice(-4)
-        .join('/')
-        .split('?')[0];
-      await this.filesService.remove(publicId);
+      const publicId = this.filesService.getImagePublicId(category.image);
+      publicId && (await this.filesService.remove(publicId));
     }
 
-    const { urls } = await this.filesService.uploadFileToCloudinary(
+    const { urls } = await this.filesService.uploadImageToCloudinary(
       file,
       `${this.FOLDER_PATH}/${slug}`,
     );
@@ -135,6 +131,11 @@ export class CategoriesService {
       where: { id },
       include: { products: true },
     });
+
+    if (category?.image) {
+      const publicId = this.filesService.getImagePublicId(category.image);
+      publicId && (await this.filesService.remove(publicId));
+    }
 
     if (!category) {
       throw new CategoryNotFoundException();

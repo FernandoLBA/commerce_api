@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { v2 } from 'cloudinary';
+import * as streamifier from 'streamifier';
 
 import { CloudinaryService } from 'src/common';
 import { UpdateFileDto, UploadFileDto } from './dto';
 
 @Injectable()
 export class FilesService {
+  private cloudinary = v2;
+  private streamifier = streamifier;
+
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 
-  async uploadFileToCloudinary(
+  async uploadImageToCloudinary(
     file: Express.Multer.File,
     folderPath: string,
     uploadFileDto?: UploadFileDto,
@@ -15,7 +20,7 @@ export class FilesService {
     const uploadResult = await this.cloudinaryService.uploadFromBuffer(
       file.buffer,
       {
-        folder: `commerce${folderPath}`,
+        folder: this.getFolderName(folderPath),
       },
     );
 
@@ -29,8 +34,28 @@ export class FilesService {
     };
   }
 
-  uploadFiles(uploadFileDto: UploadFileDto) {
-    return 'This action adds a new file';
+  async uploadMultipleImagesToCloudinary(
+    files: Express.Multer.File[],
+    folderPath: string,
+  ) {
+    const uploadPromises = files.map((file) => {
+      return new Promise((resolve, reject) => {
+        const uploadStream = this.cloudinary.uploader.upload_stream(
+          {
+            folder: folderPath,
+          },
+          (error, result) => {
+            if (error) return reject(error);
+
+            resolve(result);
+          },
+        );
+
+        this.streamifier.createReadStream(file.buffer).pipe(uploadStream);
+      });
+    });
+
+    return Promise.all(uploadPromises);
   }
 
   findAll() {
@@ -47,5 +72,15 @@ export class FilesService {
 
   async remove(publicId: string) {
     return await this.cloudinaryService.delete(publicId);
+  }
+
+  getImagePublicId(imageUrl: string, depth = -4) {
+    if (!imageUrl) return null;
+
+    return imageUrl.split('/').slice(depth).join('/').split('?')[0];
+  }
+
+  getFolderName(folderPath: string) {
+    return `commerce${folderPath}`;
   }
 }

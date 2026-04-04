@@ -49,7 +49,6 @@ export class CategoriesController {
 
   @Get(':search')
   findOne(@Param('search') search: string) {
-    console.log({ search });
     return this.categoriesService.findOne(search);
   }
 

@@ -9,8 +9,13 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { AllowedFileSizes } from 'src/common/enums';
+import { FilesValidationPipe } from 'src/common/pipes';
 import { CreateProductDto, UpdateProductDto } from './dto';
 import { ProductsService } from './products.service';
 
@@ -33,6 +38,20 @@ export class ProductsController {
     return this.productsService.findOne(search);
   }
 
+  @Post(':productId/files/upload')
+  @UseInterceptors(
+    FilesInterceptor('files', 6, {
+      limits: { fieldSize: AllowedFileSizes.IMAGE },
+    }),
+  )
+  async uploadImagesToCloudinary(
+    @Param('productId') productId: string,
+    @UploadedFiles(new FilesValidationPipe())
+    files: Express.Multer.File[],
+  ) {
+    return await this.productsService.uploadFiles(productId, files);
+  }
+
   @Patch(':slug')
   update(
     @Param('slug') slug: string,
@@ -44,6 +63,6 @@ export class ProductsController {
   @Delete(':slug')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('slug') slug: string) {
-    return this.productsService.remove(slug);
+    return this.productsService.removeOne(slug);
   }
 }
