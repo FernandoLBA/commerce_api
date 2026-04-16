@@ -65,4 +65,9 @@ export class ProductsController {
   remove(@Param('slug') slug: string) {
     return this.productsService.removeOne(slug);
   }
+
+  @Delete(':imageId/files/delete')
+  async deleteImage(@Param('imageId') imageId: string): Promise<string> {
+    return await this.productsService.deleteImage(imageId);
+  }
 }

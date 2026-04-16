@@ -3,7 +3,11 @@ import { isUUID } from 'class-validator';
 
 import { UploadFileDto } from 'src/files/dto';
 import { FilesService } from 'src/files/files.service';
-import { CategoryNotFoundException, ProductNotFoundException } from '../common';
+import {
+  CategoryNotFoundException,
+  ProductImageNotFoundException,
+  ProductNotFoundException,
+} from '../common';
 import { SlugService } from '../common/services/slug.service';
 import { PrismaService } from '../prisma';
 import { CreateProductDto, UpdateProductDto } from './dto';
@@ -68,9 +72,6 @@ export class ProductsService {
   }
 
   async update(slug: string, updateProductDto: UpdateProductDto) {
-    const product = await this.findOne(slug); // Verifica que existe
-    console.log('🚀 ~ ProductsService ~ update ~ product:', product);
-
     if (updateProductDto.categoryId) {
       const category = await this.prisma.category.findUnique({
         where: { id: updateProductDto.categoryId },
@@ -108,10 +109,6 @@ export class ProductsService {
     });
 
     const resolvedUploadedImages = await Promise.all(uploadedImages);
-    console.log(
-      '🚀 ~ ProductsService ~ uploadFiles ~ resolvedUploadedImages:',
-      resolvedUploadedImages,
-    );
 
     await this.prisma.productImage.createMany({
       data: this.imageDataNormalizer(productId, resolvedUploadedImages),
@@ -124,6 +121,27 @@ export class ProductsService {
   async removeOne(slug: string): Promise<void> {
     await this.findOne(slug); // Verifica que existe
     await this.prisma.product.delete({ where: { slug } });
+  }
+
+  async deleteImage(imageId: string): Promise<string> {
+    const image = await this.prisma.productImage.findUnique({
+      where: { id: imageId },
+    });
+
+    if (!image) {
+      throw new ProductImageNotFoundException(
+        `Image with ID "${imageId}" not found`,
+      );
+    }
+
+    // Eliminar de Cloudinary si publicId existe
+    if (image.publicId) {
+      await this.filesService.remove(image.publicId);
+    }
+
+    await this.prisma.productImage.delete({ where: { id: imageId } });
+
+    return `Image with ID "${imageId}" has been deleted successfully.`;
   }
 
   imageDataNormalizer(
@@ -146,4 +164,6 @@ export class ProductsService {
       publicId: this.filesService.getImagePublicId(file.urls.large),
     }));
   }
+
+  getHighestPriorityOrder() {}
 }

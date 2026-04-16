@@ -22,9 +22,9 @@
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "prisma:reset": "rm -rf prisma/migrations && pnpm prisma migrate reset --force",
-    "server:setup": "pnpm prisma:reset && pnpm prisma:generate && pnpm prisma:migrate --name init && pnpm prisma:seed",
-    "server:uninstall": "rm -rf dist node_modules pnpm-lock.yaml && pnpm install"
+    "prisma:reset": "rm -rf prisma/migrations src/generated && pnpm prisma migrate reset --force",
+    "server:setup": "pnpm prisma:reset && pnpm prisma:generate && pnpm prisma:migrate --name init",
+    "server:reinstall": "rm -rf dist node_modules pnpm-lock.yaml && pnpm install"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -75,6 +75,7 @@
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
+    "@types/mocha": "^10.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^22.19.7",
     "@types/nodemailer": "^7.0.9",

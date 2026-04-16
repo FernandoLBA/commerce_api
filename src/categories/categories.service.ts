@@ -79,6 +79,11 @@ export class CategoriesService {
       }
     }
 
+    if( !updateCategoryDto.image && category.image) {
+      const publicId = this.filesService.getImagePublicId(category.image);
+      publicId && (await this.filesService.remove(publicId));
+    }
+
     return this.prisma.category.update({
       where: { slug },
       data: {

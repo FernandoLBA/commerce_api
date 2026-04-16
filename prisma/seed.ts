@@ -62,9 +62,10 @@ async function main() {
       phone: '+51999999999',
       role: Role.ADMIN,
       isActive: true,
+      emailVerified: true,
     },
   });
-
+  
   const customers = await Promise.all([
     prisma.user.create({
       data: {
@@ -75,6 +76,7 @@ async function main() {
         phone: '+51912345678',
         role: Role.USER,
         isActive: false,
+        emailVerified: true,
       },
     }),
     prisma.user.create({

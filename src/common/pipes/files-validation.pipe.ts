@@ -59,10 +59,6 @@ export class FilesValidationPipe implements PipeTransform {
   }
 
   private isValidSize(fileSize: number, mimetype: AllowedMimeTypes) {
-    console.log('🚀 ~ FilesValidationPipe ~ isValidSize ~ fileSize::', {
-      fileSize,
-      mimetype,
-    });
     const { fileSizeInMB, isImage, isApplication } = this.fileInfoParser(
       mimetype,
       fileSize,
@@ -91,19 +87,23 @@ export class FilesValidationPipe implements PipeTransform {
 
     let allowedFiles: Express.Multer.File[] = [];
 
-    value.forEach((file) => {
-      const { allowed } = this.isValidFile(file.mimetype as AllowedMimeTypes);
+    if (Array.isArray(value)) {
+      value.forEach((file) => {
+        const { allowed } = this.isValidFile(file.mimetype as AllowedMimeTypes);
 
-      const isSizeValid = this.isValidSize(
-        file.size,
-        file.mimetype as AllowedMimeTypes,
-      );
+        const isSizeValid = this.isValidSize(
+          file.size,
+          file.mimetype as AllowedMimeTypes,
+        );
 
-      if (allowed && isSizeValid) {
-        allowedFiles.push(file);
-      }
-    });
+        if (allowed && isSizeValid) {
+          allowedFiles.push(file);
+        }
+      });
 
-    return allowedFiles.length === 1 ? allowedFiles[0] : allowedFiles;
+      return allowedFiles
+    }
+
+    return value;
   }
 }
