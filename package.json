@@ -20,10 +20,11 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
+    "prisma:update": "prisma generate && prisma migrate dev --name ",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:reset": "rm -rf prisma/migrations src/generated && pnpm prisma migrate reset --force",
-    "server:setup": "pnpm prisma:reset && pnpm prisma:generate && pnpm prisma:migrate --name init",
+    "server:setup": "pnpm prisma:reset && pnpm prisma:generate && pnpm prisma:migrate --name",
     "server:reinstall": "rm -rf dist node_modules pnpm-lock.yaml && pnpm install"
   },
   "prisma": {
@@ -61,11 +62,6 @@
     "streamifier": "^0.1.1",
     "stripe": "^20.3.0",
     "uuid": "^13.0.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/pg": "8.11.11"
-    }
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -113,5 +109,12 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.22.0",
+      "onFail": "download"
+    }
   }
 }
