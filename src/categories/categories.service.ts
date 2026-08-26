@@ -79,9 +79,9 @@ export class CategoriesService {
       }
     }
 
-    if( !updateCategoryDto.image && category.image) {
+    if (!updateCategoryDto.image && category.image) {
       const publicId = this.filesService.getImagePublicId(category.image);
-      publicId && (await this.filesService.remove(publicId));
+      if (publicId) await this.filesService.remove(publicId);
     }
 
     return this.prisma.category.update({
@@ -114,7 +114,7 @@ export class CategoriesService {
     // it removes the previous image
     if (category.image) {
       const publicId = this.filesService.getImagePublicId(category.image);
-      publicId && (await this.filesService.remove(publicId));
+      if (publicId) await this.filesService.remove(publicId);
     }
 
     const { urls } = await this.filesService.uploadImageToCloudinary(
@@ -139,7 +139,7 @@ export class CategoriesService {
 
     if (category?.image) {
       const publicId = this.filesService.getImagePublicId(category.image);
-      publicId && (await this.filesService.remove(publicId));
+      if (publicId) await this.filesService.remove(publicId);
     }
 
     if (!category) {

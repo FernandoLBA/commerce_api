@@ -81,7 +81,7 @@ describe('CouponsService', () => {
       prisma.coupon.findFirst.mockResolvedValue(null);
       prisma.coupon.create.mockResolvedValue(mockCoupon);
 
-      const result = await service.create({
+      await service.create({
         code: 'NEWCOUPON',
         discountType: DiscountType.PERCENTAGE,
         discountValue: 15,

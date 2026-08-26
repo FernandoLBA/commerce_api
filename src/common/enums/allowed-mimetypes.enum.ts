@@ -12,5 +12,4 @@ export enum AllowedImagesMimetypes {
 }
 
 export type AllowedMimeTypes =
-  | AllowedApplicationMimetypes
-  | AllowedImagesMimetypes;
+  AllowedApplicationMimetypes | AllowedImagesMimetypes;

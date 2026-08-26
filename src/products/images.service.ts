@@ -222,7 +222,5 @@ export class ImagesService {
     return this.findAllByProduct(productId);
   }
 
-  getHighestDisplayOrder(){
-    
-  }
+  getHighestDisplayOrder() {}
 }

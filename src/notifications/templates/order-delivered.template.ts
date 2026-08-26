@@ -1,4 +1,11 @@
-import { wrapInHtmlTemplate, emailFooter, successBadge, inline, colors, brandName } from './base.template';
+import {
+  wrapInHtmlTemplate,
+  emailFooter,
+  successBadge,
+  inline,
+  colors,
+  brandName,
+} from './base.template';
 
 export interface OrderDeliveredData {
   orderNumber: string;

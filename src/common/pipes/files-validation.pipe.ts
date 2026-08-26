@@ -1,9 +1,4 @@
-import {
-  ArgumentMetadata,
-  BadRequestException,
-  Injectable,
-  PipeTransform,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
 import {
   AllowedApplicationMimetypes,
@@ -82,10 +77,10 @@ export class FilesValidationPipe implements PipeTransform {
     return true;
   }
 
-  transform(value: Express.Multer.File[], _metadata: ArgumentMetadata) {
+  transform(value: Express.Multer.File[]) {
     if (value.length === 0) throw new Error('No files provided');
 
-    let allowedFiles: Express.Multer.File[] = [];
+    const allowedFiles: Express.Multer.File[] = [];
 
     if (Array.isArray(value)) {
       value.forEach((file) => {
@@ -101,7 +96,7 @@ export class FilesValidationPipe implements PipeTransform {
         }
       });
 
-      return allowedFiles
+      return allowedFiles;
     }
 
     return value;

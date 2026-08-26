@@ -1,0 +1,35 @@
+name: CI/CD Nestjs to ECR then EC2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  # CI Code checks
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3 # from github market place, search as actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3 # from github market place, search as actions/setup-node
+        with:
+          node-version: 22.23.2 # use same version to avoid surprise later
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./ # route where project dependecies will be installed
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        working-directory: ./
+
+      - name: Lint
+        run: npm run lint:ci # check your package.json script
+        working-directory: ./
+
+      - name: Run tests
+        run: npm test

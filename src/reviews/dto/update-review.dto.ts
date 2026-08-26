@@ -10,6 +10,8 @@ export class UpdateReviewDto extends PartialType(CreateReviewDto) {
 
   @IsString()
   @IsOptional()
-  @MaxLength(1000, { message: VALIDATION_MESSAGES.MAX_LENGTH('Admin response', 1000) })
+  @MaxLength(1000, {
+    message: VALIDATION_MESSAGES.MAX_LENGTH('Admin response', 1000),
+  })
   adminResponse?: string;
 }

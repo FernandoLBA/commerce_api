@@ -175,7 +175,11 @@ describe('CategoriesService', () => {
 
   describe('remove', () => {
     it('should remove a category without products', async () => {
-      const categoryWithoutProducts = { ...mockCategory, products: [], _count: { products: 0 } };
+      const categoryWithoutProducts = {
+        ...mockCategory,
+        products: [],
+        _count: { products: 0 },
+      };
       prisma.category.findUnique.mockResolvedValue(categoryWithoutProducts);
       prisma.category.delete.mockResolvedValue(categoryWithoutProducts);
 

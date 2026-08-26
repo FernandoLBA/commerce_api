@@ -1,11 +1,20 @@
-import { wrapInHtmlTemplate, emailFooter, successBadge, inline, colors, brandName } from './base.template';
+import {
+  wrapInHtmlTemplate,
+  emailFooter,
+  successBadge,
+  inline,
+  colors,
+  brandName,
+} from './base.template';
 
 export interface PaymentConfirmationData {
   orderNumber: string;
   amount: number;
 }
 
-export function paymentConfirmationEmailText(data: PaymentConfirmationData): string {
+export function paymentConfirmationEmailText(
+  data: PaymentConfirmationData,
+): string {
   return `
 ¡Pago recibido!
 
@@ -17,7 +26,9 @@ Tu pedido será procesado y enviado pronto.
   `.trim();
 }
 
-export function paymentConfirmationEmailHtml(data: PaymentConfirmationData): string {
+export function paymentConfirmationEmailHtml(
+  data: PaymentConfirmationData,
+): string {
   const content = `
     <h1 style="${inline.heading1}">¡Pago recibido! 💳</h1>
     

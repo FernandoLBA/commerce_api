@@ -115,12 +115,6 @@ export class UsersController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
   getAllUsers() {
-    console.log(
-      '[ADMIN ALL] req.user:',
-      typeof arguments[0] === 'object' && arguments[0].user
-        ? arguments[0].user
-        : undefined,
-    );
     return this.usersService.getAllUsers();
   }
 }

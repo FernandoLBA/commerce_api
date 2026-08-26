@@ -218,10 +218,7 @@ export class ShippingService {
 
     // Handle status change
     if (updateData.status && updateData.status !== shipment.status) {
-      this.validateStatusTransition(
-        shipment.status as ShippingStatus,
-        updateData.status,
-      );
+      this.validateStatusTransition(shipment.status, updateData.status);
 
       // Set timestamps
       if (updateData.status === ShippingStatus.SHIPPED) {

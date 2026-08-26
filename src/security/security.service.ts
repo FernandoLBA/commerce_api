@@ -295,7 +295,7 @@ export class SecurityService {
         "'; DROP TABLE users; --",
         "1' UNION SELECT * FROM users --",
         "admin'--",
-        "1; DELETE FROM products",
+        '1; DELETE FROM products',
       ],
       xss: [
         '<script>alert("XSS")</script>',
@@ -318,13 +318,7 @@ export class SecurityService {
         '$(cat /etc/passwd)',
         '&& rm -rf /',
       ],
-      weakPasswords: [
-        'password',
-        '123456',
-        'admin123',
-        'qwerty',
-        'abc123',
-      ],
+      weakPasswords: ['password', '123456', 'admin123', 'qwerty', 'abc123'],
     };
   }
 }
