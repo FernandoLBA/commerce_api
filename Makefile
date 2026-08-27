@@ -64,6 +64,10 @@ clean:
 db-shell:
 	docker compose exec database psql -U $${DB_USER:-postgres} -d $${DB_NAME:-commerce_db}
 
+# Access database shell
+create-image:
+	docker build-t ecommerce-nest-api:latest .
+
 # ==========================================
 # Database Commands
 # ==========================================

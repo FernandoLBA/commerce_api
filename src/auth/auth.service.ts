@@ -119,7 +119,7 @@ export class AuthService {
     // Verify password
     const isPasswordValid = await this.bcryptService.comparePasswords(
       password,
-      user.password,
+      user.password as string,
     );
 
     if (!isPasswordValid) {
@@ -149,7 +149,7 @@ export class AuthService {
    * Validate user by ID (used in JWT strategy)
    */
   async validateUser(id: string) {
-    return this.prisma.user.findUnique({
+    return await this.prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -244,7 +244,9 @@ export class AuthService {
     await this.notificationsService.sendActivationEmail(
       email,
       activationToken,
-      user.firstName || 'Usuario',
+      typeof user.firstName === 'string'
+        ? (user.firstName as string)
+        : 'Usuario',
     );
 
     return {
@@ -278,7 +280,9 @@ export class AuthService {
     await this.notificationsService.sendPasswordResetEmail(
       email,
       passwordResetToken,
-      user.firstName || 'Usuario',
+      typeof user.firstName === 'string'
+        ? (user.firstName as string)
+        : 'Usuario',
     );
 
     return {

@@ -5,6 +5,9 @@ allowBuilds:
   prisma: true
   unrs-resolver: true
 
+minimumReleaseAgeExclude:
+  - mercadopago@3.5.1
+
 overrides:
   deepmerge-ts: ^8.0.0
   linkify-it: ^5.0.2
