@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ProductsService } from './products.service';
 import { PrismaService } from '../prisma';
 import { SlugService } from '../common/services/slug.service';
+import { FilesService } from '../files/files.service';
 
 describe('ProductsService', () => {
   let service: ProductsService;
@@ -60,6 +61,10 @@ describe('ProductsService', () => {
         {
           provide: SlugService,
           useValue: mockSlugService,
+        },
+        {
+          provide: FilesService,
+          useValue: { getImagePublicId: jest.fn(), remove: jest.fn() },
         },
       ],
     }).compile();
@@ -130,10 +135,10 @@ describe('ProductsService', () => {
       prisma.product.findUnique.mockResolvedValue(mockProduct);
       prisma.product.delete.mockResolvedValue(mockProduct);
 
-      await service.removeOne(mockProduct.id);
+      await service.removeOne(mockProduct.slug);
 
       expect(prisma.product.delete).toHaveBeenCalledWith({
-        where: { id: mockProduct.id },
+        where: { slug: mockProduct.slug },
       });
     });
   });

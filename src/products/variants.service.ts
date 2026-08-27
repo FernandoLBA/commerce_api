@@ -179,9 +179,12 @@ export class VariantsService {
   }
 
   async updateStock(id: string, quantity: number) {
+    const variant = await this.findOne(id);
+    const stock = Math.max(0, variant.stock + Number(quantity));
+
     return this.prisma.productVariant.update({
       where: { id },
-      data: { stock: Number(quantity) },
+      data: { stock },
     });
   }
 

@@ -1,6 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import 'dotenv/config';
 import { json, urlencoded } from 'express';
 import helmet from 'helmet';
 

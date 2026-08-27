@@ -28,8 +28,47 @@ jobs:
         working-directory: ./
 
       - name: Lint
-        run: npm run lint:ci # check your package.json script
+        run: npm run lint:ci # check your package.json scripts
         working-directory: ./
 
       - name: Run tests
         run: npm test
+
+      - name: NPM audit (high severity)
+        run: npm audit --audit-level=high
+        working-directory: ./
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Login to AWS via OIDC instead of using AWS secrets access keys that is dangerous
+      - name: Configure AWS OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Login to ECR
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+
+      # Build Docker Image
+      - name: Build Docker Image
+        run: docker build --no-cahe -t ecommerce-nest-api:latest ./api
+
+      # Tag Docker Image to ECR
+      - name: Tag Docker Image to ECR
+        run: docker tag ecommerce-nest-api:latest ${{ secrets.ECR_REPOSITORY }}:latest
+
+      # Push Docker Image
+      - name: Push Docker Image to ECR
+        run: docker push ${{ secrets.ECR_REPOSITORY }}:latest

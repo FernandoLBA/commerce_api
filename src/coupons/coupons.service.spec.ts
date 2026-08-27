@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CouponsService } from './coupons.service';
 import { PrismaService } from '../prisma';
-import { DiscountType } from '../generated/prisma/client';
+import { DiscountType } from '@prisma/client';
 
 describe('CouponsService', () => {
   let service: CouponsService;

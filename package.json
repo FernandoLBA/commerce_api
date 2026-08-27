@@ -9,9 +9,10 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
-    "start:prod": "node dist/main",
+    "dev": "nest start --watch",
+    "debug": "nest start --debug --watch",
+    "prod": "node dist/main",
+    "api:audit": "pnpm audit --audit-level=high",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "lint:ci": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "test": "jest",
@@ -26,7 +27,7 @@
     "prisma:seed": "ts-node prisma/seed.ts",
     "prisma:reset": "rm -rf prisma/migrations src/generated && pnpm prisma migrate reset --force",
     "server:setup": "pnpm prisma:reset && pnpm prisma:generate && pnpm prisma:migrate --name",
-    "server:reinstall": "rm -rf dist node_modules pnpm-lock.yaml && pnpm install"
+    "server:reinstall": "rm -rf dist node_modules pnpm-lock.yaml && pnpm install && pnpm prisma:update"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -50,10 +51,10 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cloudinary": "^2.9.0",
-    "dotenv": "^17.3.1",
+    "commerce-api": "link:",
     "helmet": "^8.1.0",
     "mercadopago": "^2.12.0",
-    "nodemailer": "^7.0.13",
+    "nodemailer": "^9.0.5",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
@@ -85,11 +86,11 @@
     "eslint-plugin-prettier": "^5.5.6",
     "globals": "^16.0.0",
     "jest": "^30.0.0",
-    "prisma": "^7.3.0",
     "prettier": "^3.9.6",
+    "prisma": "^7.3.0",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
-    "ts-jest": "^29.2.5",
+    "ts-jest": "^29.4.12",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
@@ -103,7 +104,7 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
+    "rootDir": "./",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
@@ -112,13 +113,9 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
-  },
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.22.0",
-      "onFail": "download"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/src/$1"
     }
   }
 }

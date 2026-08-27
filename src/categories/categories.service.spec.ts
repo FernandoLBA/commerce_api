@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CategoriesService } from './categories.service';
 import { PrismaService } from '../prisma';
 import { SlugService } from '../common/services/slug.service';
+import { FilesService } from '../files/files.service';
 import {
   CategoryNotFoundException,
   CategoryAlreadyExistsException,
@@ -62,6 +63,10 @@ describe('CategoriesService', () => {
         {
           provide: SlugService,
           useValue: mockSlugService,
+        },
+        {
+          provide: FilesService,
+          useValue: { getImagePublicId: jest.fn(), remove: jest.fn() },
         },
       ],
     }).compile();

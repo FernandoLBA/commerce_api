@@ -4,3 +4,9 @@ allowBuilds:
   esbuild: true
   prisma: true
   unrs-resolver: true
+
+overrides:
+  deepmerge-ts: ^8.0.0
+  linkify-it: ^5.0.2
+  nodemailer: ^9.0.5
+  uuid: ^13.0.2
