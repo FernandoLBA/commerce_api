@@ -20,13 +20,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Paso 2: Instala el gestor de paquetes pnpm en el runner de GitHub
+      # Paso 2: Instala el gestor de paquetes pnpm  indicando la ruta de la API en el runner de GitHub
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9 # Se alinea con la versión usada en desarrollo local
+          dest: ./api
 
-      # Paso 3: Configura el entorno de ejecución Node.js con caché para pnpm
+      # Paso 3: Configura Node.js con la caché apuntando directamente al lockfile de la API
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
