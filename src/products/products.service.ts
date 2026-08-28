@@ -49,7 +49,7 @@ export class ProductsService {
   }
 
   async findAll(categoryId?: string) {
-    return this.prisma.product.findMany({
+    return await this.prisma.product.findMany({
       where: categoryId ? { categoryId } : undefined,
       include: { category: true, images: true },
       orderBy: { createdAt: 'desc' },

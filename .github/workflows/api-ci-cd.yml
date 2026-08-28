@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main # Ejecución automática al hacer push en la rama 'main'
+      - release
+      - develop
 
 jobs:
   # ==========================================
@@ -71,7 +73,7 @@ jobs:
 
       # Paso 2: Autenticación en AWS mediante OIDC (sin credenciales estáticas)
       - name: Configure AWS OIDC
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
