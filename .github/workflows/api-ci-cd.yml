@@ -32,7 +32,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 9
+          version: 11
           standalone: true
 
       # Paso 4: Instala dependencias en la raíz del proyecto
