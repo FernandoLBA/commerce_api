@@ -1,42 +1,81 @@
+# Versión del formato de especificación de Docker Compose
 version: '3.8'
 
+# Definición de los servicios (contenedores) que componen la aplicación
 services:
+  # Nombre del servicio dentro de la red interna de Docker Compose
   api:
+    # Configuración del proceso de construcción de la imagen de Docker
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: .          # Directorio raíz donde se buscarán los archivos del proyecto
+      dockerfile: Dockerfile # Nombre del Dockerfile a utilizar para compilar la imagen
+    
+    # Nombre personalizado que se le asignará al contenedor en ejecución
     container_name: ecommerce-nest-api
+    
+    # Mapeo de puertos entre el host (tu máquina) y el contenedor [Host:Contenedor]
+    # Usa la variable $PORT si existe; si no, toma 3000 como valor por defecto
     ports:
-      - '${PORT}:3000'
+      - '${PORT:-3000}:${PORT:-3000}'
+
+    # Opción alternativa para cargar automáticamente todas las variables desde un archivo .env
+    # Descoméntalo si prefieres no declarar cada variable manualmente en 'environment'
+    # env_file:
+    #   - .env
+
+    # Inyección explícita de variables de entorno al contenedor
+    # Mapea las variables del sistema/archivo .env local hacia el entorno dentro del contenedor
     environment:
+      # Configuración general del servidor
+      PORT: ${PORT:-3000}
+      NODE_ENV: ${NODE_ENV}
+
+      # Configuración de conexión a la Base de Datos (PostgreSQL/MySQL)
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       DB_HOST: ${DB_HOST}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL} # Cadena de conexión utilizada por Prisma
       DB_PORT: ${DB_PORT}
+
+      # Configuración de Seguridad y CORS
       CORS_ORIGINS: ${CORS_ORIGINS}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+
+      # Autenticación y Tokens (JWT)
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+
+      # Protección contra ataques de fuerza bruta / Rate Limiting (Throttler)
+      THROTTLE_TTL: ${THROTTLE_TTL}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT}
+      THROTTLE_AUTH_TTL: ${THROTTLE_AUTH_TTL}
+      THROTTLE_AUTH_LIMIT: ${THROTTLE_AUTH_LIMIT}
+      THROTTLE_CREATE_TTL: ${THROTTLE_CREATE_TTL}
+      THROTTLE_CREATE_LIMIT: ${THROTTLE_CREATE_LIMIT}
+
+      # Pasarelas de Pago (Stripe & MercadoPago)
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN}
+
+      # Almacenamiento multimedia en la nube (Cloudinary)
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CLOUDINARY_URL: ${CLOUDINARY_URL}
+
+      # Servicio de correo electrónico (SMTP)
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_SECURE: ${MAIL_SECURE}
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+
+    # Política de reinicio: Reinicia el contenedor automáticamente si se detiene por error,
+    # a menos que lo hayas detenido intencionalmente con `docker compose stop`
     restart: unless-stopped
-
-# OLD docker-compose content
-# services:
-#   database:
-#     image: postgres:15-alpine
-#     container_name: commerce_db
-#     environment:
-#       POSTGRES_USER: ${DB_USER:-postgres}
-#       POSTGRES_PASSWORD: ${DB_PASSWORD:-mySecretPassword}
-#       POSTGRES_DB: ${DB_NAME:-commerce_db}
-#     ports:
-#       - "${DB_PORT:-5432}:${DB_PORT:-5432}"
-#     volumes:
-#       - postgres_data:/var/lib/postgresql/data
-
-# volumes:
-#   postgres_data:

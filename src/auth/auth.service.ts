@@ -119,7 +119,7 @@ export class AuthService {
     // Verify password
     const isPasswordValid = await this.bcryptService.comparePasswords(
       password,
-      user.password as string,
+      user.password,
     );
 
     if (!isPasswordValid) {
@@ -244,9 +244,7 @@ export class AuthService {
     await this.notificationsService.sendActivationEmail(
       email,
       activationToken,
-      typeof user.firstName === 'string'
-        ? (user.firstName as string)
-        : 'Usuario',
+      typeof user.firstName === 'string' ? user.firstName : 'Usuario',
     );
 
     return {
@@ -280,9 +278,7 @@ export class AuthService {
     await this.notificationsService.sendPasswordResetEmail(
       email,
       passwordResetToken,
-      typeof user.firstName === 'string'
-        ? (user.firstName as string)
-        : 'Usuario',
+      typeof user.firstName === 'string' ? user.firstName : 'Usuario',
     );
 
     return {

@@ -14,10 +14,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { AllowedFileSizes } from 'src/common/enums';
-import { FilesValidationPipe } from 'src/common/pipes';
+import { AllowedFileSizes } from '../common/enums';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto';
+import { FilesValidationPipe } from '../common/pipes';
 
 @Controller('categories')
 export class CategoriesController {

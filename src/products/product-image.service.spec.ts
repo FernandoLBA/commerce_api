@@ -10,7 +10,10 @@ describe('ProductImageService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductImageService,
-        { provide: PrismaService, useValue: { productImage: { createMany: jest.fn() } } },
+        {
+          provide: PrismaService,
+          useValue: { productImage: { createMany: jest.fn() } },
+        },
         { provide: FilesService, useValue: { getImagePublicId: jest.fn() } },
       ],
     }).compile();
