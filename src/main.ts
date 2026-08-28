@@ -1,6 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import 'dotenv/config';
 import { json, urlencoded } from 'express';
 import helmet from 'helmet';
 
@@ -11,7 +10,7 @@ import {
   securityConfig,
 } from './common';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 async function bootstrap() {
@@ -53,7 +52,7 @@ async function bootstrap() {
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('trust proxy', 1);
 
-  await app.listen(PORT).then(() => {
+  await app.listen(PORT, '0.0.0.0').then(() => {
     console.log(`🚀 Application is running on: http://localhost:${PORT}`);
     console.log(`📚 API prefix: /api`);
     console.log(`🔒 Security: Helmet, CORS, Rate Limiting enabled`);

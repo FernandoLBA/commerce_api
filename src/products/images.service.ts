@@ -221,4 +221,6 @@ export class ImagesService {
     await Promise.all(updatePromises);
     return this.findAllByProduct(productId);
   }
+
+  getHighestDisplayOrder() {}
 }

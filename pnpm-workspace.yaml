@@ -1,0 +1,16 @@
+allowBuilds:
+  '@prisma/engines': true
+  '@swc/core': true
+  bcrypt: true
+  esbuild: true
+  prisma: true
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - mercadopago@3.5.1
+
+overrides:
+  deepmerge-ts: ^8.0.0
+  linkify-it: ^5.0.2
+  nodemailer: ^9.0.5
+  uuid: ^13.0.2

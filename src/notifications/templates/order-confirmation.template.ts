@@ -1,4 +1,10 @@
-import { wrapInHtmlTemplate, emailFooter, inline, colors, brandName } from './base.template';
+import {
+  wrapInHtmlTemplate,
+  emailFooter,
+  inline,
+  colors,
+  brandName,
+} from './base.template';
 
 export interface OrderConfirmationData {
   orderNumber: string;
@@ -21,9 +27,14 @@ export interface OrderConfirmationData {
   };
 }
 
-export function orderConfirmationEmailText(data: OrderConfirmationData): string {
+export function orderConfirmationEmailText(
+  data: OrderConfirmationData,
+): string {
   const itemsList = data.items
-    .map((item) => `- ${item.productName} x${item.quantity}: S/. ${item.subtotal.toFixed(2)}`)
+    .map(
+      (item) =>
+        `- ${item.productName} x${item.quantity}: S/. ${item.subtotal.toFixed(2)}`,
+    )
     .join('\n');
 
   const addr = data.shippingAddress;
@@ -53,7 +64,9 @@ Te notificaremos cuando tu pedido sea enviado.
   `.trim();
 }
 
-export function orderConfirmationEmailHtml(data: OrderConfirmationData): string {
+export function orderConfirmationEmailHtml(
+  data: OrderConfirmationData,
+): string {
   const itemsHtml = data.items
     .map(
       (item) => `
@@ -96,11 +109,15 @@ export function orderConfirmationEmailHtml(data: OrderConfirmationData): string 
           <td style="padding: 4px 0; color: ${colors.textSecondary};">Envío:</td>
           <td style="padding: 4px 0; text-align: right; font-weight: 600;">S/. ${data.shippingCost.toFixed(2)}</td>
         </tr>
-        ${data.discount > 0 ? `
+        ${
+          data.discount > 0
+            ? `
         <tr>
           <td style="padding: 4px 0; color: ${colors.success};">Descuento:</td>
           <td style="padding: 4px 0; text-align: right; font-weight: 600; color: ${colors.success};">-S/. ${data.discount.toFixed(2)}</td>
-        </tr>` : ''}
+        </tr>`
+            : ''
+        }
         <tr>
           <td style="padding: 12px 0 0 0; font-size: 18px; font-weight: 700; color: ${colors.text}; border-top: 2px solid ${colors.border};">Total:</td>
           <td style="padding: 12px 0 0 0; text-align: right; font-size: 18px; font-weight: 700; color: ${colors.primary}; border-top: 2px solid ${colors.border};">S/. ${data.total.toFixed(2)}</td>

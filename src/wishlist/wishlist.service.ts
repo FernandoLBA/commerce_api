@@ -26,7 +26,9 @@ export class WishlistService {
       });
 
       if (!variant) {
-        throw new NotFoundException(`Variant with ID ${dto.variantId} not found`);
+        throw new NotFoundException(
+          `Variant with ID ${dto.variantId} not found`,
+        );
       }
     }
 
@@ -74,8 +76,11 @@ export class WishlistService {
       currentPrice: item.variant?.price ?? item.product.price,
       isAvailable: (item.variant?.stock ?? item.product.stock) > 0,
       priceDrop:
-        item.priceWhenAdded && Number(item.priceWhenAdded) > Number(item.variant?.price ?? item.product.price)
-          ? Number(item.priceWhenAdded) - Number(item.variant?.price ?? item.product.price)
+        item.priceWhenAdded &&
+        Number(item.priceWhenAdded) >
+          Number(item.variant?.price ?? item.product.price)
+          ? Number(item.priceWhenAdded) -
+            Number(item.variant?.price ?? item.product.price)
           : 0,
     }));
   }
@@ -96,11 +101,7 @@ export class WishlistService {
     return item;
   }
 
-  async update(
-    id: string,
-    userId: string,
-    dto: UpdateWishlistItemDto,
-  ) {
+  async update(id: string, userId: string, dto: UpdateWishlistItemDto) {
     await this.findOne(id, userId);
 
     return this.prisma.wishlistItem.update({
@@ -158,7 +159,7 @@ export class WishlistService {
 
   async moveToCart(id: string, userId: string) {
     const item = await this.findOne(id, userId);
-    
+
     // Mark for removal (cart service should call removeByProduct after adding)
     return item;
   }

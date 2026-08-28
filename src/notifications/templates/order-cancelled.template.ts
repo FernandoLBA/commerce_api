@@ -1,4 +1,10 @@
-import { wrapInHtmlTemplate, emailFooter, inline, colors, brandName } from './base.template';
+import {
+  wrapInHtmlTemplate,
+  emailFooter,
+  inline,
+  colors,
+  brandName,
+} from './base.template';
 
 export interface OrderCancelledData {
   orderNumber: string;

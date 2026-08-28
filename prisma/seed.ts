@@ -1,19 +1,16 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const {
+import {
+  DiscountType,
+  MovementType,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
   PrismaClient,
   Role,
-  DiscountType,
-  OrderStatus,
-  PaymentStatus,
-  PaymentMethod,
   ShippingCarrier,
   ShippingStatus,
-  MovementType,
-} = require('@prisma/client');
-// } = require('../src/generated/prisma/client');
+} from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
-import 'dotenv/config';
 import { Pool } from 'pg';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -62,6 +59,7 @@ async function main() {
       phone: '+51999999999',
       role: Role.ADMIN,
       isActive: true,
+      emailVerified: true,
     },
   });
 
@@ -75,6 +73,7 @@ async function main() {
         phone: '+51912345678',
         role: Role.USER,
         isActive: false,
+        emailVerified: true,
       },
     }),
     prisma.user.create({
@@ -535,133 +534,1185 @@ async function main() {
   const productData = [
     // Electrónica (0-9)
     [
-      { name: 'iPhone 15 Pro', slug: 'iphone-15-pro', description: 'El iPhone más avanzado con chip A17 Pro.', shortDescription: 'iPhone 15 Pro con chip A17 Pro', price: 4999.0, compareAtPrice: 5499.0, attributes: [storageAttribute.id, colorAttribute.id], values: [['128GB', '256GB', '512GB'], ['Negro', 'Blanco', 'Azul']], image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500' },
-      { name: 'MacBook Air M3', slug: 'macbook-air-m3', description: 'MacBook Air con chip M3.', shortDescription: 'MacBook Air M3', price: 5999.0, compareAtPrice: 6499.0, attributes: [storageAttribute.id], values: [['256GB', '512GB', '1TB']], image: 'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=500' },
-      { name: 'Samsung Galaxy S24', slug: 'samsung-galaxy-s24', description: 'Samsung Galaxy S24.', shortDescription: 'Samsung Galaxy S24', price: 3999.0, attributes: [storageAttribute.id, colorAttribute.id], values: [['128GB', '256GB'], ['Negro', 'Blanco']], image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500' },
-      { name: 'iPad Pro', slug: 'ipad-pro', description: 'iPad Pro con M2.', shortDescription: 'iPad Pro M2', price: 3499.0, attributes: [storageAttribute.id], values: [['128GB', '256GB', '512GB']], image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500' },
-      { name: 'AirPods Pro', slug: 'airpods-pro', description: 'AirPods Pro.', shortDescription: 'AirPods Pro', price: 899.0, attributes: [colorAttribute.id], values: [['Blanco']], image: 'https://images.unsplash.com/photo-1606220945770-b5b6c2c9eaef?w=500' },
-      { name: 'Apple Watch Series 9', slug: 'apple-watch-series-9', description: 'Apple Watch Series 9.', shortDescription: 'Apple Watch Series 9', price: 1299.0, attributes: [colorAttribute.id], values: [['Negro', 'Blanco', 'Azul']], image: 'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=500' },
-      { name: 'Sony WH-1000XM5', slug: 'sony-wh-1000xm5', description: 'Audífonos Sony WH-1000XM5.', shortDescription: 'Sony WH-1000XM5', price: 1499.0, attributes: [colorAttribute.id], values: [['Negro', 'Blanco']], image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500' },
-      { name: 'Nintendo Switch OLED', slug: 'nintendo-switch-oled', description: 'Nintendo Switch OLED.', shortDescription: 'Nintendo Switch OLED', price: 1299.0, attributes: [colorAttribute.id], values: [['Blanco']], image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500' },
-      { name: 'GoPro HERO11', slug: 'gopro-hero11', description: 'Cámara GoPro HERO11.', shortDescription: 'GoPro HERO11', price: 1999.0, attributes: [colorAttribute.id], values: [['Negro']], image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=500' },
-      { name: 'Kindle Paperwhite', slug: 'kindle-paperwhite', description: 'Kindle Paperwhite.', shortDescription: 'Kindle Paperwhite', price: 499.0, attributes: [storageAttribute.id], values: [['8GB', '16GB']], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
+      {
+        name: 'iPhone 15 Pro',
+        slug: 'iphone-15-pro',
+        description: 'El iPhone más avanzado con chip A17 Pro.',
+        shortDescription: 'iPhone 15 Pro con chip A17 Pro',
+        price: 4999.0,
+        compareAtPrice: 5499.0,
+        attributes: [storageAttribute.id, colorAttribute.id],
+        values: [
+          ['128GB', '256GB', '512GB'],
+          ['Negro', 'Blanco', 'Azul'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500',
+      },
+      {
+        name: 'MacBook Air M3',
+        slug: 'macbook-air-m3',
+        description: 'MacBook Air con chip M3.',
+        shortDescription: 'MacBook Air M3',
+        price: 5999.0,
+        compareAtPrice: 6499.0,
+        attributes: [storageAttribute.id],
+        values: [['256GB', '512GB', '1TB']],
+        image:
+          'https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=500',
+      },
+      {
+        name: 'Samsung Galaxy S24',
+        slug: 'samsung-galaxy-s24',
+        description: 'Samsung Galaxy S24.',
+        shortDescription: 'Samsung Galaxy S24',
+        price: 3999.0,
+        attributes: [storageAttribute.id, colorAttribute.id],
+        values: [
+          ['128GB', '256GB'],
+          ['Negro', 'Blanco'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500',
+      },
+      {
+        name: 'iPad Pro',
+        slug: 'ipad-pro',
+        description: 'iPad Pro con M2.',
+        shortDescription: 'iPad Pro M2',
+        price: 3499.0,
+        attributes: [storageAttribute.id],
+        values: [['128GB', '256GB', '512GB']],
+        image:
+          'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500',
+      },
+      {
+        name: 'AirPods Pro',
+        slug: 'airpods-pro',
+        description: 'AirPods Pro.',
+        shortDescription: 'AirPods Pro',
+        price: 899.0,
+        attributes: [colorAttribute.id],
+        values: [['Blanco']],
+        image:
+          'https://images.unsplash.com/photo-1606220945770-b5b6c2c9eaef?w=500',
+      },
+      {
+        name: 'Apple Watch Series 9',
+        slug: 'apple-watch-series-9',
+        description: 'Apple Watch Series 9.',
+        shortDescription: 'Apple Watch Series 9',
+        price: 1299.0,
+        attributes: [colorAttribute.id],
+        values: [['Negro', 'Blanco', 'Azul']],
+        image:
+          'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?w=500',
+      },
+      {
+        name: 'Sony WH-1000XM5',
+        slug: 'sony-wh-1000xm5',
+        description: 'Audífonos Sony WH-1000XM5.',
+        shortDescription: 'Sony WH-1000XM5',
+        price: 1499.0,
+        attributes: [colorAttribute.id],
+        values: [['Negro', 'Blanco']],
+        image:
+          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
+      },
+      {
+        name: 'Nintendo Switch OLED',
+        slug: 'nintendo-switch-oled',
+        description: 'Nintendo Switch OLED.',
+        shortDescription: 'Nintendo Switch OLED',
+        price: 1299.0,
+        attributes: [colorAttribute.id],
+        values: [['Blanco']],
+        image:
+          'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500',
+      },
+      {
+        name: 'GoPro HERO11',
+        slug: 'gopro-hero11',
+        description: 'Cámara GoPro HERO11.',
+        shortDescription: 'GoPro HERO11',
+        price: 1999.0,
+        attributes: [colorAttribute.id],
+        values: [['Negro']],
+        image:
+          'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=500',
+      },
+      {
+        name: 'Kindle Paperwhite',
+        slug: 'kindle-paperwhite',
+        description: 'Kindle Paperwhite.',
+        shortDescription: 'Kindle Paperwhite',
+        price: 499.0,
+        attributes: [storageAttribute.id],
+        values: [['8GB', '16GB']],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
     ],
     // Ropa (10-19)
     [
-      { name: 'Polo Algodón Pima', slug: 'polo-algodon-pima', description: 'Polo de algodón pima.', shortDescription: 'Polo algodón pima', price: 89.9, compareAtPrice: 119.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['S', 'M', 'L', 'XL'], ['Negro', 'Blanco', 'Azul', 'Rojo']], image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500' },
-      { name: 'Jeans Clásicos', slug: 'jeans-clasicos', description: 'Jeans clásicos.', shortDescription: 'Jeans clásicos', price: 149.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['28', '30', '32', '34'], ['Azul', 'Negro']], image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=500' },
-      { name: 'Chaqueta de Cuero', slug: 'chaqueta-cuero', description: 'Chaqueta de cuero.', shortDescription: 'Chaqueta cuero', price: 299.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['M', 'L', 'XL'], ['Negro', 'Marrón']], image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500' },
-      { name: 'Vestido Elegante', slug: 'vestido-elegante', description: 'Vestido elegante.', shortDescription: 'Vestido elegante', price: 199.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['S', 'M', 'L'], ['Negro', 'Rojo', 'Azul']], image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500' },
-      { name: 'Zapatillas Deportivas', slug: 'zapatillas-deportivas', description: 'Zapatillas deportivas.', shortDescription: 'Zapatillas deportivas', price: 249.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['38', '40', '42', '44'], ['Blanco', 'Negro', 'Azul']], image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500' },
-      { name: 'Camisa Formal', slug: 'camisa-formal', description: 'Camisa formal.', shortDescription: 'Camisa formal', price: 129.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['S', 'M', 'L', 'XL'], ['Blanco', 'Azul', 'Gris']], image: 'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500' },
-      { name: 'Sudadera con Capucha', slug: 'sudadera-capucha', description: 'Sudadera con capucha.', shortDescription: 'Sudadera capucha', price: 179.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['M', 'L', 'XL'], ['Negro', 'Gris', 'Azul']], image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500' },
-      { name: 'Falda Plisada', slug: 'falda-plisada', description: 'Falda plisada.', shortDescription: 'Falda plisada', price: 159.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['S', 'M', 'L'], ['Negro', 'Beige']], image: 'https://images.unsplash.com/photo-1583496661160-fb5886a6aaaa?w=500' },
-      { name: 'Traje de Baño', slug: 'traje-bano', description: 'Traje de baño.', shortDescription: 'Traje baño', price: 99.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['S', 'M', 'L'], ['Azul', 'Rojo', 'Negro']], image: 'https://images.unsplash.com/photo-1562887538-5fe2e6b3b1b7?w=500' },
-      { name: 'Abrigo de Lana', slug: 'abrigo-lana', description: 'Abrigo de lana.', shortDescription: 'Abrigo lana', price: 399.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['M', 'L', 'XL'], ['Negro', 'Gris', 'Marrón']], image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=500' },
+      {
+        name: 'Polo Algodón Pima',
+        slug: 'polo-algodon-pima',
+        description: 'Polo de algodón pima.',
+        shortDescription: 'Polo algodón pima',
+        price: 89.9,
+        compareAtPrice: 119.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['S', 'M', 'L', 'XL'],
+          ['Negro', 'Blanco', 'Azul', 'Rojo'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500',
+      },
+      {
+        name: 'Jeans Clásicos',
+        slug: 'jeans-clasicos',
+        description: 'Jeans clásicos.',
+        shortDescription: 'Jeans clásicos',
+        price: 149.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['28', '30', '32', '34'],
+          ['Azul', 'Negro'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1542272604-787c3835535d?w=500',
+      },
+      {
+        name: 'Chaqueta de Cuero',
+        slug: 'chaqueta-cuero',
+        description: 'Chaqueta de cuero.',
+        shortDescription: 'Chaqueta cuero',
+        price: 299.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['M', 'L', 'XL'],
+          ['Negro', 'Marrón'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500',
+      },
+      {
+        name: 'Vestido Elegante',
+        slug: 'vestido-elegante',
+        description: 'Vestido elegante.',
+        shortDescription: 'Vestido elegante',
+        price: 199.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['S', 'M', 'L'],
+          ['Negro', 'Rojo', 'Azul'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500',
+      },
+      {
+        name: 'Zapatillas Deportivas',
+        slug: 'zapatillas-deportivas',
+        description: 'Zapatillas deportivas.',
+        shortDescription: 'Zapatillas deportivas',
+        price: 249.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['38', '40', '42', '44'],
+          ['Blanco', 'Negro', 'Azul'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500',
+      },
+      {
+        name: 'Camisa Formal',
+        slug: 'camisa-formal',
+        description: 'Camisa formal.',
+        shortDescription: 'Camisa formal',
+        price: 129.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['S', 'M', 'L', 'XL'],
+          ['Blanco', 'Azul', 'Gris'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500',
+      },
+      {
+        name: 'Sudadera con Capucha',
+        slug: 'sudadera-capucha',
+        description: 'Sudadera con capucha.',
+        shortDescription: 'Sudadera capucha',
+        price: 179.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['M', 'L', 'XL'],
+          ['Negro', 'Gris', 'Azul'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=500',
+      },
+      {
+        name: 'Falda Plisada',
+        slug: 'falda-plisada',
+        description: 'Falda plisada.',
+        shortDescription: 'Falda plisada',
+        price: 159.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['S', 'M', 'L'],
+          ['Negro', 'Beige'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1583496661160-fb5886a6aaaa?w=500',
+      },
+      {
+        name: 'Traje de Baño',
+        slug: 'traje-bano',
+        description: 'Traje de baño.',
+        shortDescription: 'Traje baño',
+        price: 99.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['S', 'M', 'L'],
+          ['Azul', 'Rojo', 'Negro'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1562887538-5fe2e6b3b1b7?w=500',
+      },
+      {
+        name: 'Abrigo de Lana',
+        slug: 'abrigo-lana',
+        description: 'Abrigo de lana.',
+        shortDescription: 'Abrigo lana',
+        price: 399.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['M', 'L', 'XL'],
+          ['Negro', 'Gris', 'Marrón'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=500',
+      },
     ],
     // Hogar (20-29)
     [
-      { name: 'Cafetera Italiana', slug: 'cafetera-italiana', description: 'Cafetera italiana.', shortDescription: 'Cafetera italiana', price: 159.0, compareAtPrice: 199.0, attributes: [materialAttribute.id, capacityAttribute.id], values: [['Acero Inoxidable'], ['1L', '2L']], image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500' },
-      { name: 'Lámpara de Mesa', slug: 'lampara-mesa', description: 'Lámpara de mesa.', shortDescription: 'Lámpara mesa', price: 89.9, attributes: [colorAttribute.id], values: [['Blanco', 'Negro']], image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500' },
-      { name: 'Juego de Sábanas', slug: 'juego-sabanas', description: 'Juego de sábanas.', shortDescription: 'Juego sábanas', price: 199.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['Queen', 'King'], ['Blanco', 'Gris']], image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500' },
-      { name: 'Sofá Modular', slug: 'sofa-modular', description: 'Sofá modular.', shortDescription: 'Sofá modular', price: 2499.0, attributes: [colorAttribute.id], values: [['Gris', 'Beige']], image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500' },
-      { name: 'Mesa de Comedor', slug: 'mesa-comedor', description: 'Mesa de comedor.', shortDescription: 'Mesa comedor', price: 899.0, attributes: [materialAttribute.id], values: [['Madera']], image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500' },
-      { name: 'Aspiradora Robot', slug: 'aspiradora-robot', description: 'Aspiradora robot.', shortDescription: 'Aspiradora robot', price: 799.0, attributes: [colorAttribute.id], values: [['Blanco', 'Negro']], image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500' },
-      { name: 'Cortinas Opacas', slug: 'cortinas-opacas', description: 'Cortinas opacas.', shortDescription: 'Cortinas opacas', price: 149.9, attributes: [colorAttribute.id], values: [['Blanco', 'Gris', 'Azul']], image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500' },
-      { name: 'Juego de Ollas', slug: 'juego-ollas', description: 'Juego de ollas.', shortDescription: 'Juego ollas', price: 299.9, attributes: [materialAttribute.id], values: [['Acero Inoxidable']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Alfombra Moderna', slug: 'alfombra-moderna', description: 'Alfombra moderna.', shortDescription: 'Alfombra moderna', price: 249.9, attributes: [colorAttribute.id], values: [['Gris', 'Beige']], image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500' },
-      { name: 'Reloj de Pared', slug: 'reloj-pared', description: 'Reloj de pared.', shortDescription: 'Reloj pared', price: 79.9, attributes: [colorAttribute.id], values: [['Blanco', 'Negro']], image: 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=500' },
+      {
+        name: 'Cafetera Italiana',
+        slug: 'cafetera-italiana',
+        description: 'Cafetera italiana.',
+        shortDescription: 'Cafetera italiana',
+        price: 159.0,
+        compareAtPrice: 199.0,
+        attributes: [materialAttribute.id, capacityAttribute.id],
+        values: [['Acero Inoxidable'], ['1L', '2L']],
+        image:
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500',
+      },
+      {
+        name: 'Lámpara de Mesa',
+        slug: 'lampara-mesa',
+        description: 'Lámpara de mesa.',
+        shortDescription: 'Lámpara mesa',
+        price: 89.9,
+        attributes: [colorAttribute.id],
+        values: [['Blanco', 'Negro']],
+        image:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500',
+      },
+      {
+        name: 'Juego de Sábanas',
+        slug: 'juego-sabanas',
+        description: 'Juego de sábanas.',
+        shortDescription: 'Juego sábanas',
+        price: 199.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['Queen', 'King'],
+          ['Blanco', 'Gris'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500',
+      },
+      {
+        name: 'Sofá Modular',
+        slug: 'sofa-modular',
+        description: 'Sofá modular.',
+        shortDescription: 'Sofá modular',
+        price: 2499.0,
+        attributes: [colorAttribute.id],
+        values: [['Gris', 'Beige']],
+        image:
+          'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500',
+      },
+      {
+        name: 'Mesa de Comedor',
+        slug: 'mesa-comedor',
+        description: 'Mesa de comedor.',
+        shortDescription: 'Mesa comedor',
+        price: 899.0,
+        attributes: [materialAttribute.id],
+        values: [['Madera']],
+        image:
+          'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500',
+      },
+      {
+        name: 'Aspiradora Robot',
+        slug: 'aspiradora-robot',
+        description: 'Aspiradora robot.',
+        shortDescription: 'Aspiradora robot',
+        price: 799.0,
+        attributes: [colorAttribute.id],
+        values: [['Blanco', 'Negro']],
+        image:
+          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500',
+      },
+      {
+        name: 'Cortinas Opacas',
+        slug: 'cortinas-opacas',
+        description: 'Cortinas opacas.',
+        shortDescription: 'Cortinas opacas',
+        price: 149.9,
+        attributes: [colorAttribute.id],
+        values: [['Blanco', 'Gris', 'Azul']],
+        image:
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500',
+      },
+      {
+        name: 'Juego de Ollas',
+        slug: 'juego-ollas',
+        description: 'Juego de ollas.',
+        shortDescription: 'Juego ollas',
+        price: 299.9,
+        attributes: [materialAttribute.id],
+        values: [['Acero Inoxidable']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Alfombra Moderna',
+        slug: 'alfombra-moderna',
+        description: 'Alfombra moderna.',
+        shortDescription: 'Alfombra moderna',
+        price: 249.9,
+        attributes: [colorAttribute.id],
+        values: [['Gris', 'Beige']],
+        image:
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500',
+      },
+      {
+        name: 'Reloj de Pared',
+        slug: 'reloj-pared',
+        description: 'Reloj de pared.',
+        shortDescription: 'Reloj pared',
+        price: 79.9,
+        attributes: [colorAttribute.id],
+        values: [['Blanco', 'Negro']],
+        image:
+          'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?w=500',
+      },
     ],
     // Deportes (30-39)
     [
-      { name: 'Mancuernas Ajustables', slug: 'mancuernas-ajustables', description: 'Mancuernas ajustables.', shortDescription: 'Mancuernas ajustables', price: 349.0, attributes: [capacityAttribute.id], values: [['5kg', '10kg', '15kg', '20kg']], image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500' },
-      { name: 'Bicicleta de Montaña', slug: 'bicicleta-montana', description: 'Bicicleta de montaña.', shortDescription: 'Bicicleta montaña', price: 1499.0, attributes: [sizeAttribute.id, colorAttribute.id], values: [['M', 'L'], ['Rojo', 'Azul']], image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=500' },
-      { name: 'Pelota de Fútbol', slug: 'pelota-futbol', description: 'Pelota de fútbol.', shortDescription: 'Pelota fútbol', price: 89.9, attributes: [colorAttribute.id], values: [['Blanco']], image: 'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=500' },
-      { name: 'Raqueta de Tenis', slug: 'raqueta-tenis', description: 'Raqueta de tenis.', shortDescription: 'Raqueta tenis', price: 299.9, attributes: [materialAttribute.id], values: [['Grafito']], image: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=500' },
-      { name: 'Colchoneta de Yoga', slug: 'colchoneta-yoga', description: 'Colchoneta de yoga.', shortDescription: 'Colchoneta yoga', price: 79.9, attributes: [colorAttribute.id], values: [['Morado', 'Azul', 'Verde']], image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500' },
-      { name: 'Pesas Rusas', slug: 'pesas-rusas', description: 'Pesas rusas.', shortDescription: 'Pesas rusas', price: 149.9, attributes: [capacityAttribute.id], values: [['2kg', '4kg', '6kg']], image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500' },
-      { name: 'Cuerda de Saltar', slug: 'cuerda-saltar', description: 'Cuerda de saltar.', shortDescription: 'Cuerda saltar', price: 29.9, attributes: [colorAttribute.id], values: [['Negro', 'Rojo']], image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500' },
-      { name: 'Guantes de Boxeo', slug: 'guantes-boxeo', description: 'Guantes de boxeo.', shortDescription: 'Guantes boxeo', price: 199.9, attributes: [sizeAttribute.id, colorAttribute.id], values: [['M', 'L'], ['Rojo', 'Negro']], image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500' },
-      { name: 'Banda Elástica', slug: 'banda-elastica', description: 'Banda elástica.', shortDescription: 'Banda elástica', price: 49.9, attributes: [colorAttribute.id], values: [['Morado', 'Verde', 'Azul']], image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500' },
-      { name: 'Balón de Baloncesto', slug: 'balon-baloncesto', description: 'Balón de baloncesto.', shortDescription: 'Balón baloncesto', price: 129.9, attributes: [sizeAttribute.id], values: [['7']], image: 'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=500' },
+      {
+        name: 'Mancuernas Ajustables',
+        slug: 'mancuernas-ajustables',
+        description: 'Mancuernas ajustables.',
+        shortDescription: 'Mancuernas ajustables',
+        price: 349.0,
+        attributes: [capacityAttribute.id],
+        values: [['5kg', '10kg', '15kg', '20kg']],
+        image:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
+      },
+      {
+        name: 'Bicicleta de Montaña',
+        slug: 'bicicleta-montana',
+        description: 'Bicicleta de montaña.',
+        shortDescription: 'Bicicleta montaña',
+        price: 1499.0,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['M', 'L'],
+          ['Rojo', 'Azul'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=500',
+      },
+      {
+        name: 'Pelota de Fútbol',
+        slug: 'pelota-futbol',
+        description: 'Pelota de fútbol.',
+        shortDescription: 'Pelota fútbol',
+        price: 89.9,
+        attributes: [colorAttribute.id],
+        values: [['Blanco']],
+        image:
+          'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=500',
+      },
+      {
+        name: 'Raqueta de Tenis',
+        slug: 'raqueta-tenis',
+        description: 'Raqueta de tenis.',
+        shortDescription: 'Raqueta tenis',
+        price: 299.9,
+        attributes: [materialAttribute.id],
+        values: [['Grafito']],
+        image:
+          'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=500',
+      },
+      {
+        name: 'Colchoneta de Yoga',
+        slug: 'colchoneta-yoga',
+        description: 'Colchoneta de yoga.',
+        shortDescription: 'Colchoneta yoga',
+        price: 79.9,
+        attributes: [colorAttribute.id],
+        values: [['Morado', 'Azul', 'Verde']],
+        image:
+          'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500',
+      },
+      {
+        name: 'Pesas Rusas',
+        slug: 'pesas-rusas',
+        description: 'Pesas rusas.',
+        shortDescription: 'Pesas rusas',
+        price: 149.9,
+        attributes: [capacityAttribute.id],
+        values: [['2kg', '4kg', '6kg']],
+        image:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
+      },
+      {
+        name: 'Cuerda de Saltar',
+        slug: 'cuerda-saltar',
+        description: 'Cuerda de saltar.',
+        shortDescription: 'Cuerda saltar',
+        price: 29.9,
+        attributes: [colorAttribute.id],
+        values: [['Negro', 'Rojo']],
+        image:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
+      },
+      {
+        name: 'Guantes de Boxeo',
+        slug: 'guantes-boxeo',
+        description: 'Guantes de boxeo.',
+        shortDescription: 'Guantes boxeo',
+        price: 199.9,
+        attributes: [sizeAttribute.id, colorAttribute.id],
+        values: [
+          ['M', 'L'],
+          ['Rojo', 'Negro'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
+      },
+      {
+        name: 'Banda Elástica',
+        slug: 'banda-elastica',
+        description: 'Banda elástica.',
+        shortDescription: 'Banda elástica',
+        price: 49.9,
+        attributes: [colorAttribute.id],
+        values: [['Morado', 'Verde', 'Azul']],
+        image:
+          'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500',
+      },
+      {
+        name: 'Balón de Baloncesto',
+        slug: 'balon-baloncesto',
+        description: 'Balón de baloncesto.',
+        shortDescription: 'Balón baloncesto',
+        price: 129.9,
+        attributes: [sizeAttribute.id],
+        values: [['7']],
+        image:
+          'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=500',
+      },
     ],
     // Libros (40-49)
     [
-      { name: 'El Principito', slug: 'el-principito', description: 'Clásico de Antoine de Saint-Exupéry.', shortDescription: 'El Principito', price: 29.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: '1984', slug: '1984', description: 'Novela de George Orwell.', shortDescription: '1984', price: 39.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'Cien Años de Soledad', slug: 'cien-anos-soledad', description: 'Novela de Gabriel García Márquez.', shortDescription: 'Cien Años de Soledad', price: 49.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'Harry Potter y la Piedra Filosofal', slug: 'harry-potter-piedra-filosofal', description: 'Primer libro de la saga Harry Potter.', shortDescription: 'Harry Potter 1', price: 59.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'El Código Da Vinci', slug: 'codigo-da-vinci', description: 'Novela de Dan Brown.', shortDescription: 'El Código Da Vinci', price: 44.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'Orgullo y Prejuicio', slug: 'orgullo-prejuicio', description: 'Novela de Jane Austen.', shortDescription: 'Orgullo y Prejuicio', price: 34.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'El Señor de los Anillos', slug: 'senor-anillos', description: 'Trilogía de J.R.R. Tolkien.', shortDescription: 'El Señor de los Anillos', price: 89.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'Don Quijote', slug: 'don-quijote', description: 'Clásico de Miguel de Cervantes.', shortDescription: 'Don Quijote', price: 69.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'La Sombra del Viento', slug: 'sombra-viento', description: 'Novela de Carlos Ruiz Zafón.', shortDescription: 'La Sombra del Viento', price: 54.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
-      { name: 'El Alquimista', slug: 'el-alquimista', description: 'Novela de Paulo Coelho.', shortDescription: 'El Alquimista', price: 39.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500' },
+      {
+        name: 'El Principito',
+        slug: 'el-principito',
+        description: 'Clásico de Antoine de Saint-Exupéry.',
+        shortDescription: 'El Principito',
+        price: 29.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: '1984',
+        slug: '1984',
+        description: 'Novela de George Orwell.',
+        shortDescription: '1984',
+        price: 39.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'Cien Años de Soledad',
+        slug: 'cien-anos-soledad',
+        description: 'Novela de Gabriel García Márquez.',
+        shortDescription: 'Cien Años de Soledad',
+        price: 49.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'Harry Potter y la Piedra Filosofal',
+        slug: 'harry-potter-piedra-filosofal',
+        description: 'Primer libro de la saga Harry Potter.',
+        shortDescription: 'Harry Potter 1',
+        price: 59.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'El Código Da Vinci',
+        slug: 'codigo-da-vinci',
+        description: 'Novela de Dan Brown.',
+        shortDescription: 'El Código Da Vinci',
+        price: 44.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'Orgullo y Prejuicio',
+        slug: 'orgullo-prejuicio',
+        description: 'Novela de Jane Austen.',
+        shortDescription: 'Orgullo y Prejuicio',
+        price: 34.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'El Señor de los Anillos',
+        slug: 'senor-anillos',
+        description: 'Trilogía de J.R.R. Tolkien.',
+        shortDescription: 'El Señor de los Anillos',
+        price: 89.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'Don Quijote',
+        slug: 'don-quijote',
+        description: 'Clásico de Miguel de Cervantes.',
+        shortDescription: 'Don Quijote',
+        price: 69.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'La Sombra del Viento',
+        slug: 'sombra-viento',
+        description: 'Novela de Carlos Ruiz Zafón.',
+        shortDescription: 'La Sombra del Viento',
+        price: 54.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
+      {
+        name: 'El Alquimista',
+        slug: 'el-alquimista',
+        description: 'Novela de Paulo Coelho.',
+        shortDescription: 'El Alquimista',
+        price: 39.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500',
+      },
     ],
     // Belleza (50-59)
     [
-      { name: 'Crema Hidratante', slug: 'crema-hidratante', description: 'Crema hidratante para piel seca.', shortDescription: 'Crema hidratante', price: 49.9, attributes: [capacityAttribute.id], values: [['50ml', '100ml']], image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500' },
-      { name: 'Máscara de Pestañas', slug: 'mascara-pestanas', description: 'Máscara de pestañas volumizadora.', shortDescription: 'Máscara pestañas', price: 29.9, attributes: [colorAttribute.id], values: [['Negro']], image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500' },
-      { name: 'Perfume Mujer', slug: 'perfume-mujer', description: 'Perfume floral para mujer.', shortDescription: 'Perfume mujer', price: 149.9, attributes: [capacityAttribute.id], values: [['50ml', '100ml']], image: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=500' },
-      { name: 'Shampoo Anticaspa', slug: 'shampoo-anticaspa', description: 'Shampoo para caspa.', shortDescription: 'Shampoo anticaspa', price: 39.9, attributes: [capacityAttribute.id], values: [['250ml', '500ml']], image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500' },
-      { name: 'Base de Maquillaje', slug: 'base-maquillaje', description: 'Base de maquillaje.', shortDescription: 'Base maquillaje', price: 79.9, attributes: [colorAttribute.id], values: [['Beige Claro', 'Beige Medio']], image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500' },
-      { name: 'Crema Solar', slug: 'crema-solar', description: 'Crema solar SPF 50.', shortDescription: 'Crema solar', price: 59.9, attributes: [capacityAttribute.id], values: [['200ml']], image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500' },
-      { name: 'Esmalte de Uñas', slug: 'esmalte-unas', description: 'Esmalte de uñas rojo.', shortDescription: 'Esmalte uñas', price: 19.9, attributes: [colorAttribute.id], values: [['Rojo', 'Rosa', 'Negro']], image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500' },
-      { name: 'Aceite para Cabello', slug: 'aceite-cabello', description: 'Aceite nutritivo para cabello.', shortDescription: 'Aceite cabello', price: 69.9, attributes: [capacityAttribute.id], values: [['100ml']], image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500' },
-      { name: 'Desodorante Roll-on', slug: 'desodorante-roll-on', description: 'Desodorante roll-on.', shortDescription: 'Desodorante roll-on', price: 24.9, attributes: [flavorAttribute.id], values: [['Lavanda', 'Cítrico']], image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500' },
-      { name: 'Mascarilla Facial', slug: 'mascarilla-facial', description: 'Mascarilla hidratante.', shortDescription: 'Mascarilla facial', price: 34.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500' },
+      {
+        name: 'Crema Hidratante',
+        slug: 'crema-hidratante',
+        description: 'Crema hidratante para piel seca.',
+        shortDescription: 'Crema hidratante',
+        price: 49.9,
+        attributes: [capacityAttribute.id],
+        values: [['50ml', '100ml']],
+        image:
+          'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
+      },
+      {
+        name: 'Máscara de Pestañas',
+        slug: 'mascara-pestanas',
+        description: 'Máscara de pestañas volumizadora.',
+        shortDescription: 'Máscara pestañas',
+        price: 29.9,
+        attributes: [colorAttribute.id],
+        values: [['Negro']],
+        image:
+          'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500',
+      },
+      {
+        name: 'Perfume Mujer',
+        slug: 'perfume-mujer',
+        description: 'Perfume floral para mujer.',
+        shortDescription: 'Perfume mujer',
+        price: 149.9,
+        attributes: [capacityAttribute.id],
+        values: [['50ml', '100ml']],
+        image:
+          'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=500',
+      },
+      {
+        name: 'Shampoo Anticaspa',
+        slug: 'shampoo-anticaspa',
+        description: 'Shampoo para caspa.',
+        shortDescription: 'Shampoo anticaspa',
+        price: 39.9,
+        attributes: [capacityAttribute.id],
+        values: [['250ml', '500ml']],
+        image:
+          'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
+      },
+      {
+        name: 'Base de Maquillaje',
+        slug: 'base-maquillaje',
+        description: 'Base de maquillaje.',
+        shortDescription: 'Base maquillaje',
+        price: 79.9,
+        attributes: [colorAttribute.id],
+        values: [['Beige Claro', 'Beige Medio']],
+        image:
+          'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500',
+      },
+      {
+        name: 'Crema Solar',
+        slug: 'crema-solar',
+        description: 'Crema solar SPF 50.',
+        shortDescription: 'Crema solar',
+        price: 59.9,
+        attributes: [capacityAttribute.id],
+        values: [['200ml']],
+        image:
+          'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
+      },
+      {
+        name: 'Esmalte de Uñas',
+        slug: 'esmalte-unas',
+        description: 'Esmalte de uñas rojo.',
+        shortDescription: 'Esmalte uñas',
+        price: 19.9,
+        attributes: [colorAttribute.id],
+        values: [['Rojo', 'Rosa', 'Negro']],
+        image:
+          'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500',
+      },
+      {
+        name: 'Aceite para Cabello',
+        slug: 'aceite-cabello',
+        description: 'Aceite nutritivo para cabello.',
+        shortDescription: 'Aceite cabello',
+        price: 69.9,
+        attributes: [capacityAttribute.id],
+        values: [['100ml']],
+        image:
+          'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
+      },
+      {
+        name: 'Desodorante Roll-on',
+        slug: 'desodorante-roll-on',
+        description: 'Desodorante roll-on.',
+        shortDescription: 'Desodorante roll-on',
+        price: 24.9,
+        attributes: [flavorAttribute.id],
+        values: [['Lavanda', 'Cítrico']],
+        image:
+          'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500',
+      },
+      {
+        name: 'Mascarilla Facial',
+        slug: 'mascarilla-facial',
+        description: 'Mascarilla hidratante.',
+        shortDescription: 'Mascarilla facial',
+        price: 34.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=500',
+      },
     ],
     // Jardín (60-69)
     [
-      { name: 'Maceta de Cerámica', slug: 'maceta-ceramica', description: 'Maceta de cerámica.', shortDescription: 'Maceta cerámica', price: 49.9, attributes: [capacityAttribute.id, colorAttribute.id], values: [['5L', '10L'], ['Blanco', 'Terracota']], image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500' },
-      { name: 'Tijeras de Jardín', slug: 'tijeras-jardin', description: 'Tijeras de jardín.', shortDescription: 'Tijeras jardín', price: 39.9, attributes: [materialAttribute.id], values: [['Acero Inoxidable']], image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500' },
-      { name: 'Regadera', slug: 'regadera', description: 'Regadera de jardín.', shortDescription: 'Regadera', price: 29.9, attributes: [capacityAttribute.id], values: [['2L', '5L']], image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500' },
-      { name: 'Semillas de Tomate', slug: 'semillas-tomate', description: 'Semillas de tomate.', shortDescription: 'Semillas tomate', price: 9.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500' },
-      { name: 'Mesa de Jardín', slug: 'mesa-jardin', description: 'Mesa de jardín.', shortDescription: 'Mesa jardín', price: 299.9, attributes: [materialAttribute.id], values: [['Madera']], image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500' },
-      { name: 'Barbacoa Portátil', slug: 'barbacoa-portatil', description: 'Barbacoa portátil.', shortDescription: 'Barbacoa portátil', price: 199.9, attributes: [materialAttribute.id], values: [['Acero Inoxidable']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Guantes de Jardín', slug: 'guantes-jardin', description: 'Guantes de jardín.', shortDescription: 'Guantes jardín', price: 19.9, attributes: [sizeAttribute.id], values: [['M', 'L']], image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500' },
-      { name: 'Fertilizante Orgánico', slug: 'fertilizante-organico', description: 'Fertilizante orgánico.', shortDescription: 'Fertilizante orgánico', price: 24.9, attributes: [capacityAttribute.id], values: [['1kg', '5kg']], image: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500' },
-      { name: 'Hamaca', slug: 'hamaca', description: 'Hamaca para jardín.', shortDescription: 'Hamaca', price: 149.9, attributes: [colorAttribute.id], values: [['Verde', 'Azul']], image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500' },
-      { name: 'Piscina Inflable', slug: 'piscina-inflable', description: 'Piscina inflable.', shortDescription: 'Piscina inflable', price: 99.9, attributes: [capacityAttribute.id], values: [['1000L']], image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500' },
+      {
+        name: 'Maceta de Cerámica',
+        slug: 'maceta-ceramica',
+        description: 'Maceta de cerámica.',
+        shortDescription: 'Maceta cerámica',
+        price: 49.9,
+        attributes: [capacityAttribute.id, colorAttribute.id],
+        values: [
+          ['5L', '10L'],
+          ['Blanco', 'Terracota'],
+        ],
+        image:
+          'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500',
+      },
+      {
+        name: 'Tijeras de Jardín',
+        slug: 'tijeras-jardin',
+        description: 'Tijeras de jardín.',
+        shortDescription: 'Tijeras jardín',
+        price: 39.9,
+        attributes: [materialAttribute.id],
+        values: [['Acero Inoxidable']],
+        image:
+          'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500',
+      },
+      {
+        name: 'Regadera',
+        slug: 'regadera',
+        description: 'Regadera de jardín.',
+        shortDescription: 'Regadera',
+        price: 29.9,
+        attributes: [capacityAttribute.id],
+        values: [['2L', '5L']],
+        image:
+          'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500',
+      },
+      {
+        name: 'Semillas de Tomate',
+        slug: 'semillas-tomate',
+        description: 'Semillas de tomate.',
+        shortDescription: 'Semillas tomate',
+        price: 9.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500',
+      },
+      {
+        name: 'Mesa de Jardín',
+        slug: 'mesa-jardin',
+        description: 'Mesa de jardín.',
+        shortDescription: 'Mesa jardín',
+        price: 299.9,
+        attributes: [materialAttribute.id],
+        values: [['Madera']],
+        image:
+          'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=500',
+      },
+      {
+        name: 'Barbacoa Portátil',
+        slug: 'barbacoa-portatil',
+        description: 'Barbacoa portátil.',
+        shortDescription: 'Barbacoa portátil',
+        price: 199.9,
+        attributes: [materialAttribute.id],
+        values: [['Acero Inoxidable']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Guantes de Jardín',
+        slug: 'guantes-jardin',
+        description: 'Guantes de jardín.',
+        shortDescription: 'Guantes jardín',
+        price: 19.9,
+        attributes: [sizeAttribute.id],
+        values: [['M', 'L']],
+        image:
+          'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500',
+      },
+      {
+        name: 'Fertilizante Orgánico',
+        slug: 'fertilizante-organico',
+        description: 'Fertilizante orgánico.',
+        shortDescription: 'Fertilizante orgánico',
+        price: 24.9,
+        attributes: [capacityAttribute.id],
+        values: [['1kg', '5kg']],
+        image:
+          'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500',
+      },
+      {
+        name: 'Hamaca',
+        slug: 'hamaca',
+        description: 'Hamaca para jardín.',
+        shortDescription: 'Hamaca',
+        price: 149.9,
+        attributes: [colorAttribute.id],
+        values: [['Verde', 'Azul']],
+        image:
+          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=500',
+      },
+      {
+        name: 'Piscina Inflable',
+        slug: 'piscina-inflable',
+        description: 'Piscina inflable.',
+        shortDescription: 'Piscina inflable',
+        price: 99.9,
+        attributes: [capacityAttribute.id],
+        values: [['1000L']],
+        image:
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500',
+      },
     ],
     // Cocina (70-79)
     [
-      { name: 'Olla a Presión', slug: 'olla-presion', description: 'Olla a presión.', shortDescription: 'Olla presión', price: 149.9, attributes: [capacityAttribute.id, materialAttribute.id], values: [['5L', '7L'], ['Acero Inoxidable']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Batidora de Mano', slug: 'batidora-mano', description: 'Batidora de mano.', shortDescription: 'Batidora mano', price: 79.9, attributes: [colorAttribute.id], values: [['Blanco', 'Negro']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Tostadora', slug: 'tostadora', description: 'Tostadora eléctrica.', shortDescription: 'Tostadora', price: 89.9, attributes: [colorAttribute.id], values: [['Plateado']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Licuadora', slug: 'licuadora', description: 'Licuadora potente.', shortDescription: 'Licuadora', price: 199.9, attributes: [capacityAttribute.id], values: [['1.5L']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Cafetera de Goteo', slug: 'cafetera-goteo', description: 'Cafetera de goteo.', shortDescription: 'Cafetera goteo', price: 129.9, attributes: [capacityAttribute.id], values: [['10 tazas']], image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500' },
-      { name: 'Horno Microondas', slug: 'horno-microondas', description: 'Horno microondas.', shortDescription: 'Microondas', price: 299.9, attributes: [capacityAttribute.id], values: [['20L']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Plancha Eléctrica', slug: 'plancha-electrica', description: 'Plancha eléctrica.', shortDescription: 'Plancha eléctrica', price: 59.9, attributes: [colorAttribute.id], values: [['Azul', 'Rosa']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Exprimidor', slug: 'exprimidor', description: 'Exprimidor de cítricos.', shortDescription: 'Exprimidor', price: 49.9, attributes: [materialAttribute.id], values: [['Plástico']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Freidora de Aire', slug: 'freidora-aire', description: 'Freidora de aire.', shortDescription: 'Freidora aire', price: 249.9, attributes: [capacityAttribute.id], values: [['3.5L']], image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500' },
-      { name: 'Molinillo de Café', slug: 'molinillo-cafe', description: 'Molinillo de café.', shortDescription: 'Molinillo café', price: 89.9, attributes: [capacityAttribute.id], values: [['30g']], image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500' },
+      {
+        name: 'Olla a Presión',
+        slug: 'olla-presion',
+        description: 'Olla a presión.',
+        shortDescription: 'Olla presión',
+        price: 149.9,
+        attributes: [capacityAttribute.id, materialAttribute.id],
+        values: [['5L', '7L'], ['Acero Inoxidable']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Batidora de Mano',
+        slug: 'batidora-mano',
+        description: 'Batidora de mano.',
+        shortDescription: 'Batidora mano',
+        price: 79.9,
+        attributes: [colorAttribute.id],
+        values: [['Blanco', 'Negro']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Tostadora',
+        slug: 'tostadora',
+        description: 'Tostadora eléctrica.',
+        shortDescription: 'Tostadora',
+        price: 89.9,
+        attributes: [colorAttribute.id],
+        values: [['Plateado']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Licuadora',
+        slug: 'licuadora',
+        description: 'Licuadora potente.',
+        shortDescription: 'Licuadora',
+        price: 199.9,
+        attributes: [capacityAttribute.id],
+        values: [['1.5L']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Cafetera de Goteo',
+        slug: 'cafetera-goteo',
+        description: 'Cafetera de goteo.',
+        shortDescription: 'Cafetera goteo',
+        price: 129.9,
+        attributes: [capacityAttribute.id],
+        values: [['10 tazas']],
+        image:
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500',
+      },
+      {
+        name: 'Horno Microondas',
+        slug: 'horno-microondas',
+        description: 'Horno microondas.',
+        shortDescription: 'Microondas',
+        price: 299.9,
+        attributes: [capacityAttribute.id],
+        values: [['20L']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Plancha Eléctrica',
+        slug: 'plancha-electrica',
+        description: 'Plancha eléctrica.',
+        shortDescription: 'Plancha eléctrica',
+        price: 59.9,
+        attributes: [colorAttribute.id],
+        values: [['Azul', 'Rosa']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Exprimidor',
+        slug: 'exprimidor',
+        description: 'Exprimidor de cítricos.',
+        shortDescription: 'Exprimidor',
+        price: 49.9,
+        attributes: [materialAttribute.id],
+        values: [['Plástico']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Freidora de Aire',
+        slug: 'freidora-aire',
+        description: 'Freidora de aire.',
+        shortDescription: 'Freidora aire',
+        price: 249.9,
+        attributes: [capacityAttribute.id],
+        values: [['3.5L']],
+        image:
+          'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=500',
+      },
+      {
+        name: 'Molinillo de Café',
+        slug: 'molinillo-cafe',
+        description: 'Molinillo de café.',
+        shortDescription: 'Molinillo café',
+        price: 89.9,
+        attributes: [capacityAttribute.id],
+        values: [['30g']],
+        image:
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=500',
+      },
     ],
     // Juguetes (80-89)
     [
-      { name: 'Lego Creator', slug: 'lego-creator', description: 'Set de Lego Creator.', shortDescription: 'Lego Creator', price: 149.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Muñeca Barbie', slug: 'muneca-barbie', description: 'Muñeca Barbie.', shortDescription: 'Muñeca Barbie', price: 79.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Pelota de Fútbol', slug: 'pelota-futbol-juguete', description: 'Pelota de fútbol para niños.', shortDescription: 'Pelota fútbol niño', price: 39.9, attributes: [colorAttribute.id], values: [['Blanco']], image: 'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=500' },
-      { name: 'Puzzle 500 Piezas', slug: 'puzzle-500-piezas', description: 'Puzzle de 500 piezas.', shortDescription: 'Puzzle 500 piezas', price: 29.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Coche de Control Remoto', slug: 'coche-control-remoto', description: 'Coche de control remoto.', shortDescription: 'Coche control remoto', price: 99.9, attributes: [colorAttribute.id], values: [['Rojo', 'Azul']], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Bloques de Construcción', slug: 'bloques-construccion', description: 'Bloques de construcción.', shortDescription: 'Bloques construcción', price: 49.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Osito de Peluche', slug: 'osito-peluche', description: 'Osito de peluche.', shortDescription: 'Osito peluche', price: 34.9, attributes: [colorAttribute.id], values: [['Marrón']], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Juego de Mesa Monopoly', slug: 'monopoly', description: 'Juego de mesa Monopoly.', shortDescription: 'Monopoly', price: 89.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Muñeco de Acción', slug: 'muneco-accion', description: 'Muñeco de acción.', shortDescription: 'Muñeco acción', price: 24.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
-      { name: 'Tren Eléctrico', slug: 'tren-electrico', description: 'Tren eléctrico.', shortDescription: 'Tren eléctrico', price: 199.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500' },
+      {
+        name: 'Lego Creator',
+        slug: 'lego-creator',
+        description: 'Set de Lego Creator.',
+        shortDescription: 'Lego Creator',
+        price: 149.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Muñeca Barbie',
+        slug: 'muneca-barbie',
+        description: 'Muñeca Barbie.',
+        shortDescription: 'Muñeca Barbie',
+        price: 79.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Pelota de Fútbol',
+        slug: 'pelota-futbol-juguete',
+        description: 'Pelota de fútbol para niños.',
+        shortDescription: 'Pelota fútbol niño',
+        price: 39.9,
+        attributes: [colorAttribute.id],
+        values: [['Blanco']],
+        image:
+          'https://images.unsplash.com/photo-1574623452334-1e0ac2b3ccb4?w=500',
+      },
+      {
+        name: 'Puzzle 500 Piezas',
+        slug: 'puzzle-500-piezas',
+        description: 'Puzzle de 500 piezas.',
+        shortDescription: 'Puzzle 500 piezas',
+        price: 29.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Coche de Control Remoto',
+        slug: 'coche-control-remoto',
+        description: 'Coche de control remoto.',
+        shortDescription: 'Coche control remoto',
+        price: 99.9,
+        attributes: [colorAttribute.id],
+        values: [['Rojo', 'Azul']],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Bloques de Construcción',
+        slug: 'bloques-construccion',
+        description: 'Bloques de construcción.',
+        shortDescription: 'Bloques construcción',
+        price: 49.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Osito de Peluche',
+        slug: 'osito-peluche',
+        description: 'Osito de peluche.',
+        shortDescription: 'Osito peluche',
+        price: 34.9,
+        attributes: [colorAttribute.id],
+        values: [['Marrón']],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Juego de Mesa Monopoly',
+        slug: 'monopoly',
+        description: 'Juego de mesa Monopoly.',
+        shortDescription: 'Monopoly',
+        price: 89.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Muñeco de Acción',
+        slug: 'muneco-accion',
+        description: 'Muñeco de acción.',
+        shortDescription: 'Muñeco acción',
+        price: 24.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
+      {
+        name: 'Tren Eléctrico',
+        slug: 'tren-electrico',
+        description: 'Tren eléctrico.',
+        shortDescription: 'Tren eléctrico',
+        price: 199.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=500',
+      },
     ],
     // Automotriz (90-99)
     [
-      { name: 'Aceite de Motor', slug: 'aceite-motor', description: 'Aceite de motor sintético.', shortDescription: 'Aceite motor', price: 49.9, attributes: [capacityAttribute.id], values: [['1L', '5L']], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Filtro de Aire', slug: 'filtro-aire', description: 'Filtro de aire para auto.', shortDescription: 'Filtro aire', price: 29.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Batería de Auto', slug: 'bateria-auto', description: 'Batería de auto.', shortDescription: 'Batería auto', price: 299.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Llantas de Aleación', slug: 'llantas-alecion', description: 'Llantas de aleación.', shortDescription: 'Llantas aleación', price: 899.9, attributes: [sizeAttribute.id], values: [['16"', '17"']], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Limpiaparabrisas', slug: 'limpiaparabrisas', description: 'Limpiaparabrisas.', shortDescription: 'Limpiaparabrisas', price: 39.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Tapetes para Auto', slug: 'tapetes-auto', description: 'Tapetes para auto.', shortDescription: 'Tapetes auto', price: 79.9, attributes: [colorAttribute.id], values: [['Negro', 'Gris']], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Sistema de Audio', slug: 'sistema-audio', description: 'Sistema de audio para auto.', shortDescription: 'Sistema audio', price: 499.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Cargador Portátil', slug: 'cargador-portatil', description: 'Cargador portátil para auto.', shortDescription: 'Cargador portátil', price: 149.9, attributes: [capacityAttribute.id], values: [['10000mAh']], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'Kit de Herramientas', slug: 'kit-herramientas', description: 'Kit de herramientas para auto.', shortDescription: 'Kit herramientas', price: 199.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
-      { name: 'GPS para Auto', slug: 'gps-auto', description: 'GPS para auto.', shortDescription: 'GPS auto', price: 399.9, attributes: [], values: [], image: 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500' },
+      {
+        name: 'Aceite de Motor',
+        slug: 'aceite-motor',
+        description: 'Aceite de motor sintético.',
+        shortDescription: 'Aceite motor',
+        price: 49.9,
+        attributes: [capacityAttribute.id],
+        values: [['1L', '5L']],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Filtro de Aire',
+        slug: 'filtro-aire',
+        description: 'Filtro de aire para auto.',
+        shortDescription: 'Filtro aire',
+        price: 29.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Batería de Auto',
+        slug: 'bateria-auto',
+        description: 'Batería de auto.',
+        shortDescription: 'Batería auto',
+        price: 299.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Llantas de Aleación',
+        slug: 'llantas-alecion',
+        description: 'Llantas de aleación.',
+        shortDescription: 'Llantas aleación',
+        price: 899.9,
+        attributes: [sizeAttribute.id],
+        values: [['16"', '17"']],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Limpiaparabrisas',
+        slug: 'limpiaparabrisas',
+        description: 'Limpiaparabrisas.',
+        shortDescription: 'Limpiaparabrisas',
+        price: 39.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Tapetes para Auto',
+        slug: 'tapetes-auto',
+        description: 'Tapetes para auto.',
+        shortDescription: 'Tapetes auto',
+        price: 79.9,
+        attributes: [colorAttribute.id],
+        values: [['Negro', 'Gris']],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Sistema de Audio',
+        slug: 'sistema-audio',
+        description: 'Sistema de audio para auto.',
+        shortDescription: 'Sistema audio',
+        price: 499.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Cargador Portátil',
+        slug: 'cargador-portatil',
+        description: 'Cargador portátil para auto.',
+        shortDescription: 'Cargador portátil',
+        price: 149.9,
+        attributes: [capacityAttribute.id],
+        values: [['10000mAh']],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'Kit de Herramientas',
+        slug: 'kit-herramientas',
+        description: 'Kit de herramientas para auto.',
+        shortDescription: 'Kit herramientas',
+        price: 199.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
+      {
+        name: 'GPS para Auto',
+        slug: 'gps-auto',
+        description: 'GPS para auto.',
+        shortDescription: 'GPS auto',
+        price: 399.9,
+        attributes: [],
+        values: [],
+        image:
+          'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=500',
+      },
     ],
   ];
 
@@ -703,7 +1754,9 @@ async function main() {
               const variant = await prisma.productVariant.create({
                 data: {
                   productId: product.id,
-                  sku: `${prodData.slug}-${val1}-${val2}`.replace(/\s/g, '').toUpperCase(),
+                  sku: `${prodData.slug}-${val1}-${val2}`
+                    .replace(/\s/g, '')
+                    .toUpperCase(),
                   price: prodData.price,
                   stock: Math.floor(Math.random() * 50) + 10,
                   isActive: true,
@@ -794,9 +1847,15 @@ async function main() {
   console.log(`✅ Created ${allImages.length} product images\n`);
 
   // Find specific variants for orders
-  const iphoneVariant = allVariants.find(v => v.productId === allProducts[0].id && v.sku.includes('NEGRO-128GB'));
-  const poloVariant = allVariants.find(v => v.productId === allProducts[10].id && v.sku.includes('NEGRO-M'));
-  const laptopVariant = allVariants.find(v => v.productId === allProducts[1].id && v.sku.includes('256GB'));
+  const iphoneVariant = allVariants.find(
+    (v) => v.productId === allProducts[0].id && v.sku.includes('NEGRO-128GB'),
+  );
+  const poloVariant = allVariants.find(
+    (v) => v.productId === allProducts[10].id && v.sku.includes('NEGRO-M'),
+  );
+  const laptopVariant = allVariants.find(
+    (v) => v.productId === allProducts[1].id && v.sku.includes('256GB'),
+  );
 
   // ==================== STOCK ALERTS ====================
   console.log('🔔 Creating stock alerts...');
@@ -897,7 +1956,9 @@ async function main() {
         create: [
           {
             productId: allProducts[10].id, // Polo
-            variantId: allVariants.find(v => v.productId === allProducts[10].id)?.id,
+            variantId: allVariants.find(
+              (v) => v.productId === allProducts[10].id,
+            )?.id,
             quantity: 2,
           },
           {

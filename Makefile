@@ -64,6 +64,22 @@ clean:
 db-shell:
 	docker compose exec database psql -U $${DB_USER:-postgres} -d $${DB_NAME:-commerce_db}
 
+# Create API Docker Image
+create-image:
+	docker build -t ecommerce-nest-api:latest .
+
+# Run API Docker Image with .env file
+run-image-envs:
+	docker run -p 3000:3000 --env-file .env ecommerce-nest-api
+
+# Genera un token temporal de AWS y mediante el pipe (|) se lo pasa a docker para autenticarse en ECR 
+docker-aws-ecr-login:
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin
+
+# Connects to AWS EC2 instance by ssh
+connect-aws-cli-ec2:
+	ssh -i ecommerce-nest-ec2.pem ec2-user@ec2-54-164-73-2.compute-1.amazonaws.com
+
 # ==========================================
 # Database Commands
 # ==========================================

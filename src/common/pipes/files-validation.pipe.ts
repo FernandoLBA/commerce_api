@@ -1,9 +1,4 @@
-import {
-  ArgumentMetadata,
-  BadRequestException,
-  Injectable,
-  PipeTransform,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
 import {
   AllowedApplicationMimetypes,
@@ -59,10 +54,6 @@ export class FilesValidationPipe implements PipeTransform {
   }
 
   private isValidSize(fileSize: number, mimetype: AllowedMimeTypes) {
-    console.log('🚀 ~ FilesValidationPipe ~ isValidSize ~ fileSize::', {
-      fileSize,
-      mimetype,
-    });
     const { fileSizeInMB, isImage, isApplication } = this.fileInfoParser(
       mimetype,
       fileSize,
@@ -86,24 +77,28 @@ export class FilesValidationPipe implements PipeTransform {
     return true;
   }
 
-  transform(value: Express.Multer.File[], _metadata: ArgumentMetadata) {
+  transform(value: Express.Multer.File[]) {
     if (value.length === 0) throw new Error('No files provided');
 
-    let allowedFiles: Express.Multer.File[] = [];
+    const allowedFiles: Express.Multer.File[] = [];
 
-    value.forEach((file) => {
-      const { allowed } = this.isValidFile(file.mimetype as AllowedMimeTypes);
+    if (Array.isArray(value)) {
+      value.forEach((file) => {
+        const { allowed } = this.isValidFile(file.mimetype as AllowedMimeTypes);
 
-      const isSizeValid = this.isValidSize(
-        file.size,
-        file.mimetype as AllowedMimeTypes,
-      );
+        const isSizeValid = this.isValidSize(
+          file.size,
+          file.mimetype as AllowedMimeTypes,
+        );
 
-      if (allowed && isSizeValid) {
-        allowedFiles.push(file);
-      }
-    });
+        if (allowed && isSizeValid) {
+          allowedFiles.push(file);
+        }
+      });
 
-    return allowedFiles.length === 1 ? allowedFiles[0] : allowedFiles;
+      return allowedFiles;
+    }
+
+    return value;
   }
 }

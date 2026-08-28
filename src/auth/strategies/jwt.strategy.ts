@@ -29,22 +29,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    */
   async validate(payload: JwtPayload) {
     // try {
-      const user = await this.authService.validateUser(payload.id);
-      if (!user) {
-        this.logger.warn(
-          `Attempted access with non-existent user: ${payload.id}`,
-        );
-        throw new UnauthorizedException('User not authenticated');
-      }
+    const user = await this.authService.validateUser(payload.id);
+    if (!user) {
+      this.logger.warn(
+        `Attempted access with non-existent user: ${payload.id}`,
+      );
+      throw new UnauthorizedException('User not authenticated');
+    }
 
-      if(!user.emailVerified) {
-        this.logger.warn(
-          `Attempted access with inactive user: ${payload.id}`,
-        );
-        throw new UnauthorizedException('User account is inactive');
-      }
-      // Log to see what validate returns
-      return user;
+    if (!user.emailVerified) {
+      this.logger.warn(`Attempted access with inactive user: ${payload.id}`);
+      throw new UnauthorizedException('User account is inactive');
+    }
+    // Log to see what validate returns
+    return user;
     // } catch (error) {
     //   this.logger.error(
     //     `Error validating JWT payload for user ${payload.id}:`,

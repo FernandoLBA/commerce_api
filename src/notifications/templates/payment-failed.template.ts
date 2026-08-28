@@ -1,4 +1,11 @@
-import { wrapInHtmlTemplate, emailFooter, errorBadge, inline, colors, brandName } from './base.template';
+import {
+  wrapInHtmlTemplate,
+  emailFooter,
+  errorBadge,
+  inline,
+  colors,
+  brandName,
+} from './base.template';
 
 export interface PaymentFailedData {
   orderNumber: string;

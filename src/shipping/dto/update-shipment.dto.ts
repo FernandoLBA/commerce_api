@@ -4,7 +4,12 @@ import { VALIDATION_MESSAGES } from '../../common/constants/validation-messages'
 
 export class UpdateShipmentDto {
   @IsOptional()
-  @IsEnum(ShippingStatus, { message: VALIDATION_MESSAGES.INVALID_ENUM('Status', 'PENDING, PROCESSING, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, RETURNED, CANCELLED') })
+  @IsEnum(ShippingStatus, {
+    message: VALIDATION_MESSAGES.INVALID_ENUM(
+      'Status',
+      'PENDING, PROCESSING, SHIPPED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, FAILED, RETURNED, CANCELLED',
+    ),
+  })
   status?: ShippingStatus;
 
   @IsOptional()
@@ -16,7 +21,10 @@ export class UpdateShipmentDto {
   trackingUrl?: string;
 
   @IsOptional()
-  @IsDateString({}, { message: VALIDATION_MESSAGES.INVALID_DATE('Estimated delivery date') })
+  @IsDateString(
+    {},
+    { message: VALIDATION_MESSAGES.INVALID_DATE('Estimated delivery date') },
+  )
   estimatedDeliveryDate?: string;
 
   @IsOptional()

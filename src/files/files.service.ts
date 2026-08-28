@@ -3,7 +3,7 @@ import { v2 } from 'cloudinary';
 import * as streamifier from 'streamifier';
 
 import { CloudinaryService } from 'src/common';
-import { UpdateFileDto, UploadFileDto } from './dto';
+import { UploadFileDto } from './dto';
 
 @Injectable()
 export class FilesService {
@@ -45,7 +45,7 @@ export class FilesService {
             folder: folderPath,
           },
           (error, result) => {
-            if (error) return reject(error);
+            if (error) return reject(new Error(error.message));
 
             resolve(result);
           },
@@ -66,7 +66,7 @@ export class FilesService {
     return `This action returns a #${id} file`;
   }
 
-  update(id: number, updateFileDto: UpdateFileDto) {
+  update(id: number) {
     return `This action updates a #${id} file`;
   }
 

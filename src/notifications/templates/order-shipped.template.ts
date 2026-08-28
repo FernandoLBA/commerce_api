@@ -1,4 +1,11 @@
-import { wrapInHtmlTemplate, emailFooter, primaryButton, inline, colors, brandName } from './base.template';
+import {
+  wrapInHtmlTemplate,
+  emailFooter,
+  primaryButton,
+  inline,
+  colors,
+  brandName,
+} from './base.template';
 
 export interface OrderShippedData {
   orderNumber: string;
@@ -48,11 +55,15 @@ export function orderShippedEmailHtml(data: OrderShippedData): string {
   const trackingSection = data.trackingNumber
     ? `
       <p style="margin: 8px 0; color: ${colors.textSecondary};"><strong>Número de seguimiento:</strong> ${data.trackingNumber}</p>
-      ${data.trackingUrl ? `
+      ${
+        data.trackingUrl
+          ? `
         <div style="margin-top: 16px;">
           ${primaryButton('Rastrear mi envío', data.trackingUrl)}
         </div>
-      ` : ''}
+      `
+          : ''
+      }
     `
     : '';
 

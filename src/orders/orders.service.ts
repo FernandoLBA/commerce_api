@@ -40,98 +40,94 @@ export class OrdersService {
     const total = subtotal + shippingCost - discount;
 
     // Use transaction for order creation
-    try {
-      const result = await this.prisma.$transaction(async (tx) => {
-        // Generate order number
-        const orderNumber = await this.generateOrderNumber();
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Generate order number
+      const orderNumber = await this.generateOrderNumber();
 
-        // Create order
-        const savedOrder = await tx.order.create({
-          data: {
-            orderNumber,
-            userId,
-            status: OrderStatus.PENDING,
-            shippingAddress: {
-              recipientName: address.recipientName,
-              recipientPhone: address.recipientPhone,
-              street: address.street,
-              number: address.number,
-              apartment: address.apartment,
-              district: address.district,
-              city: address.city,
-              department: address.department,
-              postalCode: address.postalCode,
-              reference: address.reference,
-            },
-            subtotal,
-            shippingCost,
-            discount,
-            total,
-            discountCode: createOrderDto.discountCode,
-            notes: createOrderDto.notes,
+      // Create order
+      const savedOrder = await tx.order.create({
+        data: {
+          orderNumber,
+          userId,
+          status: OrderStatus.PENDING,
+          shippingAddress: {
+            recipientName: address.recipientName,
+            recipientPhone: address.recipientPhone,
+            street: address.street,
+            number: address.number,
+            apartment: address.apartment,
+            district: address.district,
+            city: address.city,
+            department: address.department,
+            postalCode: address.postalCode,
+            reference: address.reference,
           },
-        });
-
-        // Create order items from cart
-        for (const cartItem of cart.items) {
-          // Get price from variant if exists, otherwise from product
-          const unitPrice = cartItem.variant
-            ? Number(cartItem.variant.price)
-            : Number(cartItem.product.price);
-
-          await tx.orderItem.create({
-            data: {
-              orderId: savedOrder.id,
-              productId: cartItem.productId,
-              productName: cartItem.product.name,
-              variantId: cartItem.variantId,
-              variantAttributes: cartItem.variant?.attributeValues?.map(
-                (av: any) => ({
-                  name: av.attribute?.name || '',
-                  value: av.value,
-                }),
-              ),
-              unitPrice,
-              quantity: cartItem.quantity,
-              subtotal: cartItem.quantity * unitPrice,
-            },
-          });
-
-          // Reserve stock
-          if (cartItem.variantId) {
-            await tx.productVariant.update({
-              where: { id: cartItem.variantId },
-              data: { stock: { decrement: cartItem.quantity } },
-            });
-          } else {
-            await tx.product.update({
-              where: { id: cartItem.productId },
-              data: { stock: { decrement: cartItem.quantity } },
-            });
-          }
-        }
-
-        // Create initial payment record
-        await tx.payment.create({
-          data: {
-            orderId: savedOrder.id,
-            method: createOrderDto.paymentMethod,
-            status: PaymentStatus.PENDING,
-            amount: total,
-            currency: 'PEN',
-          },
-        });
-
-        return savedOrder;
+          subtotal,
+          shippingCost,
+          discount,
+          total,
+          discountCode: createOrderDto.discountCode,
+          notes: createOrderDto.notes,
+        },
       });
 
-      // Clear cart
-      await this.cartService.clearCart(userId);
+      // Create order items from cart
+      for (const cartItem of cart.items) {
+        // Get price from variant if exists, otherwise from product
+        const unitPrice = cartItem.variant
+          ? Number(cartItem.variant.price)
+          : Number(cartItem.product.price);
 
-      return this.findOne(result.id, userId);
-    } catch (error) {
-      throw error;
-    }
+        await tx.orderItem.create({
+          data: {
+            orderId: savedOrder.id,
+            productId: cartItem.productId,
+            productName: cartItem.product.name,
+            variantId: cartItem.variantId,
+            variantAttributes: cartItem.variant?.attributeValues?.map(
+              (av: any) => ({
+                name: av.attribute?.name || '',
+                value: av.value,
+              }),
+            ),
+            unitPrice,
+            quantity: cartItem.quantity,
+            subtotal: cartItem.quantity * unitPrice,
+          },
+        });
+
+        // Reserve stock
+        if (cartItem.variantId) {
+          await tx.productVariant.update({
+            where: { id: cartItem.variantId },
+            data: { stock: { decrement: cartItem.quantity } },
+          });
+        } else {
+          await tx.product.update({
+            where: { id: cartItem.productId },
+            data: { stock: { decrement: cartItem.quantity } },
+          });
+        }
+      }
+
+      // Create initial payment record
+      await tx.payment.create({
+        data: {
+          orderId: savedOrder.id,
+          method: createOrderDto.paymentMethod,
+          status: PaymentStatus.PENDING,
+          amount: total,
+          currency: 'PEN',
+        },
+      });
+
+      return savedOrder;
+    });
+
+    // Clear cart
+    await this.cartService.clearCart(userId);
+
+    return this.findOne(result.id, userId);
   }
 
   async findAll(userId?: string, isAdmin = false) {
@@ -185,10 +181,7 @@ export class OrdersService {
 
     // Handle status changes
     if (updateOrderDto.status && updateOrderDto.status !== order.status) {
-      this.validateStatusTransition(
-        order.status as OrderStatus,
-        updateOrderDto.status,
-      );
+      this.validateStatusTransition(order.status, updateOrderDto.status);
     }
 
     const updateData: Prisma.OrderUpdateInput = { ...updateOrderDto };

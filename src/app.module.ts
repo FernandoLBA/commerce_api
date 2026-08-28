@@ -25,8 +25,6 @@ import { WishlistModule } from './wishlist/wishlist.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
-      // envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
     }),
     // Prisma - Database ORM
     PrismaModule,

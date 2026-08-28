@@ -100,7 +100,9 @@ export class ValidationException extends ApiException {
     super(
       ErrorCodes.VALIDATION_ERROR,
       HttpStatus.BAD_REQUEST,
-      Array.isArray(details) ? ErrorMessages[ErrorCodes.VALIDATION_ERROR] : details,
+      Array.isArray(details)
+        ? ErrorMessages[ErrorCodes.VALIDATION_ERROR]
+        : details,
       detailsArray,
     );
   }

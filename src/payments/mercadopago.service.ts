@@ -26,9 +26,7 @@ export class MercadoPagoService {
     this.mpPayment = new MPPayment(this.client);
   }
 
-  async createPreference(
-    orderId: string,
-  ): Promise<{
+  async createPreference(orderId: string): Promise<{
     preferenceId: string;
     initPoint: string;
     sandboxInitPoint: string;
@@ -184,7 +182,7 @@ export class MercadoPagoService {
             try {
               if (order.user?.email) {
                 await this.notificationsService.sendPaymentConfirmation(
-                  order as any,
+                  order,
                   order.user.email,
                   Number(order.total),
                 );
@@ -215,7 +213,7 @@ export class MercadoPagoService {
           try {
             if (order.user?.email) {
               await this.notificationsService.sendPaymentFailed(
-                order as any,
+                order,
                 order.user.email,
                 updateData.errorMessage,
               );

@@ -183,7 +183,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: `El monto mínimo de compra es S/. ${coupon.minPurchaseAmount}`,
+          errorMessage: `El monto mínimo de compra es S/. ${Number(coupon.minPurchaseAmount)}`,
         };
       }
 

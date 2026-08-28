@@ -85,26 +85,22 @@ export class StripeService {
         signature,
         webhookSecret,
       );
-    } catch (err) {
+    } catch {
       throw new ValidationException(`Webhook signature verification failed`);
     }
 
     // Handle the event
     switch (event.type) {
       case 'payment_intent.succeeded':
-        await this.handlePaymentSuccess(
-          event.data.object as Stripe.PaymentIntent,
-        );
+        await this.handlePaymentSuccess(event.data.object);
         break;
 
       case 'payment_intent.payment_failed':
-        await this.handlePaymentFailure(
-          event.data.object as Stripe.PaymentIntent,
-        );
+        await this.handlePaymentFailure(event.data.object);
         break;
 
       case 'charge.refunded':
-        await this.handleRefund(event.data.object as Stripe.Charge);
+        await this.handleRefund(event.data.object);
         break;
 
       default:

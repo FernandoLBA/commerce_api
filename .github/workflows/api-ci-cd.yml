@@ -1,0 +1,191 @@
+# Nombre descriptivo del flujo de trabajo dentro de GitHub Actions
+name: CI/CD Nestjs to ECR then EC2
+
+# Eventos que disparan la ejecución automática o manual del pipeline
+on:
+  workflow_dispatch: # Permite ejecutar el pipeline manualmente desde la consola de GitHub
+  push:
+    branches:
+      - main # Se ejecuta automáticamente al hacer un push a la rama 'main'
+
+jobs:
+  # ==========================================
+  # JOB 1: Integración Continua (Chequeos del código)
+  # ==========================================
+  ci:
+    runs-on: ubuntu-latest # Ejecuta el trabajo en un entorno virtual basado en la última versión de Ubuntu
+
+    steps:
+      # Paso 1: Clona el código fuente del repositorio dentro del runner
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Paso 2: Configura el entorno de ejecución para Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.23.2 # Mantiene la versión fija de Node.js para consistencia entre entornos
+
+      # Paso 3: Instala dependencias con npm
+      - name: Install dependencies
+        run: npm ci # Realiza una instalación limpia basada estrictamente en package-lock.json
+        working-directory: ./ # Establece el directorio de trabajo raíz
+
+      # Paso 4: Genera los tipos e interfaces del cliente de Prisma
+      - name: Generate Prisma Client
+        run: npx prisma generate # Construye las definiciones de Prisma en node_modules
+        working-directory: ./
+
+      # Paso 5: Ejecuta la validación de código estático (Linter)
+      - name: Lint
+        run: npm run lint:ci # Ejecuta la regla estricta de ESLint definida para CI
+        working-directory: ./
+
+      # Paso 6: Lanza las pruebas automatizadas
+      - name: Run tests
+        run: npm test # Corre la suite de tests (usualmente Jest)
+
+      # Paso 7: Audita el árbol de dependencias buscando vulnerabilidades
+      - name: NPM audit (high severity)
+        run: npm audit --audit-level=high # Revisa fallos de seguridad graves en librerías de terceros
+        working-directory: ./
+
+  # ==========================================
+  # JOB 2: Despliegue Continuo (AWS ECR + EC2)
+  # ==========================================
+  deploy:
+    needs: ci # Garantiza que este job se ejecute ÚNICAMENTE si el job 'ci' pasa con éxito
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Requerido para autorizar el intercambio de tokens OIDC con AWS
+      contents: read # Otorga acceso de lectura al contenido del repositorio
+
+    steps:
+      # Paso 1: Clona el código fuente en el entorno virtual del job de despliegue
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Paso 2: Autenticación en AWS mediante OIDC (sin claves de acceso estáticas)
+      - name: Configure AWS OIDC
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }} # ARN del rol de IAM que asumirá GitHub Actions
+          aws-region: ${{ secrets.AWS_REGION }} # Región de AWS donde se encuentran los servicios
+
+      # Paso 3: Inicia sesión en Amazon Elastic Container Registry (ECR)
+      - name: Login to Amazon ECR
+        run: |
+          # Obtiene la clave de sesión temporal de ECR y autentica el CLI local de Docker
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
+
+      # Paso 4: Compilación de la imagen Docker de producción
+      - name: Build Docker Image
+        run: docker build --no-cache -t ecommerce-nest-api:latest ./api # Construye la imagen omitiendo caché previa
+
+      # Paso 5: Asignación de la etiqueta remota para el registro ECR
+      - name: Tag Docker Image to ECR
+        run: docker tag ecommerce-nest-api:latest ${{ secrets.ECR_REPOSITORY }}:latest # Vincula la imagen local a la URI del repositorio ECR
+
+      # Paso 6: Publicación de la imagen en Amazon ECR
+      - name: Push Docker Image to ECR
+        run: docker push ${{ secrets.ECR_REPOSITORY }}:latest # Subida del contenedor empaquetado a la nube de AWS
+
+      # Paso 7: Conexión por SSH al servidor EC2 y actualización de la aplicación
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v0.1.7 # Se conecta remotamente a la instancia EC2 por SSH
+        with:
+          host: ${{ secrets.EC2_HOST }} # IP pública o dominio de la EC2
+          username: ${{ secrets.EC2_USER }} # Usuario del sistema operativo (ej. ubuntu, ec2-user)
+          key: ${{ secrets.EC2_KEY }} # Clave privada SSH (.pem)
+          script: |
+            # 1. Descarga la versión más reciente de la imagen subida a Amazon ECR
+            docker pull ${{ secrets.ECR_REPOSITORY }}:latest
+
+            # 2. Detiene el contenedor previo si está activo (no falla si no existe)
+            docker stop ecommerce-nest-api || true
+
+            # 3. Elimina el contenedor antiguo para liberar el nombre del servicio
+            docker rm ecommerce-nest-api || true
+
+            # 4. Obtiene el secreto de producción en formato JSON desde AWS Secrets Manager
+            SECRETS_JSON=$(aws secretsmanager get-secret-value \
+              --secret-id ecommerce-nest-prod-secrets \
+              --query SecretString \
+              --output text)
+
+            # 5. Parsea el objeto JSON con jq y asigna las credenciales como variables de entorno locales
+            export DATABASE_URL=$(echo $SECRETS_JSON | jq -r .DATABASE_URL)
+            export DB_HOST=$(echo $SECRETS_JSON | jq -r .DB_HOST)
+            export DB_PORT=$(echo $SECRETS_JSON | jq -r .DB_PORT)
+            export DB_USER=$(echo $SECRETS_JSON | jq -r .DB_USER)
+            export DB_PASSWORD=$(echo $SECRETS_JSON | jq -r .DB_PASSWORD)
+            export DB_NAME=$(echo $SECRETS_JSON | jq -r .DB_NAME)
+            export NODE_ENV=$(echo $SECRETS_JSON | jq -r .NODE_ENV)
+            export PORT=$(echo $SECRETS_JSON | jq -r .PORT)
+            export JWT_SECRET=$(echo $SECRETS_JSON | jq -r .JWT_SECRET)
+            export JWT_EXPIRES_IN=$(echo $SECRETS_JSON | jq -r .JWT_EXPIRES_IN)
+            export JWT_REFRESH_EXPIRES_IN=$(echo $SECRETS_JSON | jq -r .JWT_REFRESH_EXPIRES_IN)
+            export CORS_ORIGINS=$(echo $SECRETS_JSON | jq -r .CORS_ORIGINS)
+            export THROTTLE_TTL=$(echo $SECRETS_JSON | jq -r .THROTTLE_TTL)
+            export THROTTLE_LIMIT=$(echo $SECRETS_JSON | jq -r .THROTTLE_LIMIT)
+            export THROTTLE_AUTH_TTL=$(echo $SECRETS_JSON | jq -r .THROTTLE_AUTH_TTL)
+            export THROTTLE_AUTH_LIMIT=$(echo $SECRETS_JSON | jq -r .THROTTLE_AUTH_LIMIT)
+            export THROTTLE_CREATE_TTL=$(echo $SECRETS_JSON | jq -r .THROTTLE_CREATE_TTL)
+            export THROTTLE_CREATE_LIMIT=$(echo $SECRETS_JSON | jq -r .THROTTLE_CREATE_LIMIT)
+            export INTERNAL_API_KEY=$(echo $SECRETS_JSON | jq -r .INTERNAL_API_KEY)
+            export STRIPE_SECRET_KEY=$(echo $SECRETS_JSON | jq -r .STRIPE_SECRET_KEY)
+            export STRIPE_WEBHOOK_SECRET=$(echo $SECRETS_JSON | jq -r .STRIPE_WEBHOOK_SECRET)
+            export NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$(echo $SECRETS_JSON | jq -r .NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+            export MERCADOPAGO_ACCESS_TOKEN=$(echo $SECRETS_JSON | jq -r .MERCADOPAGO_ACCESS_TOKEN)
+            export CLOUDINARY_CLOUD_NAME=$(echo $SECRETS_JSON | jq -r .CLOUDINARY_CLOUD_NAME)
+            export CLOUDINARY_API_KEY=$(echo $SECRETS_JSON | jq -r .CLOUDINARY_API_KEY)
+            export CLOUDINARY_API_SECRET=$(echo $SECRETS_JSON | jq -r .CLOUDINARY_API_SECRET)
+            export CLOUDINARY_URL=$(echo $SECRETS_JSON | jq -r .CLOUDINARY_URL)
+            export MAIL_HOST=$(echo $SECRETS_JSON | jq -r .MAIL_HOST)
+            export MAIL_PORT=$(echo $SECRETS_JSON | jq -r .MAIL_PORT)
+            export MAIL_SECURE=$(echo $SECRETS_JSON | jq -r .MAIL_SECURE)
+            export MAIL_USER=$(echo $SECRETS_JSON | jq -r .MAIL_USER)
+            export MAIL_PASSWORD=$(echo $SECRETS_JSON | jq -r .MAIL_PASSWORD)
+            export MAIL_FROM=$(echo $SECRETS_JSON | jq -r .MAIL_FROM)
+
+            # 6. Ejecuta el nuevo contenedor inyectando dinámicamente las variables de entorno
+            docker run -d \
+              -p $PORT:$PORT \
+              --name ecommerce-nest-api \
+              -e DATABASE_URL \
+              -e DB_HOST \
+              -e DB_PORT \
+              -e DB_USER \
+              -e DB_PASSWORD \
+              -e DB_NAME \
+              -e NODE_ENV \
+              -e PORT \
+              -e JWT_SECRET \
+              -e JWT_EXPIRES_IN \
+              -e CORS_ORIGINS \
+              -e THROTTLE_TTL \
+              -e THROTTLE_LIMIT \
+              -e THROTTLE_AUTH_TTL \
+              -e THROTTLE_AUTH_LIMIT \
+              -e THROTTLE_CREATE_TTL \
+              -e THROTTLE_CREATE_LIMIT \
+              -e INTERNAL_API_KEY \
+              -e STRIPE_SECRET_KEY \
+              -e STRIPE_WEBHOOK_SECRET \
+              -e NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY \
+              -e MERCADOPAGO_ACCESS_TOKEN \
+              -e CLOUDINARY_CLOUD_NAME \
+              -e CLOUDINARY_API_KEY \
+              -e CLOUDINARY_API_SECRET \
+              -e CLOUDINARY_URL \
+              -e MAIL_HOST \
+              -e MAIL_PORT \
+              -e MAIL_SECURE \
+              -e MAIL_USER \
+              -e MAIL_PASSWORD \
+              -e MAIL_FROM \
+              ${{ secrets.ECR_REPOSITORY }}:latest
+
+            # 7. Elimina imágenes de Docker antiguas o huérfanas para prevenir el llenado de disco en la EC2
+            docker image prune -f

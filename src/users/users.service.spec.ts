@@ -182,7 +182,10 @@ describe('UsersService', () => {
 
     it('should set first address as default', async () => {
       prisma.address.count.mockResolvedValue(0);
-      prisma.address.create.mockResolvedValue({ ...mockAddress, isDefault: true });
+      prisma.address.create.mockResolvedValue({
+        ...mockAddress,
+        isDefault: true,
+      });
 
       const result = await service.createAddress(userId, {
         ...mockCreateAddressDto,
@@ -230,7 +233,10 @@ describe('UsersService', () => {
     it('should unset other defaults when updating to default', async () => {
       prisma.address.findFirst.mockResolvedValue(mockAddress);
       prisma.address.updateMany.mockResolvedValue({ count: 1 });
-      prisma.address.update.mockResolvedValue({ ...mockAddress, isDefault: true });
+      prisma.address.update.mockResolvedValue({
+        ...mockAddress,
+        isDefault: true,
+      });
 
       await service.updateAddress(userId, mockAddress.id, { isDefault: true });
 
@@ -240,7 +246,10 @@ describe('UsersService', () => {
 
   describe('deleteAddress', () => {
     it('should delete an address', async () => {
-      prisma.address.findFirst.mockResolvedValue({ ...mockAddress, isDefault: false });
+      prisma.address.findFirst.mockResolvedValue({
+        ...mockAddress,
+        isDefault: false,
+      });
       prisma.address.delete.mockResolvedValue(mockAddress);
 
       await service.deleteAddress(userId, mockAddress.id);
@@ -251,12 +260,19 @@ describe('UsersService', () => {
     });
 
     it('should set another address as default after deleting default', async () => {
-      const anotherAddress = { ...mockAddress, id: 'address-2', isDefault: false };
+      const anotherAddress = {
+        ...mockAddress,
+        id: 'address-2',
+        isDefault: false,
+      };
       prisma.address.findFirst
         .mockResolvedValueOnce({ ...mockAddress, isDefault: true }) // getAddress
         .mockResolvedValueOnce(anotherAddress); // find new default
       prisma.address.delete.mockResolvedValue(mockAddress);
-      prisma.address.update.mockResolvedValue({ ...anotherAddress, isDefault: true });
+      prisma.address.update.mockResolvedValue({
+        ...anotherAddress,
+        isDefault: true,
+      });
 
       await service.deleteAddress(userId, mockAddress.id);
 

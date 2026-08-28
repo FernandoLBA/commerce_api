@@ -317,7 +317,6 @@ describe('VariantsService', () => {
         'attr-val-3',
       ]);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- Jest mock type
       const updateCall = prisma.productVariant.update.mock.calls[0][0] as {
         where: { id: string };
         data: {

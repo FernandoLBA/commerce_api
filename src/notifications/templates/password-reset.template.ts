@@ -1,4 +1,11 @@
-import { wrapInHtmlTemplate, primaryButton, emailFooter, inline, colors, brandName } from './base.template';
+import {
+  wrapInHtmlTemplate,
+  primaryButton,
+  emailFooter,
+  inline,
+  colors,
+  brandName,
+} from './base.template';
 
 export interface PasswordResetEmailData {
   firstName: string;

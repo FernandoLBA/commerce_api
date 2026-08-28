@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CouponsService } from './coupons.service';
 import { PrismaService } from '../prisma';
-import { DiscountType } from '../generated/prisma/client';
+import { DiscountType } from '@prisma/client';
 
 describe('CouponsService', () => {
   let service: CouponsService;
@@ -81,7 +81,7 @@ describe('CouponsService', () => {
       prisma.coupon.findFirst.mockResolvedValue(null);
       prisma.coupon.create.mockResolvedValue(mockCoupon);
 
-      const result = await service.create({
+      await service.create({
         code: 'NEWCOUPON',
         discountType: DiscountType.PERCENTAGE,
         discountValue: 15,
