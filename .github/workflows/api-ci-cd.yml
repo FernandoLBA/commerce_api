@@ -20,34 +20,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Paso 2: Instala el gestor de paquetes pnpm  indicando la ruta de la API en el runner de GitHub
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9 # Se alinea con la versión usada en desarrollo local
-
-      # Paso 3: Configura Node.js
+      # Paso 2: Primero se configura Node.js en el runner
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
-      # Paso 4: Instala dependencias estrictamente desde pnpm-lock.yaml
+      # Paso 3: Se instala pnpm de forma independiente (standalone)
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          standalone: true
+
+      # Paso 4: Instala dependencias dentro de la carpeta ./api
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         working-directory: ./api
 
-      # Paso 5: Genera los tipos e interfaces del cliente de Prisma
+      # Paso 5: Genera el cliente de Prisma
       - name: Generate Prisma Client
         run: pnpm exec prisma generate
         working-directory: ./api
 
-      # Paso 6: Ejecuta la validación de código estático (Linter)
+      # Paso 6: Ejecuta el Linter
       - name: Lint
         run: pnpm run lint:ci
         working-directory: ./api
 
-      # Paso 7: Lanza las pruebas automatizadas
+      # Paso 7: Ejecuta las pruebas unitarias
       - name: Run tests
         run: pnpm test
         working-directory: ./api
