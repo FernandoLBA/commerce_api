@@ -74,7 +74,7 @@ export class VariantsService {
     return variant;
   }
 
-  async findAllByProduct(productId: string) {
+  findAllByProduct(productId: string) {
     return this.prisma.productVariant.findMany({
       where: { productId },
       include: {

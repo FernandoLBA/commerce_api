@@ -32,7 +32,7 @@ export class AttributesService {
     });
   }
 
-  async findAllAttributes() {
+  findAllAttributes() {
     return this.prisma.productAttribute.findMany({
       include: { values: true },
       orderBy: { name: 'asc' },
@@ -108,7 +108,7 @@ export class AttributesService {
     return value;
   }
 
-  async findAttributeValuesByIds(ids: string[]) {
+  findAttributeValuesByIds(ids: string[]) {
     return this.prisma.productAttributeValue.findMany({
       where: { id: { in: ids } },
     });

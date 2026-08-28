@@ -148,7 +148,7 @@ export class ImagesService {
     });
   }
 
-  async findAllByProduct(productId: string) {
+  findAllByProduct(productId: string) {
     return this.prisma.productImage.findMany({
       where: { productId },
       orderBy: { displayOrder: 'asc' },

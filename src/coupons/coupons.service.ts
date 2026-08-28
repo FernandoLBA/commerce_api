@@ -52,7 +52,7 @@ export class CouponsService {
     });
   }
 
-  async findAll(includeInactive = false) {
+  findAll(includeInactive = false) {
     const where: Prisma.CouponWhereInput = {};
     if (!includeInactive) {
       where.isActive = true;
@@ -256,7 +256,7 @@ export class CouponsService {
     return usage;
   }
 
-  async getCouponUsageHistory(couponId: string) {
+  getCouponUsageHistory(couponId: string) {
     return this.prisma.couponUsage.findMany({
       where: { couponId },
       include: { user: true, order: true },
