@@ -1,12 +1,12 @@
-# Nombre del flujo de trabajo en GitHub Actions
+# Nombre descriptivo del flujo de trabajo dentro de GitHub Actions
 name: CI/CD Nestjs to ECR then EC2
 
 # Eventos que disparan la ejecución
 on:
-  workflow_dispatch: # Permite ejecución manual desde la consola de GitHub
+  workflow_dispatch: # Permite ejecuciones manuales desde la consola
   push:
     branches:
-      - main # Ejecución automática al hacer push en la rama 'main'
+      - main # Se ejecuta automáticamente al hacer push en la rama 'main'
       - release
       - develop
 
@@ -22,58 +22,53 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Paso 2: Instala el gestor de paquetes pnpm en el runner de GitHub
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9 # Se alinea con la versión usada en desarrollo local
-
-      # Paso 3: Configura el entorno de ejecución Node.js con caché para pnpm
+      # Paso 2: Configura el entorno de ejecución para Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.23.2
-          cache: "pnpm"
-          cache-dependency-path: "./api/pnpm-lock.yaml"
+          node-version: "22"
 
-      # Paso 4: Instala dependencias estrictamente desde pnpm-lock.yaml
+      # Paso 3: Instala pnpm de forma independiente en el runner
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          standalone: true
+
+      # Paso 4: Instala dependencias en la raíz del proyecto
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        working-directory: ./api
 
-      # Paso 5: Genera los tipos e interfaces del cliente de Prisma
+      # Paso 5: Genera los tipos del cliente de Prisma
       - name: Generate Prisma Client
         run: pnpm exec prisma generate
-        working-directory: ./api
 
-      # Paso 6: Ejecuta la validación de código estático (Linter)
+      # Paso 6: Valida el código estático con ESLint
       - name: Lint
         run: pnpm run lint:ci
-        working-directory: ./api
 
-      # Paso 7: Lanza las pruebas automatizadas
+      # Paso 7: Ejecuta la suite de pruebas
       - name: Run tests
         run: pnpm test
-        working-directory: ./api
 
   # ==========================================
   # JOB 2: Despliegue Continuo (AWS ECR + EC2)
   # ==========================================
   deploy:
-    needs: ci # Garantiza ejecución solo si el job 'ci' pasa con éxito
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # Requerido para la autenticación OIDC con AWS
-      contents: read # Acceso de lectura al repositorio
+      id-token: write
+      contents: read
 
     steps:
       # Paso 1: Clona el código fuente
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Paso 2: Autenticación en AWS mediante OIDC (sin credenciales estáticas)
+      # Paso 2: Autenticación en AWS mediante OIDC
       - name: Configure AWS OIDC
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
@@ -83,21 +78,21 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Paso 4: Configura el motor Buildx para compilaciones multiplataforma
+      # Paso 4: Configura el motor Buildx para compilación multiplataforma
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Paso 5: Compila y sube la imagen especificando la arquitectura del servidor (linux/amd64)
+      # Paso 5: Compila y sube la imagen desde la RAÍZ (.) forzando arquitectura linux/amd64
       - name: Build and Push Docker Image (linux/amd64)
         uses: docker/build-push-action@v5
         with:
-          context: ./api
-          file: ./api/Dockerfile
-          platforms: linux/amd64 # Evita la advertencia y fallos de emulación en la EC2
+          context: . # <-- Cambiado de ./api a la raíz (.)
+          file: ./Dockerfile # <-- Ubicación real de tu Dockerfile
+          platforms: linux/amd64
           push: true
           tags: ${{ secrets.ECR_REPOSITORY }}:latest
 
-      # Paso 6: Despliegue remoto en la EC2 mediante SSH
+      # Paso 6: Despliegue en la EC2 mediante SSH
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -105,35 +100,35 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
           script: |
-            # 1. Autenticación en ECR desde el servidor
+            # 1. Autenticación en ECR
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
 
-            # 2. Descarga de la última imagen compilada para linux/amd64
+            # 2. Descargar la imagen
             docker pull ${{ secrets.ECR_REPOSITORY }}:latest
 
-            # 3. Limpieza del contenedor previo
+            # 3. Detener y remover el contenedor anterior
             docker stop ecommerce-nest-api || true
             docker rm ecommerce-nest-api || true
 
-            # 4. Extracción de variables desde AWS Secrets Manager y conversión a formato .env
+            # 4. Inyectar secretos en un archivo .env temporal desde AWS Secrets Manager
             aws secretsmanager get-secret-value \
               --secret-id ecommerce-nest-prod-secrets \
               --query SecretString \
               --output text | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]' > /tmp/.env.prod
 
-            # 5. Obtención dinámica del puerto
+            # 5. Obtener el puerto configurado o asignar 3000 por defecto
             APP_PORT=$(grep ^PORT= /tmp/.env.prod | cut -d '=' -f2)
             APP_PORT=${APP_PORT:-3000}
 
-            # 6. Lanzamiento del nuevo contenedor usando --env-file
+            # 6. Ejecutar el nuevo contenedor
             docker run -d \
               -p $APP_PORT:$APP_PORT \
               --name ecommerce-nest-api \
               --env-file /tmp/.env.prod \
               ${{ secrets.ECR_REPOSITORY }}:latest
 
-            # 7. Remoción del archivo .env temporal para mitigar riesgos de seguridad
+            # 7. Eliminar el archivo .env temporal de la máquina
             rm -f /tmp/.env.prod
 
-            # 8. Limpieza de imágenes huérfanas en el disco
+            # 8. Limpiar imágenes huérfanas
             docker image prune -f
