@@ -51,7 +51,7 @@ export class UsersService {
   }
 
   // Address methods
-  async getAddresses(userId: string) {
+  getAddresses(userId: string) {
     return this.prisma.address.findMany({
       where: { userId },
       orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
@@ -179,7 +179,7 @@ export class UsersService {
     });
   }
 
-  async getAllUsers() {
+  getAllUsers() {
     return this.prisma.user.findMany({
       select: {
         id: true,

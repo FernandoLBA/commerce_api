@@ -130,7 +130,7 @@ export class OrdersService {
     return this.findOne(result.id, userId);
   }
 
-  async findAll(userId?: string, isAdmin = false) {
+  findAll(userId?: string, isAdmin = false) {
     const where: Prisma.OrderWhereInput = isAdmin ? {} : { userId };
 
     return this.prisma.order.findMany({

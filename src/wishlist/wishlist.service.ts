@@ -153,7 +153,7 @@ export class WishlistService {
     return !!item;
   }
 
-  async getWishlistCount(userId: string): Promise<number> {
+  getWishlistCount(userId: string): Promise<number> {
     return this.prisma.wishlistItem.count({ where: { userId } });
   }
 
@@ -165,7 +165,7 @@ export class WishlistService {
   }
 
   // For scheduled jobs: get items with price drop notifications enabled
-  async getItemsForPriceDropNotification() {
+  getItemsForPriceDropNotification() {
     return this.prisma.wishlistItem.findMany({
       where: { notifyOnPriceDrop: true },
       include: { user: true, product: true, variant: true },
@@ -173,7 +173,7 @@ export class WishlistService {
   }
 
   // For scheduled jobs: get items for back in stock notifications
-  async getItemsForBackInStockNotification() {
+  getItemsForBackInStockNotification() {
     return this.prisma.wishlistItem.findMany({
       where: { notifyOnBackInStock: true },
       include: { user: true, product: true, variant: true },

@@ -164,7 +164,7 @@ export class ShippingService {
     return savedShipment;
   }
 
-  async findAll() {
+  findAll() {
     return this.prisma.shipment.findMany({
       include: { order: true },
       orderBy: { createdAt: 'desc' },
@@ -184,7 +184,7 @@ export class ShippingService {
     return shipment;
   }
 
-  async findByOrder(orderId: string) {
+  findByOrder(orderId: string) {
     return this.prisma.shipment.findFirst({
       where: { orderId },
       include: { order: true },
@@ -245,7 +245,7 @@ export class ShippingService {
   /**
    * Get shipment tracking history
    */
-  async getTrackingHistory(shipmentId: string) {
+  getTrackingHistory(shipmentId: string) {
     return this.prisma.shipmentEvent.findMany({
       where: { shipmentId },
       orderBy: { occurredAt: 'desc' },
@@ -272,7 +272,7 @@ export class ShippingService {
     };
   }
 
-  private async createEvent(
+  private createEvent(
     shipmentId: string,
     status: ShippingStatus,
     description: string,
