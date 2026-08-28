@@ -26,13 +26,11 @@ jobs:
         with:
           version: 9 # Se alinea con la versión usada en desarrollo local
 
-      # Paso 3: Configura Node.js con la caché apuntando directamente al lockfile en ./api
+      # Paso 3: Configura Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.23.2
-          cache: "pnpm"
-          cache-dependency-path: "./api/pnpm-lock.yaml"
+          node-version: '22'
 
       # Paso 4: Instala dependencias estrictamente desde pnpm-lock.yaml
       - name: Install dependencies
