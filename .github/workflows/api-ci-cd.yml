@@ -7,6 +7,8 @@ on:
   push:
     branches:
       - main # Se ejecuta automáticamente al hacer push en la rama 'main'
+      - release
+      - develop
 
 jobs:
   # ==========================================
