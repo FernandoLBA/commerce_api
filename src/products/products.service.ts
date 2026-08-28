@@ -48,8 +48,8 @@ export class ProductsService {
     });
   }
 
-  findAll(categoryId?: string) {
-    return this.prisma.product.findMany({
+  async findAll(categoryId?: string) {
+    return await this.prisma.product.findMany({
       where: categoryId ? { categoryId } : undefined,
       include: { category: true, images: true },
       orderBy: { createdAt: 'desc' },
