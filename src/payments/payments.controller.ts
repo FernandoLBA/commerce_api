@@ -1,14 +1,23 @@
+import type { RawBodyRequest } from '@nestjs/common';
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Param,
+  Controller,
+  Get,
   Headers,
-  UseGuards,
+  Param,
   ParseUUIDPipe,
+  Post,
   Req,
+  UseGuards,
 } from '@nestjs/common';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { Request } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/enums/role.enum';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { MercadoPagoService } from './mercadopago.service';
+import { StripeService } from './stripe.service';
 
 interface MercadoPagoWebhookBody {
   action?: string;
@@ -17,14 +26,6 @@ interface MercadoPagoWebhookBody {
     id?: string;
   };
 }
-import type { RawBodyRequest } from '@nestjs/common';
-import { Request } from 'express';
-import { StripeService } from './stripe.service';
-import { MercadoPagoService } from './mercadopago.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../common/guards/roles.guard';
-import { Roles } from '../common/decorators/roles.decorator';
-import { Role } from '../common/enums/role.enum';
 
 @Controller('payments')
 export class PaymentsController {
@@ -42,6 +43,7 @@ export class PaymentsController {
   }
 
   @Post('stripe/webhook')
+  @SkipThrottle()
   async handleStripeWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Headers('stripe-signature') signature: string,
@@ -70,6 +72,7 @@ export class PaymentsController {
   }
 
   @Post('mercadopago/webhook')
+  @Throttle({ default: { limit: 300, ttl: 60000 } })
   async handleMercadoPagoWebhook(@Body() body: MercadoPagoWebhookBody) {
     return this.mercadoPagoService.handleWebhook(body);
   }
