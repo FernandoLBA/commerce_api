@@ -14,37 +14,37 @@ export interface PasswordResetEmailData {
 
 export function passwordResetEmailText(data: PasswordResetEmailData): string {
   return `
-¡Hola ${data.firstName}!
+Hello ${data.firstName}!
 
-Recibimos una solicitud para restablecer tu contraseña en ${brandName}.
+We received a request to reset your password on ${brandName}.
 
-Para restablecer tu contraseña, haz clic en el siguiente enlace:
+To reset your password, click the following link:
 ${data.resetUrl}
 
-Este enlace expirará en 1 hora.
+This link will expire in 1 hour.
 
-Si no solicitaste este cambio, puedes ignorar este correo. Tu cuenta está segura.
+If you did not request this change, you can ignore this email. Your account is safe.
 
-- El equipo de ${brandName}
+- The ${brandName} team
   `.trim();
 }
 
 export function passwordResetEmailHtml(data: PasswordResetEmailData): string {
   const content = `
-    <h1 style="${inline.heading1}">Restablecer contraseña 🔐</h1>
-    <p style="${inline.paragraph}">Hola <strong>${data.firstName}</strong>,</p>
-    <p style="${inline.paragraph}">Recibimos una solicitud para restablecer tu contraseña.</p>
+    <h1 style="${inline.heading1}">Reset password 🔐</h1>
+    <p style="${inline.paragraph}">Hello <strong>${data.firstName}</strong>,</p>
+    <p style="${inline.paragraph}">We received a request to reset your password.</p>
     <div style="text-align: center; margin: 32px 0;">
-      ${primaryButton('Restablecer mi contraseña', data.resetUrl)}
+      ${primaryButton('Reset my password', data.resetUrl)}
     </div>
-    <p style="font-size: 14px; color: ${colors.textMuted};">O copia y pega este enlace en tu navegador:</p>
+    <p style="font-size: 14px; color: ${colors.textMuted};">Or copy and paste this link into your browser:</p>
     <p style="font-size: 14px; word-break: break-all;"><a href="${data.resetUrl}" style="color: ${colors.primary};">${data.resetUrl}</a></p>
     <div style="background-color: ${colors.background}; padding: 16px; border-radius: 8px; margin-top: 24px;">
-      <p style="margin: 0; font-size: 14px; color: ${colors.textSecondary};">⏰ <strong>Este enlace expirará en 1 hora.</strong></p>
+      <p style="margin: 0; font-size: 14px; color: ${colors.textSecondary};">⏰ <strong>This link will expire in 1 hour.</strong></p>
     </div>
-    ${emailFooter('Si no solicitaste este cambio, puedes ignorar este correo. Tu cuenta está segura.')}
+    ${emailFooter('If you did not request this change, you can ignore this email. Your account is safe.')}
   `;
   return wrapInHtmlTemplate(content);
 }
 
-export const passwordResetEmailSubject = `${brandName} - Restablecer contraseña`;
+export const passwordResetEmailSubject = `${brandName} - Reset password`;

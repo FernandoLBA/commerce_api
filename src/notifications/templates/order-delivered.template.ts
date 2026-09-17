@@ -13,34 +13,34 @@ export interface OrderDeliveredData {
 
 export function orderDeliveredEmailText(data: OrderDeliveredData): string {
   return `
-¡Tu pedido ha sido entregado!
+Your order has been delivered!
 
-El pedido #${data.orderNumber} ha sido entregado exitosamente.
+Order #${data.orderNumber} has been delivered successfully.
 
-Esperamos que disfrutes tu compra. Si tienes algún problema o pregunta, no dudes en contactarnos.
+We hope you enjoy your purchase. If you have any problems or questions, feel free to contact us.
 
-¡Gracias por comprar en ${brandName}!
+Thank you for shopping at ${brandName}!
   `.trim();
 }
 
 export function orderDeliveredEmailHtml(data: OrderDeliveredData): string {
   const content = `
-    <h1 style="${inline.heading1}">¡Pedido entregado! 📦✅</h1>
-    <p style="${inline.paragraph}">El pedido <strong>#${data.orderNumber}</strong> ha sido entregado exitosamente.</p>
-    
+    <h1 style="${inline.heading1}">Order delivered! 📦✅</h1>
+    <p style="${inline.paragraph}">Order <strong>#${data.orderNumber}</strong> has been delivered successfully.</p>
+
     <div style="background-color: ${colors.successLight}; padding: 24px; border-radius: 12px; margin: 24px 0; text-align: center;">
       <p style="font-size: 48px; margin: 0 0 12px 0;">🎉</p>
-      ${successBadge('Entrega completada')}
+      ${successBadge('Delivery completed')}
     </div>
-    
-    <p style="${inline.paragraph}">Esperamos que disfrutes tu compra. Si tienes algún problema o pregunta, no dudes en contactarnos.</p>
-    <p style="${inline.paragraph}">¿Te gustó tu experiencia? <a href="#" style="color: ${colors.primary};">Déjanos una reseña</a></p>
-    
+
+    <p style="${inline.paragraph}">We hope you enjoy your purchase. If you have any problems or questions, feel free to contact us.</p>
+    <p style="${inline.paragraph}">Did you like your experience? <a href="#" style="color: ${colors.primary};">Leave us a review</a></p>
+
     ${emailFooter()}
   `;
   return wrapInHtmlTemplate(content);
 }
 
 export function orderDeliveredEmailSubject(orderNumber: string): string {
-  return `¡Pedido #${orderNumber} entregado! 🎉`;
+  return `Order #${orderNumber} delivered! 🎉`;
 }

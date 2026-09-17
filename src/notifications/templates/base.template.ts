@@ -22,7 +22,7 @@ export function wrapInHtmlTemplate(content: string): string {
       ${content}
     </div>
     <div style="text-align: center; margin-top: 24px; font-size: 12px; color: ${colors.textMuted};">
-      <p>© ${new Date().getFullYear()} ${brandName}. Todos los derechos reservados.</p>
+      <p>© ${new Date().getFullYear()} ${brandName}. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -51,7 +51,7 @@ export function emailFooter(message?: string): string {
   return `
     <div style="${inline.footer}">
       ${message ? `<p style="margin: 0 0 8px 0;">${message}</p>` : ''}
-      <p style="margin: 0;">Este es un mensaje automático, por favor no respondas a este correo.</p>
+      <p style="margin: 0;">This is an automated message, please do not reply to this email.</p>
     </div>
   `;
 }

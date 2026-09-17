@@ -119,7 +119,7 @@ export class ProductsService {
   }
 
   async removeOne(slug: string): Promise<void> {
-    await this.findOne(slug); // Verifica que existe
+    await this.findOne(slug); // Verify it exists
     await this.prisma.product.delete({ where: { slug } });
   }
 
@@ -134,7 +134,7 @@ export class ProductsService {
       );
     }
 
-    // Eliminar de Cloudinary si publicId existe
+    // Delete from Cloudinary if publicId exists
     if (image.publicId) {
       await this.filesService.remove(image.publicId);
     }

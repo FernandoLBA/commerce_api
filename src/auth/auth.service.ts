@@ -47,7 +47,7 @@ export class AuthService {
   async register(createUserDto: CreateUserDto) {
     const { email, password, firstName, lastName } = createUserDto;
 
-    // Verificar si el usuario ya existe
+    // Check if user already exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -56,21 +56,21 @@ export class AuthService {
       throw new UserAlreadyExistsException();
     }
 
-    // Encriptar la contraseña
+    // Hash the password
     const hashedPassword = await this.bcryptService.hashPassword(password);
 
-    // Generar token de activación
+    // Generate activation token
     const activationToken = this.generateActivationToken();
     const activationExpires = this.getActivationExpiration(24);
 
-    // Enviar email de activación
+    // Send activation email
     await this.notificationsService.sendActivationEmail(
       email,
       activationToken,
-      firstName || 'Usuario',
+      firstName || 'User',
     );
 
-    // Crear nuevo usuario (isActive = false por defecto)
+    // Create new user (isActive = false by default)
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -100,7 +100,7 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
 
-    // Buscar el usuario
+    // Find the user
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -244,7 +244,7 @@ export class AuthService {
     await this.notificationsService.sendActivationEmail(
       email,
       activationToken,
-      typeof user.firstName === 'string' ? user.firstName : 'Usuario',
+      typeof user.firstName === 'string' ? user.firstName : 'User',
     );
 
     return {
@@ -278,7 +278,7 @@ export class AuthService {
     await this.notificationsService.sendPasswordResetEmail(
       email,
       passwordResetToken,
-      typeof user.firstName === 'string' ? user.firstName : 'Usuario',
+      typeof user.firstName === 'string' ? user.firstName : 'User',
     );
 
     return {

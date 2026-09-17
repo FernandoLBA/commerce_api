@@ -25,28 +25,28 @@ export interface OrderShippedData {
 
 export function orderShippedEmailText(data: OrderShippedData): string {
   const trackingInfo = data.trackingNumber
-    ? `\nNúmero de seguimiento: ${data.trackingNumber}${data.trackingUrl ? `\nRastrear envío: ${data.trackingUrl}` : ''}`
+    ? `\nTracking number: ${data.trackingNumber}${data.trackingUrl ? `\nTrack shipment: ${data.trackingUrl}` : ''}`
     : '';
 
   const addr = data.shippingAddress;
 
   return `
-¡Tu pedido está en camino!
+Your order is on its way!
 
-El pedido #${data.orderNumber} ha sido enviado.
+Order #${data.orderNumber} has been shipped.
 
 Carrier: ${data.carrierName}
 ${trackingInfo}
 
-Fecha estimada de entrega: ${data.estimatedDeliveryDate}
+Estimated delivery date: ${data.estimatedDeliveryDate}
 
-Dirección de entrega:
+Delivery address:
 ${addr.recipientName || ''}
 ${addr.street || ''} ${addr.number || ''}
 ${addr.district || ''}, ${addr.city || ''}
 ${addr.department || ''}
 
-¡Gracias por comprar en ${brandName}!
+Thank you for shopping at ${brandName}!
   `.trim();
 }
 
@@ -54,12 +54,12 @@ export function orderShippedEmailHtml(data: OrderShippedData): string {
   const addr = data.shippingAddress;
   const trackingSection = data.trackingNumber
     ? `
-      <p style="margin: 8px 0; color: ${colors.textSecondary};"><strong>Número de seguimiento:</strong> ${data.trackingNumber}</p>
+      <p style="margin: 8px 0; color: ${colors.textSecondary};"><strong>Tracking number:</strong> ${data.trackingNumber}</p>
       ${
         data.trackingUrl
           ? `
         <div style="margin-top: 16px;">
-          ${primaryButton('Rastrear mi envío', data.trackingUrl)}
+          ${primaryButton('Track my shipment', data.trackingUrl)}
         </div>
       `
           : ''
@@ -68,25 +68,25 @@ export function orderShippedEmailHtml(data: OrderShippedData): string {
     : '';
 
   const content = `
-    <h1 style="${inline.heading1}">¡Tu pedido está en camino! 🚚</h1>
-    <p style="${inline.paragraph}">El pedido <strong>#${data.orderNumber}</strong> ha sido enviado.</p>
-    
+    <h1 style="${inline.heading1}">Your order is on its way! 🚚</h1>
+    <p style="${inline.paragraph}">Order <strong>#${data.orderNumber}</strong> has been shipped.</p>
+
     <div style="background-color: ${colors.background}; padding: 24px; border-radius: 12px; margin: 24px 0;">
       <div style="display: flex; align-items: center; margin-bottom: 16px;">
         <span style="font-size: 32px; margin-right: 12px;">📦</span>
         <div>
           <p style="margin: 0; font-weight: 600; color: ${colors.text};">${data.carrierName}</p>
-          <p style="margin: 4px 0 0 0; font-size: 14px; color: ${colors.textMuted};">Servicio de envío</p>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: ${colors.textMuted};">Shipping service</p>
         </div>
       </div>
       ${trackingSection}
       <p style="margin: 16px 0 0 0; padding-top: 16px; border-top: 1px solid ${colors.border};">
-        <strong>📅 Fecha estimada de entrega:</strong><br>
+        <strong>📅 Estimated delivery date:</strong><br>
         <span style="color: ${colors.primary}; font-weight: 600;">${data.estimatedDeliveryDate}</span>
       </p>
     </div>
-    
-    <h2 style="${inline.heading2}">Dirección de entrega</h2>
+
+    <h2 style="${inline.heading2}">Delivery address</h2>
     <div style="background-color: ${colors.background}; padding: 16px; border-radius: 8px;">
       <p style="margin: 0; color: ${colors.text};">
         <strong>${addr.recipientName || ''}</strong><br>
@@ -95,12 +95,12 @@ export function orderShippedEmailHtml(data: OrderShippedData): string {
         ${addr.department || ''}
       </p>
     </div>
-    
+
     ${emailFooter()}
   `;
   return wrapInHtmlTemplate(content);
 }
 
 export function orderShippedEmailSubject(orderNumber: string): string {
-  return `🚚 Tu pedido #${orderNumber} está en camino`;
+  return `🚚 Your order #${orderNumber} is on its way`;
 }

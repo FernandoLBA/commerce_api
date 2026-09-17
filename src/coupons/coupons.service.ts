@@ -115,7 +115,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: 'Cupón inactivo',
+          errorMessage: 'Coupon is inactive',
         };
       }
 
@@ -124,7 +124,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: 'El cupón aún no está vigente',
+          errorMessage: 'Coupon is not active yet',
         };
       }
 
@@ -132,7 +132,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: 'El cupón ha expirado',
+          errorMessage: 'Coupon has expired',
         };
       }
 
@@ -141,7 +141,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: 'El cupón ha alcanzado su límite de uso',
+          errorMessage: 'Coupon has reached its usage limit',
         };
       }
 
@@ -155,7 +155,8 @@ export class CouponsService {
           return {
             isValid: false,
             discountAmount: 0,
-            errorMessage: 'Ya has usado este cupón el máximo número de veces',
+            errorMessage:
+              'You have already used this coupon the maximum number of times',
           };
         }
       }
@@ -170,7 +171,7 @@ export class CouponsService {
           return {
             isValid: false,
             discountAmount: 0,
-            errorMessage: 'Este cupón es solo para primera compra',
+            errorMessage: 'This coupon is only valid for first-time purchases',
           };
         }
       }
@@ -183,7 +184,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: `El monto mínimo de compra es S/. ${Number(coupon.minPurchaseAmount)}`,
+          errorMessage: `Minimum purchase amount is S/. ${Number(coupon.minPurchaseAmount)}`,
         };
       }
 
@@ -197,7 +198,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: 'El cupón no aplica a los productos del carrito',
+          errorMessage: 'Coupon does not apply to the products in the cart',
         };
       }
 
@@ -222,7 +223,7 @@ export class CouponsService {
         return {
           isValid: false,
           discountAmount: 0,
-          errorMessage: 'Cupón no encontrado',
+          errorMessage: 'Coupon not found',
         };
       }
       throw error;

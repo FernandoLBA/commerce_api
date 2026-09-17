@@ -20,22 +20,22 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  // Helmet - Protección de headers HTTP
+  // Helmet - HTTP header protection
   app.use(helmet(securityConfig.helmet));
 
-  // CORS - Configuración de orígenes permitidos
+  // CORS - Allowed origin configuration
   app.enableCors(securityConfig.cors);
 
   // Global validation pipe with security enhancements
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Elimina propiedades no decoradas
-      forbidNonWhitelisted: true, // Rechaza solicitudes con propiedades extras
-      transform: true, // Transforma automáticamente tipos
+      whitelist: true, // Strips undecorated properties
+      forbidNonWhitelisted: true, // Rejects requests with extra properties
+      transform: true, // Automatically transforms types
       transformOptions: {
         enableImplicitConversion: true,
       },
-      disableErrorMessages: NODE_ENV === 'production', // Oculta detalles en producción
+      disableErrorMessages: NODE_ENV === 'production', // Hides details in production
     }),
   );
 
@@ -48,7 +48,7 @@ async function bootstrap() {
   // Global response interceptor
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  // Trust proxy para rate limiting detrás de reverse proxy
+  // Trust proxy for rate limiting behind a reverse proxy
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('trust proxy', 1);
 

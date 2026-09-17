@@ -16,7 +16,7 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 
 /**
- * DTO para pruebas de seguridad
+ * DTO for security tests
  */
 class SecurityTestDto {
   input: string;
@@ -34,12 +34,12 @@ class PasswordTestDto {
 /**
  * Security Controller
  *
- * Este controlador proporciona endpoints para probar y verificar
- * las medidas de seguridad implementadas en la API.
+ * This controller provides endpoints to test and verify
+ * the security measures implemented in the API.
  *
- * ⚠️ IMPORTANTE: Este módulo está diseñado para pruebas de seguridad
- * controladas. En producción, estos endpoints deberían estar
- * protegidos o deshabilitados.
+ * ⚠️ IMPORTANT: This module is designed for controlled security
+ * testing. In production, these endpoints should be
+ * protected or disabled.
  */
 @Controller('security')
 export class SecurityController {
@@ -47,8 +47,8 @@ export class SecurityController {
 
   /**
    * GET /security/report
-   * Obtiene un reporte completo del estado de seguridad
-   * Solo accesible para administradores
+   * Retrieves a full report of the security status
+   * Accessible only to administrators
    */
   @Get('report')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -62,8 +62,8 @@ export class SecurityController {
 
   /**
    * GET /security/payloads
-   * Obtiene payloads de prueba para diferentes tipos de ataques
-   * Solo accesible para administradores
+   * Retrieves test payloads for different types of attacks
+   * Accessible only to administrators
    */
   @Get('payloads')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -77,7 +77,7 @@ export class SecurityController {
 
   /**
    * POST /security/test/sql-injection
-   * Prueba de detección de SQL Injection
+   * SQL Injection detection test
    */
   @Post('test/sql-injection')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -95,7 +95,7 @@ export class SecurityController {
 
   /**
    * POST /security/test/xss
-   * Prueba de detección de XSS (Cross-Site Scripting)
+   * XSS (Cross-Site Scripting) detection test
    */
   @Post('test/xss')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -113,7 +113,7 @@ export class SecurityController {
 
   /**
    * POST /security/test/path-traversal
-   * Prueba de detección de Path Traversal
+   * Path Traversal detection test
    */
   @Post('test/path-traversal')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -131,7 +131,7 @@ export class SecurityController {
 
   /**
    * POST /security/test/command-injection
-   * Prueba de detección de Command Injection
+   * Command Injection detection test
    */
   @Post('test/command-injection')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -149,7 +149,7 @@ export class SecurityController {
 
   /**
    * POST /security/test/password-strength
-   * Prueba la fortaleza de una contraseña
+   * Tests the strength of a password
    */
   @Post('test/password-strength')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -167,7 +167,7 @@ export class SecurityController {
 
   /**
    * POST /security/test/all
-   * Ejecuta todas las pruebas de seguridad en un input
+   * Runs all security tests on an input
    */
   @Post('test/all')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -204,43 +204,43 @@ export class SecurityController {
 
   /**
    * GET /security/test/rate-limit
-   * Endpoint para probar el rate limiting
-   * Tiene un límite muy bajo (3 requests por minuto) para demostración
+   * Endpoint to test rate limiting
+   * Has a very low limit (3 requests per minute) for demonstration purposes
    */
   @Get('test/rate-limit')
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   testRateLimit(@Query('attempt') attempt?: string) {
     return {
       success: true,
-      message: 'Request exitoso',
+      message: 'Successful request',
       data: {
         attempt: attempt || '1',
         timestamp: new Date(),
-        info: 'Este endpoint tiene un límite de 3 requests por minuto para demostración',
+        info: 'This endpoint has a limit of 3 requests per minute for demonstration purposes',
       },
     };
   }
 
   /**
    * GET /security/test/rate-limit-bypass
-   * Endpoint sin rate limiting para comparación
+   * Endpoint without rate limiting for comparison
    */
   @Get('test/no-rate-limit')
   @SkipThrottle()
   testNoRateLimit() {
     return {
       success: true,
-      message: 'Request sin rate limiting',
+      message: 'Request without rate limiting',
       data: {
         timestamp: new Date(),
-        info: 'Este endpoint NO tiene rate limiting (SkipThrottle)',
+        info: 'This endpoint has NO rate limiting (SkipThrottle)',
       },
     };
   }
 
   /**
    * POST /security/test/validation
-   * Prueba el ValidationPipe con diferentes inputs maliciosos
+   * Tests the ValidationPipe with different malicious inputs
    */
   @Post('test/validation')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -250,28 +250,28 @@ export class SecurityController {
     success: boolean;
     data: Record<string, unknown>;
   } {
-    // Si llega aquí, el ValidationPipe no bloqueó el request
+    // If it reaches here, the ValidationPipe did not block the request
     return {
       success: true,
       data: {
-        message: 'Request pasó la validación',
+        message: 'Request passed validation',
         receivedBody: body,
         timestamp: new Date(),
-        note: 'El ValidationPipe con whitelist eliminará propiedades no definidas en el DTO',
+        note: 'The ValidationPipe with whitelist will strip properties not defined in the DTO',
       },
     };
   }
 
   /**
    * GET /security/headers
-   * Muestra los headers de seguridad configurados por Helmet
+   * Shows the security headers configured by Helmet
    */
   @Get('headers')
   getSecurityHeaders() {
     return {
       success: true,
       data: {
-        message: 'Headers de seguridad configurados por Helmet',
+        message: 'Security headers configured by Helmet',
         headers: {
           'Content-Security-Policy':
             "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; script-src 'self'",
@@ -281,14 +281,14 @@ export class SecurityController {
           'Strict-Transport-Security': 'max-age=15552000; includeSubDomains',
           'Cross-Origin-Resource-Policy': 'cross-origin',
         },
-        note: 'Estos headers son añadidos automáticamente por Helmet a cada response',
+        note: 'These headers are automatically added by Helmet to every response',
       },
     };
   }
 
   /**
    * GET /security/cors-test
-   * Endpoint para probar CORS desde diferentes orígenes
+   * Endpoint to test CORS from different origins
    */
   @Get('cors-test')
   @SkipThrottle()

@@ -7,24 +7,24 @@ export interface LowStockAlertData {
 }
 
 export function lowStockAlertEmailText(data: LowStockAlertData): string {
-  const urgency = data.isCritical ? '🚨 CRÍTICO' : '⚠️ Bajo Stock';
+  const urgency = data.isCritical ? '🚨 CRITICAL' : '⚠️ Low Stock';
   const skuInfo = data.sku ? ` (SKU: ${data.sku})` : '';
 
   return `
-${urgency}: Alerta de Inventario
+${urgency}: Inventory Alert
 
-Producto: ${data.productName}${skuInfo}
-Stock actual: ${data.currentStock} unidades
-Umbral configurado: ${data.threshold} unidades
+Product: ${data.productName}${skuInfo}
+Current stock: ${data.currentStock} units
+Configured threshold: ${data.threshold} units
 
-${data.isCritical ? 'ACCIÓN REQUERIDA: El stock ha llegado a nivel crítico.' : 'Se recomienda reabastecer pronto.'}
+${data.isCritical ? 'ACTION REQUIRED: Stock has reached a critical level.' : 'Restocking is recommended soon.'}
 
 ---
-Este es un mensaje automático del sistema de inventario.
+This is an automated message from the inventory system.
   `.trim();
 }
 
 export function lowStockAlertEmailSubject(data: LowStockAlertData): string {
-  const urgency = data.isCritical ? '🚨 CRÍTICO' : '⚠️ Bajo Stock';
+  const urgency = data.isCritical ? '🚨 CRITICAL' : '⚠️ Low Stock';
   return `${urgency}: ${data.productName} - Stock: ${data.currentStock}`;
 }

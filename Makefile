@@ -72,7 +72,7 @@ create-image:
 run-image-envs:
 	docker run -p 3000:3000 --env-file .env ecommerce-nest-api
 
-# Genera un token temporal de AWS y mediante el pipe (|) se lo pasa a docker para autenticarse en ECR 
+# Generates a temporary token for AWS and passes it to docker for authentication in ECR
 docker-aws-ecr-login:
 	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin
 

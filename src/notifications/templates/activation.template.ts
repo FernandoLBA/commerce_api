@@ -14,39 +14,39 @@ export interface ActivationEmailData {
 
 export function activationEmailText(data: ActivationEmailData): string {
   return `
-¡Hola ${data.firstName}!
+Hello ${data.firstName}!
 
-Gracias por registrarte en ${brandName}.
+Thank you for signing up at ${brandName}.
 
-Para activar tu cuenta, haz clic en el siguiente enlace:
+To activate your account, click the following link:
 ${data.activationUrl}
 
-Este enlace expirará en 24 horas.
+This link will expire in 24 hours.
 
-Si no creaste esta cuenta, puedes ignorar este correo.
+If you did not create this account, you can ignore this email.
 
-¡Gracias!
-- El equipo de ${brandName}
+Thank you!
+- The ${brandName} team
   `.trim();
 }
 
 export function activationEmailHtml(data: ActivationEmailData): string {
   const content = `
-    <h1 style="${inline.heading1}">¡Bienvenido a ${brandName}! 🎉</h1>
-    <p style="${inline.paragraph}">Hola <strong>${data.firstName}</strong>,</p>
-    <p style="${inline.paragraph}">Gracias por registrarte. Estás a un paso de comenzar a disfrutar de las mejores ofertas.</p>
-    <p style="${inline.paragraph}">Para activar tu cuenta, haz clic en el siguiente botón:</p>
+    <h1 style="${inline.heading1}">Welcome to ${brandName}! 🎉</h1>
+    <p style="${inline.paragraph}">Hello <strong>${data.firstName}</strong>,</p>
+    <p style="${inline.paragraph}">Thank you for signing up. You're one step away from enjoying the best deals.</p>
+    <p style="${inline.paragraph}">To activate your account, click the button below:</p>
     <div style="text-align: center; margin: 32px 0;">
-      ${primaryButton('Activar mi cuenta', data.activationUrl)}
+      ${primaryButton('Activate my account', data.activationUrl)}
     </div>
-    <p style="font-size: 14px; color: ${colors.textMuted};">O copia y pega este enlace en tu navegador:</p>
+    <p style="font-size: 14px; color: ${colors.textMuted};">Or copy and paste this link into your browser:</p>
     <p style="font-size: 14px; word-break: break-all;"><a href="${data.activationUrl}" style="color: ${colors.primary};">${data.activationUrl}</a></p>
     <div style="background-color: ${colors.background}; padding: 16px; border-radius: 8px; margin-top: 24px;">
-      <p style="margin: 0; font-size: 14px; color: ${colors.textSecondary};">⏰ <strong>Este enlace expirará en 24 horas.</strong></p>
+      <p style="margin: 0; font-size: 14px; color: ${colors.textSecondary};">⏰ <strong>This link will expire in 24 hours.</strong></p>
     </div>
-    ${emailFooter('Si no creaste esta cuenta, puedes ignorar este correo.')}
+    ${emailFooter('If you did not create this account, you can ignore this email.')}
   `;
   return wrapInHtmlTemplate(content);
 }
 
-export const activationEmailSubject = `¡Bienvenido a ${brandName}! Activa tu cuenta`;
+export const activationEmailSubject = `Welcome to ${brandName}! Activate your account`;

@@ -6,8 +6,8 @@ import { JwtPayload } from '../interfaces/jwt-payload.interface';
 import { JWT_CONSTANTS } from '../../common/constants/jwt.constants';
 
 /**
- * Estrategia JWT para validar tokens Bearer en las solicitudes HTTP.
- * Valida que el token sea válido y que el usuario exista en la base de datos.
+ * JWT strategy to validate Bearer tokens in HTTP requests.
+ * Validates that the token is valid and that the user exists in the database.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -22,10 +22,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   /**
-   * Valida el payload del token JWT.
-   * @param payload - Payload decodificado del token JWT
-   * @returns Datos del usuario validado
-   * @throws UnauthorizedException si el usuario no existe
+   * Validates the JWT token payload.
+   * @param payload - Decoded JWT token payload
+   * @returns Validated user data
+   * @throws UnauthorizedException if the user does not exist
    */
   async validate(payload: JwtPayload) {
     // try {

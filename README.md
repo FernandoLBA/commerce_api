@@ -1,124 +1,124 @@
 # Commerce API 🛒
 
-API RESTful completa para e-commerce construida con NestJS y Prisma.
+A complete RESTful API for e-commerce built with NestJS and Prisma.
 
-## 🚀 Características
+## 🚀 Features
 
-- **Autenticación JWT** - Registro, login y protección de rutas
-- **Gestión de Productos** - CRUD completo con variantes, atributos e imágenes
-- **Categorías** - Sistema jerárquico de categorías
-- **Carrito de Compras** - Manejo de sesión y usuario autenticado
-- **Órdenes** - Flujo completo de pedidos con estados
-- **Pagos** - Integración con Stripe y MercadoPago
-- **Envíos** - Tracking y múltiples transportistas
-- **Inventario** - Control de stock con alertas
-- **Reseñas** - Sistema de calificaciones y comentarios
-- **Cupones** - Descuentos por porcentaje, monto fijo y envío gratis
-- **Wishlist** - Lista de deseos para usuarios
-- **Notificaciones** - Emails transaccionales
+- **JWT Authentication** - Registration, login, and route protection
+- **Product Management** - Full CRUD with variants, attributes, and images
+- **Categories** - Hierarchical category system
+- **Shopping Cart** - Session and authenticated user cart handling
+- **Orders** - Complete order flow with statuses
+- **Payments** - Stripe and MercadoPago integration
+- **Shipping** - Tracking and multiple carriers
+- **Inventory** - Stock control with alerts
+- **Reviews** - Rating and comment system
+- **Coupons** - Percentage, fixed amount, and free shipping discounts
+- **Wishlist** - User wishlists
+- **Notifications** - Transactional emails
 
-## 🛡️ Seguridad
+## 🛡️ Security
 
-Esta API implementa múltiples capas de seguridad:
+This API implements multiple layers of security:
 
-| Característica | Descripción |
+| Feature | Description |
 |----------------|-------------|
-| **Helmet** | Protección de headers HTTP contra ataques XSS, clickjacking, etc. |
-| **Rate Limiting** | Prevención de ataques de fuerza bruta y DDoS |
-| **CORS** | Control de orígenes permitidos |
-| **Validation Pipe** | Sanitización y validación de todas las entradas |
-| **JWT** | Tokens seguros con expiración configurable |
-| **Password Hashing** | Bcrypt con salt rounds configurables |
+| **Helmet** | HTTP header protection against XSS, clickjacking, etc. |
+| **Rate Limiting** | Prevention of brute-force and DDoS attacks |
+| **CORS** | Allowed origin control |
+| **Validation Pipe** | Sanitization and validation of all inputs |
+| **JWT** | Secure tokens with configurable expiration |
+| **Password Hashing** | Bcrypt with configurable salt rounds |
 
-### Rate Limiting por Endpoint
+### Rate Limiting per Endpoint
 
-| Endpoint | Límite | Período |
+| Endpoint | Limit | Period |
 |----------|--------|---------|
-| Global | 100 requests | 1 minuto |
-| `/auth/login` | 5 requests | 1 minuto |
-| `/auth/register` | 5 requests | 1 minuto |
+| Global | 100 requests | 1 minute |
+| `/auth/login` | 5 requests | 1 minute |
+| `/auth/register` | 5 requests | 1 minute |
 
-## 📋 Requisitos
+## 📋 Requirements
 
 - Node.js v18+
 - pnpm
 - PostgreSQL 14+
-- Docker (opcional)
+- Docker (optional)
 
-## 🛠️ Instalación
+## 🛠️ Installation
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone https://github.com/FernandoLBA/commerce_api.git
 cd commerce_api
 
-# Instalar dependencias
+# Install dependencies
 pnpm install
 
-# Configurar variables de entorno
+# Configure environment variables
 cp .env.example .env
-# Editar .env con tus credenciales
+# Edit .env with your credentials
 
-# Generar cliente Prisma
+# Generate Prisma client
 pnpm prisma generate
 
-# Ejecutar migraciones
+# Run migrations
 pnpm prisma migrate deploy
 
-# Poblar base de datos (opcional)
+# Seed database (optional)
 pnpm prisma db seed
 
-# Iniciar en modo desarrollo
+# Start in development mode
 pnpm start:dev
 ```
 
 ## 🐳 Docker
 
 ```bash
-# Levantar servicios (PostgreSQL)
+# Start services (PostgreSQL)
 make up
 
-# Ver logs
+# View logs
 make logs
 
-# Detener servicios
+# Stop services
 make down
 
-# Reiniciar servicios
+# Restart services
 make restart
 ```
 
-## ⚙️ Variables de Entorno
+## ⚙️ Environment Variables
 
-Ver archivo `.env.example` para la lista completa. Variables principales:
+See the `.env.example` file for the full list. Main variables:
 
 ```env
-# Base de datos
+# Database
 DATABASE_URL="postgresql://postgres:password@localhost:5432/commerce_db?schema=public"
 
-# JWT (CAMBIAR en producción)
+# JWT (CHANGE in production)
 JWT_SECRET=your_jwt_secret_key_min_32_chars
 JWT_EXPIRES_IN=1d
 
-# Entorno
+# Environment
 NODE_ENV=development
 PORT=3000
 
-# Seguridad - CORS
+# Security - CORS
 CORS_ORIGINS=http://localhost:3000,http://localhost:4200
 
-# Seguridad - Rate Limiting
+# Security - Rate Limiting
 THROTTLE_LIMIT=100
 THROTTLE_AUTH_LIMIT=5
 ```
 
-## 🏃 Ejecutar
+## 🏃 Running the app
 
 ```bash
-# Desarrollo (watch mode)
+# Development (watch mode)
 pnpm start:dev
 
-# Producción
+# Production
 pnpm build
 pnpm start:prod
 
@@ -128,106 +128,106 @@ pnpm test:e2e
 pnpm test:cov
 ```
 
-## 📚 Endpoints Principales
+## 📚 Main Endpoints
 
-| Módulo | Endpoint | Descripción |
+| Module | Endpoint | Description |
 |--------|----------|-------------|
-| Auth | `POST /api/auth/register` | Registrar usuario |
-| Auth | `POST /api/auth/login` | Iniciar sesión |
-| Users | `GET /api/users/profile` | Ver perfil |
-| Users | `PATCH /api/users/:userId/role` | Cambiar rol (admin) |
-| Users | `GET /api/users/admin/all` | Listar usuarios (admin) |
-| Products | `GET /api/products` | Listar productos |
-| Products | `POST /api/products` | Crear producto (admin) |
-| Categories | `GET /api/categories` | Listar categorías |
-| Cart | `GET /api/cart` | Ver carrito |
-| Cart | `POST /api/cart/items` | Agregar al carrito |
-| Orders | `POST /api/orders` | Crear orden |
-| Orders | `GET /api/orders` | Mis órdenes |
-| Payments | `POST /api/payments/stripe/create-intent/:orderId` | Pago con Stripe |
-| Payments | `POST /api/payments/mercadopago/create-preference/:orderId` | Pago con MercadoPago |
-| Reviews | `POST /api/reviews` | Crear reseña |
-| Coupons | `POST /api/coupons/validate` | Validar cupón |
-| Wishlist | `GET /api/wishlist` | Ver wishlist |
-| Inventory | `GET /api/inventory/low-stock` | Productos con bajo stock |
-| Shipping | `GET /api/shipping/calculate` | Calcular envío |
-| **Security** | `GET /api/security/report` | Reporte de seguridad (admin) |
-| **Security** | `POST /api/security/test/sql-injection` | Test de SQL Injection |
-| **Security** | `POST /api/security/test/xss` | Test de XSS |
-| **Security** | `GET /api/security/test/rate-limit` | Test de Rate Limiting |
+| Auth | `POST /api/auth/register` | Register user |
+| Auth | `POST /api/auth/login` | Log in |
+| Users | `GET /api/users/profile` | View profile |
+| Users | `PATCH /api/users/:userId/role` | Change role (admin) |
+| Users | `GET /api/users/admin/all` | List users (admin) |
+| Products | `GET /api/products` | List products |
+| Products | `POST /api/products` | Create product (admin) |
+| Categories | `GET /api/categories` | List categories |
+| Cart | `GET /api/cart` | View cart |
+| Cart | `POST /api/cart/items` | Add to cart |
+| Orders | `POST /api/orders` | Create order |
+| Orders | `GET /api/orders` | My orders |
+| Payments | `POST /api/payments/stripe/create-intent/:orderId` | Pay with Stripe |
+| Payments | `POST /api/payments/mercadopago/create-preference/:orderId` | Pay with MercadoPago |
+| Reviews | `POST /api/reviews` | Create review |
+| Coupons | `POST /api/coupons/validate` | Validate coupon |
+| Wishlist | `GET /api/wishlist` | View wishlist |
+| Inventory | `GET /api/inventory/low-stock` | Low-stock products |
+| Shipping | `GET /api/shipping/calculate` | Calculate shipping |
+| **Security** | `GET /api/security/report` | Security report (admin) |
+| **Security** | `POST /api/security/test/sql-injection` | SQL Injection test |
+| **Security** | `POST /api/security/test/xss` | XSS test |
+| **Security** | `GET /api/security/test/rate-limit` | Rate Limiting test |
 
-## 👤 Usuarios de Prueba
+## 👤 Test Users
 
-Después de ejecutar el seed:
+After running the seed:
 
-| Email | Contraseña | Rol |
+| Email | Password | Role |
 |-------|------------|-----|
 | admin@tienda.pe | password123 | Admin |
 | juan.perez@gmail.com | password123 | User |
 | maria.garcia@gmail.com | password123 | User |
 | carlos.rodriguez@gmail.com | password123 | User |
 
-## 🎟️ Cupones de Prueba
+## 🎟️ Test Coupons
 
-- `BIENVENIDO10` - 10% de descuento
-- `VERANO2025` - 15% de descuento  
-- `ENVIOGRATIS` - Envío gratis
-- `TECH20` - 20% en tecnología
+- `BIENVENIDO10` - 10% discount
+- `VERANO2025` - 15% discount
+- `ENVIOGRATIS` - Free shipping
+- `TECH20` - 20% off electronics
 
-## 🗂️ Estructura del Proyecto
+## 🗂️ Project Structure
 
 ```
 src/
-├── auth/           # Autenticación y JWT
-├── cart/           # Carrito de compras
-├── categories/     # Categorías de productos
-├── common/         # Utilidades compartidas
-├── coupons/        # Sistema de cupones
-├── generated/      # Cliente Prisma generado
-├── inventory/      # Control de inventario
-├── notifications/  # Emails y notificaciones
-├── orders/         # Órdenes y pagos
-├── payments/       # Stripe y MercadoPago
-├── prisma/         # PrismaModule y PrismaService
-├── products/       # Productos, variantes, imágenes
-├── reviews/        # Reseñas y calificaciones
-├── security/       # 🔒 Pruebas de seguridad
-├── shipping/       # Envíos y tracking
-├── users/          # Gestión de usuarios
-├── wishlist/       # Lista de deseos
+├── auth/           # Authentication and JWT
+├── cart/           # Shopping cart
+├── categories/     # Product categories
+├── common/         # Shared utilities
+├── coupons/        # Coupon system
+├── generated/      # Generated Prisma client
+├── inventory/      # Inventory control
+├── notifications/  # Emails and notifications
+├── orders/         # Orders and payments
+├── payments/       # Stripe and MercadoPago
+├── prisma/         # PrismaModule and PrismaService
+├── products/       # Products, variants, images
+├── reviews/        # Reviews and ratings
+├── security/       # 🔒 Security tests
+├── shipping/       # Shipping and tracking
+├── users/          # User management
+├── wishlist/       # Wishlist
 ├── app.module.ts
 └── main.ts
 prisma/
-├── schema.prisma   # Schema de base de datos
-├── migrations/     # Historial de migraciones
-└── seed.ts         # Datos de prueba
+├── schema.prisma   # Database schema
+├── migrations/     # Migration history
+└── seed.ts         # Seed data
 ```
 
-## 🔧 Tecnologías
+## 🔧 Technologies
 
-| Componente | Tecnología |
+| Component | Technology |
 |------------|------------|
 | Framework | NestJS v11 |
 | ORM | Prisma v7 |
-| Base de Datos | PostgreSQL 15 |
-| Autenticación | Passport + JWT |
-| Validación | class-validator |
-| Documentación | Swagger (OpenAPI) |
+| Database | PostgreSQL 15 |
+| Authentication | Passport + JWT |
+| Validation | class-validator |
+| Documentation | Swagger (OpenAPI) |
 | Testing | Jest |
-| Containerización | Docker |
+| Containerization | Docker |
 
-## 📖 Documentación
+## 📖 Documentation
 
-Consulta el [Manual de Desarrollo](docs/manual.md) para información detallada sobre:
-- Arquitectura del proyecto
-- Flujo de trabajo con Git
-- Creación de módulos
-- Manejo de errores
-- Autenticación y autorización
-- **Seguridad (Helmet, CORS, Rate Limiting)**
-- **Módulo de Pruebas de Seguridad**
+See the [Development Manual](docs/manual.md) for detailed information about:
+- Project architecture
+- Git workflow
+- Creating modules
+- Error handling
+- Authentication and authorization
+- **Security (Helmet, CORS, Rate Limiting)**
+- **Security Testing Module**
 - Testing
 
-## 🛡️ Licencia
+## 🛡️ License
 
 MIT License

@@ -1,10 +1,10 @@
 /**
  * Security Configuration
- * Configuración centralizada de seguridad para la API
+ * Centralized security configuration for the API
  */
 
 export const securityConfig = {
-  // Helmet - Protección de headers HTTP
+  // Helmet - HTTP header protection
   helmet: {
     contentSecurityPolicy: {
       directives: {
@@ -18,7 +18,7 @@ export const securityConfig = {
     crossOriginResourcePolicy: { policy: 'cross-origin' as const },
   },
 
-  // CORS - Configuración de orígenes permitidos
+  // CORS - Allowed origin configuration
   cors: {
     origin: process.env.CORS_ORIGINS?.split(',') || [
       'http://localhost:3000',
@@ -34,34 +34,34 @@ export const securityConfig = {
       'Origin',
     ],
     credentials: true,
-    maxAge: 86400, // 24 horas
+    maxAge: 86400, // 24 hours
   },
 
-  // Rate Limiting - Prevención de ataques de fuerza bruta
+  // Rate Limiting - Brute-force attack prevention
   throttle: {
-    // Configuración global
+    // Global configuration
     global: {
-      ttl: parseInt(process.env.THROTTLE_TTL || '60000'), // 60 segundos
-      limit: parseInt(process.env.THROTTLE_LIMIT || '100'), // 100 requests por minuto
+      ttl: parseInt(process.env.THROTTLE_TTL || '60000'), // 60 seconds
+      limit: parseInt(process.env.THROTTLE_LIMIT || '100'), // 100 requests per minute
     },
-    // Configuración estricta para autenticación
+    // Strict configuration for authentication
     auth: {
-      ttl: parseInt(process.env.THROTTLE_AUTH_TTL || '60000'), // 60 segundos
-      limit: parseInt(process.env.THROTTLE_AUTH_LIMIT || '5'), // 5 intentos por minuto
+      ttl: parseInt(process.env.THROTTLE_AUTH_TTL || '60000'), // 60 seconds
+      limit: parseInt(process.env.THROTTLE_AUTH_LIMIT || '5'), // 5 attempts per minute
     },
-    // Configuración para endpoints de creación
+    // Configuration for creation endpoints
     create: {
-      ttl: parseInt(process.env.THROTTLE_CREATE_TTL || '60000'), // 60 segundos
-      limit: parseInt(process.env.THROTTLE_CREATE_LIMIT || '30'), // 30 creaciones por minuto
+      ttl: parseInt(process.env.THROTTLE_CREATE_TTL || '60000'), // 60 seconds
+      limit: parseInt(process.env.THROTTLE_CREATE_LIMIT || '30'), // 30 creations per minute
     },
   },
 
-  // Cookies seguras (si se usan)
+  // Secure cookies (if used)
   cookies: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict' as const,
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   },
 
   // JWT

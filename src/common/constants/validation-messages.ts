@@ -1,6 +1,6 @@
 /**
- * Constantes de mensajes de validación para todos los DTOs
- * Uso: import { VALIDATION_MESSAGES } from '@common/constants/validation-messages';
+ * Validation message constants for all DTOs
+ * Usage: import { VALIDATION_MESSAGES } from '@common/constants/validation-messages';
  */
 export const VALIDATION_MESSAGES = Object.freeze({
   // General

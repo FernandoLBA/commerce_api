@@ -40,27 +40,27 @@ export function orderConfirmationEmailText(
   const addr = data.shippingAddress;
 
   return `
-¡Gracias por tu compra en ${brandName}!
+Thank you for your purchase at ${brandName}!
 
-Tu pedido #${data.orderNumber} ha sido recibido.
+Your order #${data.orderNumber} has been received.
 
-Resumen del pedido:
+Order summary:
 ${itemsList}
 
 Subtotal: S/. ${data.subtotal.toFixed(2)}
-Envío: S/. ${data.shippingCost.toFixed(2)}
-${data.discount > 0 ? `Descuento: -S/. ${data.discount.toFixed(2)}` : ''}
+Shipping: S/. ${data.shippingCost.toFixed(2)}
+${data.discount > 0 ? `Discount: -S/. ${data.discount.toFixed(2)}` : ''}
 Total: S/. ${data.total.toFixed(2)}
 
-Dirección de envío:
+Shipping address:
 ${addr.recipientName || ''}
 ${addr.street || ''} ${addr.number || ''}
 ${addr.district || ''}, ${addr.city || ''}
 ${addr.department || ''}
 
-Te notificaremos cuando tu pedido sea enviado.
+We will notify you when your order ships.
 
-- El equipo de ${brandName}
+- The ${brandName} team
   `.trim();
 }
 
@@ -82,15 +82,15 @@ export function orderConfirmationEmailHtml(
   const addr = data.shippingAddress;
 
   const content = `
-    <h1 style="${inline.heading1}">¡Gracias por tu compra! 🛍️</h1>
-    <p style="${inline.paragraph}">Tu pedido <strong>#${data.orderNumber}</strong> ha sido recibido y está siendo procesado.</p>
-    
-    <h2 style="${inline.heading2}">Resumen del pedido</h2>
+    <h1 style="${inline.heading1}">Thank you for your purchase! 🛍️</h1>
+    <p style="${inline.paragraph}">Your order <strong>#${data.orderNumber}</strong> has been received and is being processed.</p>
+
+    <h2 style="${inline.heading2}">Order summary</h2>
     <table style="${inline.table}">
       <thead>
         <tr>
-          <th style="${inline.tableHeader}">Producto</th>
-          <th style="${inline.tableHeader} text-align: center;">Cantidad</th>
+          <th style="${inline.tableHeader}">Product</th>
+          <th style="${inline.tableHeader} text-align: center;">Quantity</th>
           <th style="${inline.tableHeader} text-align: right;">Subtotal</th>
         </tr>
       </thead>
@@ -98,7 +98,7 @@ export function orderConfirmationEmailHtml(
         ${itemsHtml}
       </tbody>
     </table>
-    
+
     <div style="background-color: ${colors.background}; padding: 20px; border-radius: 12px; margin: 24px 0;">
       <table style="width: 100%;">
         <tr>
@@ -106,14 +106,14 @@ export function orderConfirmationEmailHtml(
           <td style="padding: 4px 0; text-align: right; font-weight: 600;">S/. ${data.subtotal.toFixed(2)}</td>
         </tr>
         <tr>
-          <td style="padding: 4px 0; color: ${colors.textSecondary};">Envío:</td>
+          <td style="padding: 4px 0; color: ${colors.textSecondary};">Shipping:</td>
           <td style="padding: 4px 0; text-align: right; font-weight: 600;">S/. ${data.shippingCost.toFixed(2)}</td>
         </tr>
         ${
           data.discount > 0
             ? `
         <tr>
-          <td style="padding: 4px 0; color: ${colors.success};">Descuento:</td>
+          <td style="padding: 4px 0; color: ${colors.success};">Discount:</td>
           <td style="padding: 4px 0; text-align: right; font-weight: 600; color: ${colors.success};">-S/. ${data.discount.toFixed(2)}</td>
         </tr>`
             : ''
@@ -124,8 +124,8 @@ export function orderConfirmationEmailHtml(
         </tr>
       </table>
     </div>
-    
-    <h2 style="${inline.heading2}">Dirección de envío</h2>
+
+    <h2 style="${inline.heading2}">Shipping address</h2>
     <div style="background-color: ${colors.background}; padding: 16px; border-radius: 8px;">
       <p style="margin: 0; color: ${colors.text};">
         <strong>${addr.recipientName || ''}</strong><br>
@@ -134,13 +134,13 @@ export function orderConfirmationEmailHtml(
         ${addr.department || ''}
       </p>
     </div>
-    
-    <p style="${inline.paragraph}; margin-top: 24px;">📦 Te notificaremos cuando tu pedido sea enviado.</p>
+
+    <p style="${inline.paragraph}; margin-top: 24px;">📦 We will notify you when your order ships.</p>
     ${emailFooter()}
   `;
   return wrapInHtmlTemplate(content);
 }
 
 export function orderConfirmationEmailSubject(orderNumber: string): string {
-  return `✓ Pedido #${orderNumber} confirmado - ${brandName}`;
+  return `✓ Order #${orderNumber} confirmed - ${brandName}`;
 }

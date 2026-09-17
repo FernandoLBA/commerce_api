@@ -1,18 +1,18 @@
 export enum MovementType {
   // Incoming stock
-  PURCHASE = 'purchase', // Compra de inventario
-  RETURN = 'return', // Devolución de cliente
-  ADJUSTMENT_IN = 'adjustment_in', // Ajuste positivo manual
-  TRANSFER_IN = 'transfer_in', // Transferencia entre almacenes
+  PURCHASE = 'purchase', // Inventory purchase
+  RETURN = 'return', // Customer return
+  ADJUSTMENT_IN = 'adjustment_in', // Manual positive adjustment
+  TRANSFER_IN = 'transfer_in', // Transfer between warehouses
 
   // Outgoing stock
-  SALE = 'sale', // Venta completada
-  RESERVATION = 'reservation', // Reserva por orden pendiente
-  ADJUSTMENT_OUT = 'adjustment_out', // Ajuste negativo manual
-  DAMAGED = 'damaged', // Productos dañados
-  EXPIRED = 'expired', // Productos vencidos
-  TRANSFER_OUT = 'transfer_out', // Transferencia entre almacenes
+  SALE = 'sale', // Completed sale
+  RESERVATION = 'reservation', // Reservation for pending order
+  ADJUSTMENT_OUT = 'adjustment_out', // Manual negative adjustment
+  DAMAGED = 'damaged', // Damaged products
+  EXPIRED = 'expired', // Expired products
+  TRANSFER_OUT = 'transfer_out', // Transfer between warehouses
 
-  // Release (devuelve stock reservado)
-  RELEASE = 'release', // Liberación de reserva cancelada
+  // Release (returns reserved stock)
+  RELEASE = 'release', // Release of cancelled reservation
 }

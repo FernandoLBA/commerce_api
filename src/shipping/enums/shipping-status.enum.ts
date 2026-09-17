@@ -1,9 +1,9 @@
 export enum ShippingStatus {
-  PENDING = 'pending', // Esperando envío
-  PICKED_UP = 'picked_up', // Recogido por courier
-  IN_TRANSIT = 'in_transit', // En tránsito
-  OUT_FOR_DELIVERY = 'out_for_delivery', // En reparto
-  DELIVERED = 'delivered', // Entregado
-  FAILED = 'failed', // Intento fallido
-  RETURNED = 'returned', // Devuelto
+  PENDING = 'pending', // Awaiting shipment
+  PICKED_UP = 'picked_up', // Picked up by courier
+  IN_TRANSIT = 'in_transit', // In transit
+  OUT_FOR_DELIVERY = 'out_for_delivery', // Out for delivery
+  DELIVERED = 'delivered', // Delivered
+  FAILED = 'failed', // Failed attempt
+  RETURNED = 'returned', // Returned
 }

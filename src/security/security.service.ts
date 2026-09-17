@@ -22,7 +22,7 @@ export interface BruteForceTestResult {
 @Injectable()
 export class SecurityService {
   /**
-   * Simula un ataque de inyección SQL para verificar que está protegido
+   * Simulates a SQL injection attack to verify it is protected against
    */
   testSqlInjection(input: string): SecurityTestResult {
     const sqlPatterns = [
@@ -39,8 +39,8 @@ export class SecurityService {
       testName: 'SQL Injection Test',
       passed: !detected,
       message: detected
-        ? '⚠️ Posible inyección SQL detectada - El input sería sanitizado'
-        : '✅ Input seguro - No se detectaron patrones de SQL injection',
+        ? '⚠️ Possible SQL injection detected - The input would be sanitized'
+        : '✅ Safe input - No SQL injection patterns detected',
       details: {
         input,
         patternsChecked: sqlPatterns.length,
@@ -51,7 +51,7 @@ export class SecurityService {
   }
 
   /**
-   * Simula un ataque XSS para verificar que está protegido
+   * Simulates an XSS attack to verify it is protected against
    */
   testXss(input: string): SecurityTestResult {
     const xssPatterns = [
@@ -72,8 +72,8 @@ export class SecurityService {
       testName: 'XSS (Cross-Site Scripting) Test',
       passed: !detected,
       message: detected
-        ? '⚠️ Posible ataque XSS detectado - El input sería sanitizado'
-        : '✅ Input seguro - No se detectaron patrones de XSS',
+        ? '⚠️ Possible XSS attack detected - The input would be sanitized'
+        : '✅ Safe input - No XSS patterns detected',
       details: {
         input,
         patternsChecked: xssPatterns.length,
@@ -84,7 +84,7 @@ export class SecurityService {
   }
 
   /**
-   * Simula un ataque de Path Traversal
+   * Simulates a Path Traversal attack
    */
   testPathTraversal(input: string): SecurityTestResult {
     const pathPatterns = [
@@ -103,8 +103,8 @@ export class SecurityService {
       testName: 'Path Traversal Test',
       passed: !detected,
       message: detected
-        ? '⚠️ Posible ataque de Path Traversal detectado'
-        : '✅ Input seguro - No se detectaron patrones de Path Traversal',
+        ? '⚠️ Possible Path Traversal attack detected'
+        : '✅ Safe input - No Path Traversal patterns detected',
       details: {
         input,
         patternsChecked: pathPatterns.length,
@@ -115,7 +115,7 @@ export class SecurityService {
   }
 
   /**
-   * Simula un ataque de Command Injection
+   * Simulates a Command Injection attack
    */
   testCommandInjection(input: string): SecurityTestResult {
     const commandPatterns = [
@@ -134,8 +134,8 @@ export class SecurityService {
       testName: 'Command Injection Test',
       passed: !detected,
       message: detected
-        ? '⚠️ Posible Command Injection detectado'
-        : '✅ Input seguro - No se detectaron patrones de Command Injection',
+        ? '⚠️ Possible Command Injection detected'
+        : '✅ Safe input - No Command Injection patterns detected',
       details: {
         input,
         patternsChecked: commandPatterns.length,
@@ -146,7 +146,7 @@ export class SecurityService {
   }
 
   /**
-   * Verifica la fortaleza de una contraseña
+   * Checks the strength of a password
    */
   testPasswordStrength(password: string): SecurityTestResult {
     const checks = {
@@ -163,16 +163,16 @@ export class SecurityService {
     const percentage = Math.round((score / maxScore) * 100);
 
     let strength: string;
-    if (percentage >= 100) strength = 'Muy fuerte';
-    else if (percentage >= 80) strength = 'Fuerte';
-    else if (percentage >= 60) strength = 'Moderada';
-    else if (percentage >= 40) strength = 'Débil';
-    else strength = 'Muy débil';
+    if (percentage >= 100) strength = 'Very strong';
+    else if (percentage >= 80) strength = 'Strong';
+    else if (percentage >= 60) strength = 'Moderate';
+    else if (percentage >= 40) strength = 'Weak';
+    else strength = 'Very weak';
 
     return {
       testName: 'Password Strength Test',
       passed: percentage >= 60,
-      message: `Fortaleza de contraseña: ${strength} (${percentage}%)`,
+      message: `Password strength: ${strength} (${percentage}%)`,
       details: {
         score: `${score}/${maxScore}`,
         percentage,
@@ -184,7 +184,7 @@ export class SecurityService {
   }
 
   /**
-   * Ejecuta todas las pruebas de seguridad en un input
+   * Runs all security tests on an input
    */
   runAllTests(input: string): SecurityTestResult[] {
     return [
@@ -196,7 +196,7 @@ export class SecurityService {
   }
 
   /**
-   * Genera un reporte de seguridad del sistema
+   * Generates a security report for the system
    */
   getSecurityReport(): Record<string, any> {
     return {
@@ -246,14 +246,14 @@ export class SecurityService {
   }
 
   /**
-   * Genera recomendaciones de seguridad basadas en la configuración actual
+   * Generates security recommendations based on the current configuration
    */
   private getSecurityRecommendations(): string[] {
     const recommendations: string[] = [];
 
     if (process.env.NODE_ENV !== 'production') {
       recommendations.push(
-        '⚠️ Configurar NODE_ENV=production en entorno de producción',
+        '⚠️ Set NODE_ENV=production in the production environment',
       );
     }
 
@@ -262,31 +262,31 @@ export class SecurityService {
       process.env.JWT_SECRET.includes('change_this')
     ) {
       recommendations.push(
-        '🔴 CRÍTICO: Cambiar JWT_SECRET por una clave segura de al menos 32 caracteres',
+        '🔴 CRITICAL: Change JWT_SECRET to a secure key of at least 32 characters',
       );
     }
 
     if (!process.env.CORS_ORIGINS) {
       recommendations.push(
-        '⚠️ Configurar CORS_ORIGINS con dominios específicos en producción',
+        '⚠️ Configure CORS_ORIGINS with specific domains in production',
       );
     }
 
     if (parseInt(process.env.THROTTLE_AUTH_LIMIT || '5') > 10) {
       recommendations.push(
-        '⚠️ Considerar reducir THROTTLE_AUTH_LIMIT para mayor seguridad',
+        '⚠️ Consider lowering THROTTLE_AUTH_LIMIT for greater security',
       );
     }
 
     if (recommendations.length === 0) {
-      recommendations.push('✅ Configuración de seguridad correcta');
+      recommendations.push('✅ Security configuration is correct');
     }
 
     return recommendations;
   }
 
   /**
-   * Genera payloads de prueba para diferentes tipos de ataques
+   * Generates test payloads for different types of attacks
    */
   getTestPayloads(): Record<string, string[]> {
     return {

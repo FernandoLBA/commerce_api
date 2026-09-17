@@ -11,25 +11,25 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 registros por minuto
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 registrations per minute
   async register(@Body() createUserDto: CreateUserDto) {
     return this.authService.register(createUserDto);
   }
 
   @Post('login')
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 intentos de login por minuto
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 login attempts per minute
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
   @Post('activate')
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 intentos por minuto
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   async activateAccount(@Body() body: ActivateAccountDto) {
     return this.authService.activateAccount(body.token);
   }
 
   @Post('resend-activation')
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 intentos por minuto
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 attempts per minute
   async resendActivation(@Body() resendActivationDto: ResendActivationDto) {
     return this.authService.resendActivationEmail(resendActivationDto.email);
   }

@@ -21,14 +21,14 @@ export class SlugService {
   ): Promise<string> {
     const slugName = name
       .toLowerCase()
-      .normalize('NFD') // Normalizar caracteres especiales
-      .replace(/[\u0300-\u036f]/g, '') // Remover diacríticos (tildes)
-      .replace(/[^a-z0-9\s-]/g, '') // Remover caracteres especiales
+      .normalize('NFD') // Normalize special characters
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics (accents)
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
       .trim()
-      .replace(/\s+/g, '-') // Reemplazar espacios por guiones
-      .replace(/-+/g, '-'); // Remover guiones duplicados
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-'); // Remove duplicate hyphens
 
-    // Verificar si ya existe
+    // Check if it already exists
     let finalSlug = slugName;
     let count = 1;
 
@@ -41,10 +41,10 @@ export class SlugService {
       });
 
       if (!slugExists) {
-        break; // Slug es único
+        break; // Slug is unique
       }
 
-      finalSlug = `${slugName}-${count++}`; // Agregar sufijo numérico
+      finalSlug = `${slugName}-${count++}`; // Add numeric suffix
     }
 
     return finalSlug;
