@@ -191,7 +191,18 @@ export class OrdersService {
 
     const order = await this.prisma.order.findFirst({
       where,
-      include: { items: true, payments: true, user: true },
+      include: { 
+        items: true, 
+        payments: true, 
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          }
+        } 
+      },
     });
 
     if (!order) {
