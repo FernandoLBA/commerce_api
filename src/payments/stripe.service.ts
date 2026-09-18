@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus } from '@prisma/client';
 import Stripe from 'stripe';
-
 import { ValidationException } from '../common';
+import { InventoryService } from '../inventory/inventory.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma';
 
@@ -13,6 +13,7 @@ export class StripeService {
   constructor(
     private prisma: PrismaService,
     private notificationsService: NotificationsService,
+    private inventoryService: InventoryService,
   ) {
     this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
       apiVersion: '2025-01-27.acacia' as any,
@@ -142,6 +143,9 @@ export class StripeService {
           confirmedAt: new Date(),
         },
       });
+
+      // Convert the reserved stock into a confirmed sale
+      await this.inventoryService.confirmSale(payment.order.id);
 
       // Send payment confirmation email
       try {

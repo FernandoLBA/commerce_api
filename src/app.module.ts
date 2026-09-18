@@ -9,6 +9,7 @@ import { BcryptModule } from './bcrypt/bcrypt.module';
 import { CartModule } from './cart/cart.module';
 import { CategoriesModule } from './categories/categories.module';
 import { securityConfig, ThrottlerGuard } from './common';
+import { validate } from './common/config';
 import { CouponsModule } from './coupons/coupons.module';
 import { FilesModule } from './files/files.module';
 import { InventoryModule } from './inventory/inventory.module';
@@ -27,6 +28,7 @@ import { WishlistModule } from './wishlist/wishlist.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate,
     }),
     // Prisma - Database ORM
     PrismaModule,

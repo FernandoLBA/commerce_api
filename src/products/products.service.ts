@@ -73,7 +73,7 @@ export class ProductsService {
   }
 
   async update(slug: string, updateProductDto: UpdateProductDto) {
-    if(!slug) {
+    if (!slug) {
       throw new ProductSlugEmptyException();
     }
 

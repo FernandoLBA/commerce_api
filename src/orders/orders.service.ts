@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
-
 import { CartService } from '../cart/cart.service';
 import { AddressNotFoundException, ValidationException } from '../common';
+import { CartItem, CouponsService } from '../coupons/coupons.service';
+import {
+  InventoryService,
+  StockReservation,
+} from '../inventory/inventory.service';
 import { PrismaService } from '../prisma';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -12,6 +16,8 @@ export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private cartService: CartService,
+    private couponsService: CouponsService,
+    private inventoryService: InventoryService,
   ) {}
 
   async create(userId: string, createOrderDto: CreateOrderDto) {
@@ -36,7 +42,38 @@ export class OrdersService {
     // Calculate totals
     const subtotal = cart.total;
     const shippingCost = this.calculateShippingCost(address.department);
-    const discount = 0; // TODO: Implement discount code validation
+
+    // Validate and calcultae coupon discount, if one was provided
+    let discount = 0;
+    let appliedCouponId: string | undefined;
+
+    if (createOrderDto.discountCode) {
+      const couponCartItems: CartItem[] = cart.items.map((item) => ({
+        ...item,
+        categoryId: item.product.categoryId ?? undefined,
+        price: item.variant
+          ? Number(item.variant.price)
+          : Number(item.product.price),
+        quantity: item.quantity,
+      }));
+
+      const couponValidation = await this.couponsService.validateCoupon(
+        createOrderDto.discountCode,
+        userId,
+        couponCartItems,
+        subtotal,
+      );
+
+      if (!couponValidation.isValid) {
+        throw new ValidationException(
+          couponValidation.errorMessage || 'Invalid discount code',
+        );
+      }
+
+      discount = couponValidation.discountAmount;
+      appliedCouponId = couponValidation.coupon!.id;
+    }
+
     const total = subtotal + shippingCost - discount;
 
     // Use transaction for order creation
@@ -95,19 +132,6 @@ export class OrdersService {
             subtotal: cartItem.quantity * unitPrice,
           },
         });
-
-        // Reserve stock
-        if (cartItem.variantId) {
-          await tx.productVariant.update({
-            where: { id: cartItem.variantId },
-            data: { stock: { decrement: cartItem.quantity } },
-          });
-        } else {
-          await tx.product.update({
-            where: { id: cartItem.productId },
-            data: { stock: { decrement: cartItem.quantity } },
-          });
-        }
       }
 
       // Create initial payment record
@@ -123,6 +147,25 @@ export class OrdersService {
 
       return savedOrder;
     });
+
+    // Reserve stock now that order exists (tracked as InventoryMovement, with low-stock alerts)
+    const reservations: StockReservation[] = cart.items.map((item) => ({
+      productId: item.variantId ? undefined : item.productId,
+      variantId: item.variantId ?? undefined,
+      quantity: item.quantity,
+    }));
+
+    await this.inventoryService.reserveStock(reservations, result.id, userId);
+
+    // Record coupon usage now that the order was created successfully
+    if (appliedCouponId) {
+      await this.couponsService.applyCoupon(
+        appliedCouponId,
+        userId,
+        result.id,
+        discount,
+      );
+    }
 
     // Clear cart
     await this.cartService.clearCart(userId);
@@ -148,7 +191,18 @@ export class OrdersService {
 
     const order = await this.prisma.order.findFirst({
       where,
-      include: { items: true, payments: true, user: true },
+      include: {
+        items: true,
+        payments: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
 
     if (!order) {
@@ -213,20 +267,8 @@ export class OrdersService {
       throw new ValidationException('Order cannot be cancelled at this stage');
     }
 
-    // Restore stock
-    for (const item of (order as any).items) {
-      if (item.variantId) {
-        await this.prisma.productVariant.update({
-          where: { id: item.variantId },
-          data: { stock: { increment: item.quantity } },
-        });
-      } else {
-        await this.prisma.product.update({
-          where: { id: item.productId },
-          data: { stock: { increment: item.quantity } },
-        });
-      }
-    }
+    // Restore stock (releases the reservation recorded when the order was created)
+    await this.inventoryService.releaseStock(id, userId);
 
     // Cancel pending payments
     for (const payment of (order as any).payments) {

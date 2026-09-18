@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { MovementType, Prisma } from '@prisma/client';
-
 import { NotFoundException, ValidationException } from '../common';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma';
@@ -58,18 +57,33 @@ export class InventoryService {
       }
 
       previousStock = variant.stock;
-      newStock = previousStock + quantityChange;
 
-      if (newStock < 0) {
-        throw new ValidationException(
-          `Insufficient stock. Current: ${previousStock}, requested: ${dto.quantity}`,
-        );
+      if (isOutgoing) {
+        const result = await this.prisma.productVariant.updateMany({
+          where: { id: dto.variantId, stock: { gte: dto.quantity } },
+          data: { stock: { decrement: dto.quantity } },
+        });
+
+        if (result.count === 0) {
+          throw new ValidationException(
+            `Insufficient stock. Current: ${previousStock}, requested: ${dto.quantity}`,
+          );
+        }
+      } else {
+        await this.prisma.productVariant.update({
+          where: { id: dto.variantId },
+          data: { stock: { increment: dto.quantity } },
+        });
       }
 
-      await this.prisma.productVariant.update({
-        where: { id: dto.variantId },
-        data: { stock: newStock },
-      });
+      const updatedVariant = await this.prisma.productVariant.findUniqueOrThrow(
+        {
+          where: { id: dto.variantId },
+          select: { stock: true },
+        },
+      );
+
+      newStock = updatedVariant.stock;
 
       // Check alerts
       await this.checkAndTriggerAlert(undefined, dto.variantId, newStock);
@@ -85,18 +99,31 @@ export class InventoryService {
       }
 
       previousStock = product.stock;
-      newStock = previousStock + quantityChange;
 
-      if (newStock < 0) {
-        throw new ValidationException(
-          `Insufficient stock. Current: ${previousStock}, requested: ${dto.quantity}`,
-        );
+      if (isOutgoing) {
+        const result = await this.prisma.product.updateMany({
+          where: { id: dto.productId, stock: { gte: dto.quantity } },
+          data: { stock: { decrement: dto.quantity } },
+        });
+
+        if (result.count === 0) {
+          throw new ValidationException(
+            `Insufficient stock. Current: ${previousStock}, requested: ${dto.quantity}`,
+          );
+        }
+      } else {
+        await this.prisma.product.update({
+          where: { id: dto.productId },
+          data: { stock: { increment: dto.quantity } },
+        });
       }
 
-      await this.prisma.product.update({
+      const updatedProduct = await this.prisma.product.findUniqueOrThrow({
         where: { id: dto.productId },
-        data: { stock: newStock },
+        select: { stock: true },
       });
+
+      newStock = updatedProduct.stock;
 
       // Check alerts
       await this.checkAndTriggerAlert(dto.productId, undefined, newStock);
@@ -401,15 +428,14 @@ export class InventoryService {
     if (!alert || !alert.alertEnabled) return;
 
     if (currentStock !== undefined && currentStock <= alert.lowStockThreshold) {
+      const isCritical = currentStock <= alert.criticalStockThreshold;
       const now = new Date();
       const hoursSinceLastAlert = alert.lastAlertSentAt
         ? (now.getTime() - alert.lastAlertSentAt.getTime()) / (1000 * 60 * 60)
         : 24; // Send if never sent
 
-      // Only send alert every 24 hours
-      if (hoursSinceLastAlert >= 24) {
-        const isCritical = currentStock <= alert.criticalStockThreshold;
-
+      // Critical alerts always go through; low-stock repeats are throttled to once/24h
+      if (isCritical || hoursSinceLastAlert >= 24) {
         // Send notification
         try {
           await this.notificationsService.sendLowStockAlert({
