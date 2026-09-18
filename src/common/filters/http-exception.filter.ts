@@ -1,14 +1,14 @@
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { ErrorCodes, ErrorMessages } from '../constants/error-codes.constants';
 import { ApiException } from '../exceptions/api.exception';
 import { ApiErrorResponse } from '../interfaces/api-response.interface';
-import { ErrorCodes, ErrorMessages } from '../constants/error-codes.constants';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -48,7 +48,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Map common HTTP status codes to error codes
       errorCode = this.mapStatusToErrorCode(statusCode, errorCode);
     } else if (exception instanceof Error) {
-      message = exception.message;
+      if(process.env.NODE_ENV !== "production") {
+        message = exception.message;
+      }
+      
       // Log unexpected errors in production
       console.error('Unexpected error:', exception);
     }
