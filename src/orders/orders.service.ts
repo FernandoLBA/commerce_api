@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
-
 import { CartService } from '../cart/cart.service';
 import { AddressNotFoundException, ValidationException } from '../common';
+import { CartItem, CouponsService } from '../coupons/coupons.service';
 import { PrismaService } from '../prisma';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -12,6 +12,7 @@ export class OrdersService {
   constructor(
     private prisma: PrismaService,
     private cartService: CartService,
+    private couponsService: CouponsService,
   ) {}
 
   async create(userId: string, createOrderDto: CreateOrderDto) {
@@ -36,7 +37,38 @@ export class OrdersService {
     // Calculate totals
     const subtotal = cart.total;
     const shippingCost = this.calculateShippingCost(address.department);
-    const discount = 0; // TODO: Implement discount code validation
+
+    // Validate and calcultae coupon discount, if one was provided
+    let discount = 0;
+    let appliedCouponId: string | undefined;
+
+    if(createOrderDto.discountCode) {
+      const couponCartItems: CartItem[] = cart.items.map((item) => ({
+        ...item,
+        categoryId: item.product.categoryId ?? undefined,
+        price: item.variant
+          ? Number(item.variant.price)
+          : Number(item.product.price),
+        quantity: item.quantity,
+      }))
+
+      const couponValidation = await this.couponsService.validateCoupon(
+        createOrderDto.discountCode,
+        userId,
+        couponCartItems,
+        subtotal,
+      )
+
+      if(!couponValidation.isValid) {
+        throw new ValidationException(
+          couponValidation.errorMessage || "Invalid discount code",
+        )
+      }
+
+      discount = couponValidation.discountAmount;
+      appliedCouponId = couponValidation.coupon!.id;
+    }
+
     const total = subtotal + shippingCost - discount;
 
     // Use transaction for order creation
@@ -123,6 +155,16 @@ export class OrdersService {
 
       return savedOrder;
     });
+
+    // Record coupon usage now that the order was created successfully
+    if(appliedCouponId) {
+      await this.couponsService.applyCoupon(
+        appliedCouponId,
+        userId,
+        result.id,
+        discount,
+      )
+    }
 
     // Clear cart
     await this.cartService.clearCart(userId);
