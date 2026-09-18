@@ -20,6 +20,7 @@ export const ErrorCodes = {
   PRODUCT_VARIANT_NOT_FOUND: 'PROD_004',
   PRODUCT_SKU_EXISTS: 'PROD_005',
   PRODUCT_IMAGE_NOT_FOUND: 'PROD_006',
+  PRODUCT_SLUG_IS_EMPTY: 'PROD_007',
 
   // Category errors (CAT_XXX)
   CATEGORY_NOT_FOUND: 'CAT_001',
@@ -62,6 +63,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
   [ErrorCodes.PRODUCT_NOT_FOUND]: 'Product not found',
   [ErrorCodes.PRODUCT_ALREADY_EXISTS]: 'Product already exists',
   [ErrorCodes.PRODUCT_SLUG_EXISTS]: 'Product slug already exists',
+  [ErrorCodes.PRODUCT_SLUG_IS_EMPTY]: 'Product slug is empty',
   [ErrorCodes.PRODUCT_VARIANT_NOT_FOUND]: 'Product variant not found',
   [ErrorCodes.PRODUCT_SKU_EXISTS]: 'SKU already exists',
   [ErrorCodes.PRODUCT_IMAGE_NOT_FOUND]: 'Product image not found',
