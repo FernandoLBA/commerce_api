@@ -4,8 +4,8 @@ import MercadoPagoConfig, {
   Payment as MPPayment,
   Preference,
 } from 'mercadopago';
-
 import { ValidationException } from '../common';
+import { InventoryService } from '../inventory/inventory.service';
 import { NotificationsService } from '../notifications';
 import { PrismaService } from '../prisma';
 
@@ -18,6 +18,7 @@ export class MercadoPagoService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsService: NotificationsService,
+    private readonly inventoryService: InventoryService,
   ) {
     this.client = new MercadoPagoConfig({
       accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || '',
@@ -177,6 +178,9 @@ export class MercadoPagoService {
                 confirmedAt: new Date(),
               },
             });
+
+            // Convert the reserved stock into a confirmed sale
+            await this.inventoryService.confirmSale(order.id);
 
             // Send payment confirmation email
             try {

@@ -1,11 +1,12 @@
 import { Module } from '@nestjs/common';
+import { InventoryModule } from 'src/inventory';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { MercadoPagoService } from './mercadopago.service';
 import { PaymentsController } from './payments.controller';
 import { StripeService } from './stripe.service';
-import { MercadoPagoService } from './mercadopago.service';
-import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [NotificationsModule],
+  imports: [NotificationsModule, InventoryModule],
   controllers: [PaymentsController],
   providers: [StripeService, MercadoPagoService],
   exports: [StripeService, MercadoPagoService],
