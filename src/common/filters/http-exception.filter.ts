@@ -48,10 +48,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       // Map common HTTP status codes to error codes
       errorCode = this.mapStatusToErrorCode(statusCode, errorCode);
     } else if (exception instanceof Error) {
-      if(process.env.NODE_ENV !== "production") {
+      if (process.env.NODE_ENV !== 'production') {
         message = exception.message;
       }
-      
+
       // Log unexpected errors in production
       console.error('Unexpected error:', exception);
     }
