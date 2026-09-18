@@ -119,6 +119,16 @@ export class ProductNotFoundException extends ApiException {
   }
 }
 
+export class ProductSlugEmptyException extends ApiException {
+  constructor(message?: string) {
+    super(
+      ErrorCodes.PRODUCT_SLUG_IS_EMPTY,
+      HttpStatus.BAD_REQUEST,
+      message || ErrorMessages[ErrorCodes.PRODUCT_SLUG_IS_EMPTY],
+    );
+  }
+}
+
 export class ProductAlreadyExistsException extends ApiException {
   constructor(message?: string) {
     super(

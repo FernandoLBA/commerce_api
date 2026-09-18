@@ -7,6 +7,7 @@ import {
   CategoryNotFoundException,
   ProductImageNotFoundException,
   ProductNotFoundException,
+  ProductSlugEmptyException,
 } from '../common';
 import { SlugService } from '../common/services/slug.service';
 import { PrismaService } from '../prisma';
@@ -72,6 +73,10 @@ export class ProductsService {
   }
 
   async update(slug: string, updateProductDto: UpdateProductDto) {
+    if(!slug) {
+      throw new ProductSlugEmptyException();
+    }
+
     if (updateProductDto.categoryId) {
       const category = await this.prisma.category.findUnique({
         where: { id: updateProductDto.categoryId },
@@ -82,7 +87,7 @@ export class ProductsService {
       }
     }
 
-    if (updateProductDto.name) {
+    if (!updateProductDto.slug && updateProductDto.name) {
       updateProductDto.slug = await this.slugService.generateSlug(
         updateProductDto.name,
         slug,
