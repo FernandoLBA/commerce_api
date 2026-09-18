@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { MovementType, Prisma } from '@prisma/client';
-
 import { NotFoundException, ValidationException } from '../common';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma';
@@ -401,15 +400,14 @@ export class InventoryService {
     if (!alert || !alert.alertEnabled) return;
 
     if (currentStock !== undefined && currentStock <= alert.lowStockThreshold) {
+      const isCritical = currentStock <= alert.criticalStockThreshold;
       const now = new Date();
       const hoursSinceLastAlert = alert.lastAlertSentAt
         ? (now.getTime() - alert.lastAlertSentAt.getTime()) / (1000 * 60 * 60)
         : 24; // Send if never sent
 
-      // Only send alert every 24 hours
-      if (hoursSinceLastAlert >= 24) {
-        const isCritical = currentStock <= alert.criticalStockThreshold;
-
+      // Critical alerts always go through; low-stock repeats are throttled to once/24h
+      if (isCritical || hoursSinceLastAlert >= 24) {
         // Send notification
         try {
           await this.notificationsService.sendLowStockAlert({
