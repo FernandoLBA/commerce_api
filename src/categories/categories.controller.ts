@@ -10,20 +10,24 @@ import {
   Patch,
   Post,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-
 import { AllowedFileSizes } from '../common/enums';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto';
 import { FilesValidationPipe } from '../common/pipes';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { Role, Roles, RolesGuard } from 'src/common';
 
 @Controller('categories')
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   create(@Body() createCategoryDto: CreateCategoryDto) {
     return this.categoriesService.create(createCategoryDto);
   }
@@ -34,6 +38,8 @@ export class CategoriesController {
   }
 
   @Patch(':slug/files/upload')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: AllowedFileSizes.IMAGE },
@@ -53,6 +59,8 @@ export class CategoriesController {
   }
 
   @Patch(':slug')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   update(
     @Param('slug') slug: string,
     @Body() updateCategoryDto: UpdateCategoryDto,
@@ -61,6 +69,8 @@ export class CategoriesController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.categoriesService.remove(id);
